@@ -20,17 +20,17 @@ function Play() {
   const [rcCarConnected, setRcCarConnected] = useState(false);
   
   useEffect(() => {
-    // 데모가 아니고 지갑도 연결 안 되어 있으면 홈으로
+    // If not demo and wallet not connected, redirect to home
     if (!isDemo && !isConnected) {
       navigate('/');
       return;
     }
     
-    // 타이머 시작
+    // Start timer
     setIsActive(true);
   }, [isDemo, isConnected, navigate]);
   
-  // 타이머 로직
+  // Timer logic
   useEffect(() => {
     let interval = null;
     
@@ -39,7 +39,7 @@ function Play() {
         setTimeRemaining(prev => {
           if (prev <= 1) {
             setIsActive(false);
-            alert('⏰ 플레이 시간이 종료되었습니다!');
+            alert('⏰ Play time has ended!');
             navigate('/');
             return 0;
           }
@@ -61,23 +61,23 @@ function Play() {
   };
   
   const handleBackHome = () => {
-    if (confirm('플레이를 종료하고 홈으로 돌아가시겠습니까?')) {
+    if (confirm('End play session and return to home?')) {
       navigate('/');
     }
   };
   
   return (
     <div className="play-container">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="play-header">
         <button className="back-button" onClick={handleBackHome}>
-          ← 홈으로
+          ← Back to Home
         </button>
         
         <div className="status-bar">
           <div className={`rc-status ${rcCarConnected ? 'connected' : 'disconnected'}`}>
             <span className="status-dot"></span>
-            {rcCarConnected ? 'RC카 연결됨' : 'RC카 연결 대기중'}
+            {rcCarConnected ? 'RC Car Connected' : 'Waiting for RC Car'}
           </div>
           
           <div className="timer">
@@ -87,15 +87,15 @@ function Play() {
           
           {isDemo && (
             <div className="demo-badge">
-              🎮 데모 모드
+              🎮 Demo Mode
             </div>
           )}
         </div>
       </div>
       
-      {/* 메인 컨텐츠 */}
+      {/* Main Content */}
       <div className="play-content">
-        {/* 영상 스트림 */}
+        {/* Video Stream */}
         <div className="video-section">
           <VideoStream 
             onConnectionChange={setRcCarConnected}
@@ -103,7 +103,7 @@ function Play() {
           />
         </div>
         
-        {/* 컨트롤러 */}
+        {/* Controller */}
         <div className="controller-section">
           <Controller 
             rcCarConnected={rcCarConnected}
@@ -112,11 +112,11 @@ function Play() {
         </div>
       </div>
       
-      {/* 안내 메시지 */}
+      {/* Connection Notice */}
       {!rcCarConnected && (
         <div className="connection-notice">
-          <p>🔌 RC카가 연결될 때까지 기다려주세요...</p>
-          <p className="notice-sub">하드웨어가 켜져있고 WiFi에 연결되어 있는지 확인하세요</p>
+          <p>🔌 Please wait for RC car to connect...</p>
+          <p className="notice-sub">Make sure the hardware is powered on and connected to WiFi</p>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import WalletConnectButton from './WalletConnectButton';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import './Header.css';
 
 export default function Header() {
@@ -12,7 +12,7 @@ export default function Header() {
         </Link>
 
         <nav className="nav">
-          <WalletConnectButton />
+          <ConnectButton />
         </nav>
       </div>
     </header>

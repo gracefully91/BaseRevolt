@@ -144,12 +144,12 @@ function Controller({ rcCarConnected, isDemo }) {
   return (
     <div className="controller">
       <div className="controller-title">
-        <h3>🎮 컨트롤러</h3>
-        <p className="controller-hint">키보드: W/A/S/D 또는 방향키</p>
+        <h3>🎮 Controller</h3>
+        <p className="controller-hint">Keyboard: W/A/S/D or Arrow keys</p>
       </div>
 
       <div className="d-pad">
-        {/* 위 */}
+        {/* Up */}
         <button
           className={`d-pad-btn d-pad-up ${activeCommand === 'forward' ? 'active' : ''} ${!rcCarConnected ? 'disabled' : ''}`}
           onMouseDown={() => handleButtonPress('forward')}
@@ -160,12 +160,12 @@ function Controller({ rcCarConnected, isDemo }) {
           disabled={!rcCarConnected}
         >
           <span className="arrow">▲</span>
-          <span className="label">전진</span>
+          <span className="label">Forward</span>
         </button>
 
-        {/* 가운데 행 */}
+        {/* Middle row */}
         <div className="d-pad-middle">
-          {/* 왼쪽 */}
+          {/* Left */}
           <button
             className={`d-pad-btn d-pad-left ${activeCommand === 'left' ? 'active' : ''} ${!rcCarConnected ? 'disabled' : ''}`}
             onMouseDown={() => handleButtonPress('left')}
@@ -176,10 +176,10 @@ function Controller({ rcCarConnected, isDemo }) {
             disabled={!rcCarConnected}
           >
             <span className="arrow">◄</span>
-            <span className="label">좌회전</span>
+            <span className="label">Left</span>
           </button>
 
-          {/* 정지 */}
+          {/* Stop */}
           <button
             className={`d-pad-btn d-pad-center ${!rcCarConnected ? 'disabled' : ''}`}
             onClick={() => handleButtonPress('stop')}
@@ -188,7 +188,7 @@ function Controller({ rcCarConnected, isDemo }) {
             <span className="stop-icon">⬛</span>
           </button>
 
-          {/* 오른쪽 */}
+          {/* Right */}
           <button
             className={`d-pad-btn d-pad-right ${activeCommand === 'right' ? 'active' : ''} ${!rcCarConnected ? 'disabled' : ''}`}
             onMouseDown={() => handleButtonPress('right')}
@@ -199,11 +199,11 @@ function Controller({ rcCarConnected, isDemo }) {
             disabled={!rcCarConnected}
           >
             <span className="arrow">►</span>
-            <span className="label">우회전</span>
+            <span className="label">Right</span>
           </button>
         </div>
 
-        {/* 아래 */}
+        {/* Down */}
         <button
           className={`d-pad-btn d-pad-down ${activeCommand === 'backward' ? 'active' : ''} ${!rcCarConnected ? 'disabled' : ''}`}
           onMouseDown={() => handleButtonPress('backward')}
@@ -214,19 +214,19 @@ function Controller({ rcCarConnected, isDemo }) {
           disabled={!rcCarConnected}
         >
           <span className="arrow">▼</span>
-          <span className="label">후진</span>
+          <span className="label">Backward</span>
         </button>
       </div>
 
       {!rcCarConnected && (
         <div className="controller-notice">
-          ⚠️ RC카가 연결되지 않았습니다
+          ⚠️ RC car not connected
         </div>
       )}
 
       {isDemo && (
         <div className="demo-notice">
-          ℹ️ 데모 모드: 실제 RC카 없이 UI만 체험
+          ℹ️ Demo Mode: UI preview without actual RC car
         </div>
       )}
     </div>

@@ -23,17 +23,17 @@ function VideoStream({ onConnectionChange, isDemo }) {
         ws.onopen = () => {
           console.log('✅ WebSocket connected');
           setError(null);
-          // 웹 사용자로 식별
+          // Identify as web user
           ws.send(JSON.stringify({ type: 'client', device: 'web-user' }));
         };
 
         ws.onmessage = (event) => {
           if (event.data instanceof ArrayBuffer) {
-            // 바이너리 데이터 = JPEG 프레임
+            // Binary data = JPEG frame
             displayFrame(event.data);
             updateFPS();
           } else {
-            // 텍스트 데이터 = 상태 메시지
+            // Text data = status message
             try {
               const data = JSON.parse(event.data);
               
@@ -53,7 +53,7 @@ function VideoStream({ onConnectionChange, isDemo }) {
 
         ws.onerror = (error) => {
           console.error('WebSocket error:', error);
-          setError('WebSocket 연결 오류');
+          setError('WebSocket connection error');
         };
 
         ws.onclose = () => {
@@ -61,7 +61,7 @@ function VideoStream({ onConnectionChange, isDemo }) {
           onConnectionChange(false);
           clearCanvas();
           
-          // 3초 후 재연결 시도
+          // Retry connection after 3 seconds
           setTimeout(() => {
             if (wsRef.current === ws) {
               connectWebSocket();
@@ -70,7 +70,7 @@ function VideoStream({ onConnectionChange, isDemo }) {
         };
       } catch (err) {
         console.error('WebSocket connection error:', err);
-        setError('서버 연결 실패');
+        setError('Server connection failed');
       }
     };
 
@@ -94,7 +94,7 @@ function VideoStream({ onConnectionChange, isDemo }) {
 
     const img = new Image();
     img.onload = () => {
-      // 캔버스 크기를 이미지 비율에 맞춤
+      // Fit canvas size to image ratio
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
@@ -114,11 +114,11 @@ function VideoStream({ onConnectionChange, isDemo }) {
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // "연결 대기중" 텍스트
+    // "Waiting for connection" text
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.font = '20px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('RC카 연결 대기중...', canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Waiting for RC car...', canvas.width / 2, canvas.height / 2);
   };
 
   const updateFPS = () => {
@@ -127,7 +127,7 @@ function VideoStream({ onConnectionChange, isDemo }) {
     const now = Date.now();
     const elapsed = now - lastFrameTimeRef.current;
     
-    // 1초마다 FPS 업데이트
+    // Update FPS every second
     if (elapsed >= 1000) {
       const currentFps = Math.round((frameCountRef.current * 1000) / elapsed);
       setFps(currentFps);

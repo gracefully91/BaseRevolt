@@ -1,22 +1,14 @@
-import { http, createConfig } from 'wagmi'
+import { http } from 'wagmi'
 import { base } from 'wagmi/chains'
-import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors'
+import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 
-export const config = createConfig({
+export const config = getDefaultConfig({
+  appName: 'Base Revolt',
+  projectId: 'YOUR_PROJECT_ID', // WalletConnect Cloud에서 무료로 발급 (선택사항)
   chains: [base],
-  connectors: [
-    injected(), // MetaMask 등 브라우저 지갑
-    coinbaseWallet({
-      appName: 'Base Revolt',
-      appLogoUrl: 'https://base-revolt.vercel.app/icon.png',
-    }),
-    // WalletConnect는 프로젝트 ID가 있을 때만
-    // walletConnect({
-    //   projectId: 'YOUR_WALLETCONNECT_PROJECT_ID',
-    // }),
-  ],
   transports: {
     [base.id]: http(),
   },
+  ssr: false,
 })
 

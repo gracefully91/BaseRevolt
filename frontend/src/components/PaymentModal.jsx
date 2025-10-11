@@ -8,7 +8,7 @@ export default function PaymentModal({
   open, 
   onClose, 
   onSuccess,
-  contractAddress, // 실제로는 받는 지갑 주소
+  contractAddress, // Recipient wallet address
   contractABI,
   ticketPrice 
 }) {
@@ -26,10 +26,10 @@ export default function PaymentModal({
   const [countdown, setCountdown] = useState(30);
   const [usdAmount, setUsdAmount] = useState(0.01); // $0.01
 
-  // phrasepool2 스타일: 여러 가격 소스에서 ETH 가격 가져오기
+  // Fetch ETH price from multiple sources
   const fetchEthPrice = async () => {
     const priceSources = [
-      // 1. CoinGecko (무료, API Key 불필요)
+      // 1. CoinGecko (Free, no API Key required)
       async () => {
         const response = await fetch(
           'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
@@ -40,7 +40,7 @@ export default function PaymentModal({
         return { price: data.ethereum.usd, source: 'CoinGecko' };
       },
       
-      // 2. CryptoCompare (무료, API Key 불필요)
+      // 2. CryptoCompare (Free, no API Key required)
       async () => {
         const response = await fetch(
           'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD'
@@ -50,13 +50,13 @@ export default function PaymentModal({
         return { price: data.USD, source: 'CryptoCompare' };
       },
       
-      // 3. Fallback (고정값)
+      // 3. Fallback (Fixed value)
       async () => {
         return { price: 2500, source: 'Fallback' };
       }
     ];
 
-    // 각 가격 소스를 순차적으로 시도
+    // Try each price source sequentially
     for (const source of priceSources) {
       try {
         const result = await source();
@@ -67,27 +67,27 @@ export default function PaymentModal({
           return result;
         }
       } catch (error) {
-        console.warn(`가격 소스 실패: ${error.message}`);
+        console.warn(`Price source failed: ${error.message}`);
         continue;
       }
     }
     
-    // 모든 소스 실패 시 fallback
+    // Fallback if all sources fail
     setEthPrice(2500);
     setPriceSource('Fallback');
     setLastUpdate(Date.now());
   };
 
-  // 30초 카운트다운 타이머
+  // 30-second countdown timer
   useEffect(() => {
     if (!open || !ethPrice) return;
 
     const countdownTimer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          // 카운트다운이 끝나면 가격 갱신
+          // Refresh price when countdown ends
           fetchEthPrice();
-          return 30; // 30초로 리셋
+          return 30; // Reset to 30 seconds
         }
         return prev - 1;
       });
@@ -96,7 +96,7 @@ export default function PaymentModal({
     return () => clearInterval(countdownTimer);
   }, [open, ethPrice]);
 
-  // 1단계: ETH 가격 가져오기 (환율 체크) + 초기 로딩
+  // Step 1: Fetch ETH price (exchange rate check) + initial loading
   useEffect(() => {
     if (!open) {
       setStatus('idle');
@@ -109,13 +109,13 @@ export default function PaymentModal({
       setStatus('fetching');
       await fetchEthPrice();
       setStatus('idle');
-      setCountdown(30); // 카운트다운 시작
+      setCountdown(30); // Start countdown
     };
 
     initialFetch();
   }, [open]);
 
-  // 2단계: 트랜잭션 확인 상태 추적
+  // Step 2: Track transaction confirmation status
   useEffect(() => {
     if (isConfirming) {
       setStatus('waiting');
@@ -129,29 +129,29 @@ export default function PaymentModal({
     }
   }, [isConfirming, isConfirmed, hash, onSuccess, onClose]);
 
-  // 3단계: 에러 처리
+  // Step 3: Error handling
   useEffect(() => {
     if (writeError) {
       if (writeError.message?.includes('User rejected') || 
           writeError.message?.includes('User denied')) {
-        setError('거래가 취소되었습니다.');
+        setError('Transaction canceled');
       } else {
-        setError(writeError.message || '거래 실패');
+        setError(writeError.message || 'Transaction failed');
       }
       setStatus('error');
     }
   }, [writeError]);
 
-  // 결제 실행
+  // Execute payment
   const handlePay = async () => {
     if (!isConnected) {
-      setError('먼저 지갑을 연결해주세요.');
+      setError('Please connect your wallet first');
       setStatus('error');
       return;
     }
 
     if (chain?.id !== base.id) {
-      setError('Base 네트워크로 전환해주세요.');
+      setError('Please switch to Base network');
       setStatus('error');
       return;
     }
@@ -160,94 +160,94 @@ export default function PaymentModal({
       setStatus('sending');
       setError(null);
 
-      // 일반 ETH 송금 (스마트 컨트랙트 없이)
+      // Simple ETH transfer (without smart contract)
       await sendTransaction({
-        to: contractAddress, // 받는 지갑 주소
-        value: actualEthWei, // 실제 환율에 맞춘 ETH 금액
+        to: contractAddress, // Recipient wallet address
+        value: actualEthWei, // ETH amount based on actual exchange rate
       });
 
     } catch (err) {
-      console.error('결제 에러:', err);
-      setError(err.message || '결제 실패');
+      console.error('Payment error:', err);
+      setError(err.message || 'Payment failed');
       setStatus('error');
     }
   };
 
   if (!open) return null;
 
-  // 실제 환율에 맞춰서 동적으로 ETH 금액 계산
-  const usdTargetAmount = 0.01; // $0.01 목표
+  // Calculate ETH amount dynamically based on actual exchange rate
+  const usdTargetAmount = 0.01; // $0.01 target
   const calculatedEthAmount = ethPrice ? (usdTargetAmount / ethPrice).toFixed(8) : '0.00000351';
   const calculatedUsd = ethPrice ? usdTargetAmount.toFixed(4) : '0.01';
   
-  // 실제 결제할 ETH 금액 (wei로 변환)
+  // Actual ETH amount to pay (converted to wei)
   const actualEthWei = ethPrice ? parseEther(calculatedEthAmount.toString()) : ticketPrice;
 
   return (
     <div className="payment-modal-overlay">
       <div className="payment-modal">
-        <h3 className="payment-modal-title">💳 티켓 구매 확인</h3>
+        <h3 className="payment-modal-title">💳 Confirm Purchase</h3>
         
-        {/* 1단계: 환율 정보 */}
+        {/* Step 1: Exchange rate info */}
         <div className="payment-info-box">
           <div className="payment-info-row">
-            <span className="payment-info-label">결제 금액</span>
+            <span className="payment-info-label">Payment Amount</span>
             <span className="payment-info-value">
               {calculatedEthAmount} ETH
-              {status === 'fetching' && ' (계산중...)'}
+              {status === 'fetching' && ' (Calculating...)'}
             </span>
           </div>
           <div className="payment-info-row">
-            <span className="payment-info-label">USD 환산</span>
+            <span className="payment-info-label">USD Equivalent</span>
             <span className="payment-info-value">
               ${calculatedUsd}
             </span>
           </div>
           {ethPrice && (
             <div className="payment-info-note">
-              <div>현재 ETH 가격: ${ethPrice.toLocaleString()}</div>
-              <div>가격 소스: {priceSource}</div>
+              <div>Current ETH Price: ${ethPrice.toLocaleString()}</div>
+              <div>Price Source: {priceSource}</div>
               {lastUpdate && (
                 <div>
-                  업데이트: {new Date(lastUpdate).toLocaleTimeString()}
+                  Last Update: {new Date(lastUpdate).toLocaleTimeString()}
                 </div>
               )}
               <div className="countdown-container">
-                <span className="countdown-label">다음 갱신까지:</span>
+                <span className="countdown-label">Next refresh in:</span>
                 <span className={`countdown-timer ${countdown <= 5 ? 'warning' : ''}`}>
-                  {countdown}초
+                  {countdown}s
                 </span>
                 {countdown <= 5 && (
-                  <span className="countdown-warning">⚠️ 곧 갱신됩니다!</span>
+                  <span className="countdown-warning">⚠️ Refreshing soon!</span>
                 )}
               </div>
             </div>
           )}
         </div>
 
-        {/* 2단계: 거래 내역 */}
+        {/* Step 2: Transaction details */}
         <div className="payment-details">
           <div className="payment-detail-item">
             <span className="detail-icon">🎫</span>
-            <span className="detail-text">10분 플레이 시간</span>
+            <span className="detail-text">Play Time: 10 minutes</span>
           </div>
           <div className="payment-detail-item">
-            <span className="detail-icon">📹</span>
-            <span className="detail-text">실시간 영상 스트리밍</span>
+            <span className="detail-icon">🔗</span>
+            <span className="detail-text">Network: Base Mainnet</span>
           </div>
           <div className="payment-detail-item">
-            <span className="detail-icon">🎮</span>
-            <span className="detail-text">완전한 RC카 제어</span>
+            <span className="detail-icon">👤</span>
+            <span className="detail-text">Buyer: {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Wallet not connected'}</span>
           </div>
         </div>
 
-        {/* 3단계: 트랜잭션 상태 */}
+        {/* Step 3: Transaction status */}
         {hash && (
           <div className="tx-hash-box">
-            <div className="tx-hash-label">트랜잭션 해시</div>
+            <div className="tx-hash-label">Transaction Hash:</div>
             <a 
-              href={`https://basescan.org/tx/${hash}`}
-              target="_blank"
+              href={`https://basescan.org/tx/${hash}`} 
+              target="_blank" 
               rel="noopener noreferrer"
               className="tx-hash-link"
             >
@@ -256,70 +256,52 @@ export default function PaymentModal({
           </div>
         )}
 
-        {/* 에러 메시지 */}
         {error && (
           <div className="payment-error">
             ❌ {error}
           </div>
         )}
 
-        {/* 성공 메시지 */}
-        {status === 'done' && (
-          <div className="payment-success">
-            ✅ 결제가 완료되었습니다!
-          </div>
-        )}
-
-        {/* 상태 메시지 */}
-        {status === 'fetching' && (
-          <div className="payment-status">
-            ⏳ 환율 정보를 가져오는 중...
-          </div>
-        )}
-        {status === 'sending' && (
-          <div className="payment-status">
-            📤 지갑 승인을 기다리는 중...
-          </div>
-        )}
         {status === 'waiting' && (
           <div className="payment-status">
-            ⛓️ 블록체인 확인 중... (30초~1분 소요)
+            ⏳ Confirming transaction... (max 1 minute)
           </div>
         )}
 
-        {/* 버튼 */}
+        {status === 'done' && (
+          <div className="payment-success">
+            ✅ Payment successful! Redirecting to play page...
+          </div>
+        )}
+
         <div className="payment-actions">
-          <button
-            className="payment-btn payment-btn-cancel"
-            onClick={onClose}
-            disabled={status === 'sending' || status === 'waiting'}
+          <button 
+            className="payment-btn payment-btn-cancel" 
+            onClick={onClose} 
+            disabled={status === 'sending' || status === 'waiting' || status === 'done'}
           >
-            취소
+            Cancel
           </button>
           <button
             className="payment-btn payment-btn-pay"
             onClick={handlePay}
-            disabled={
-              status === 'fetching' || 
-              status === 'sending' || 
-              status === 'waiting' || 
-              status === 'done'
-            }
+            disabled={status === 'fetching' || status === 'sending' || status === 'waiting' || status === 'done' || !ethPrice}
           >
-            {status === 'idle' && '💰 결제하기'}
-            {status === 'fetching' && '⏳ 준비중...'}
-            {status === 'sending' && '📤 전송중...'}
-            {status === 'waiting' && '⏳ 확인중...'}
-            {status === 'done' && '✅ 완료'}
-            {status === 'error' && '🔄 재시도'}
+            {status === 'fetching' && 'Calculating rate...'}
+            {status === 'idle' && '💰 Pay Now'}
+            {status === 'sending' && 'Waiting for wallet...'}
+            {status === 'waiting' && 'Confirming...'}
+            {status === 'done' && 'Complete!'}
+            {status === 'error' && 'Retry'}
           </button>
         </div>
 
         <p className="payment-note">
-          💡 결제 후 자동으로 플레이 페이지로 이동합니다
+          * Exchange rate updates every 30 seconds
+          <br />
+          * Actual ETH amount sent varies based on exchange rate
         </p>
       </div>
     </div>
   );
 }
-
