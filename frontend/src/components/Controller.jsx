@@ -8,13 +8,7 @@ function Controller({ rcCarConnected, isDemo }) {
   const pressedKeys = useRef(new Set());
 
   useEffect(() => {
-    // Skip WebSocket connection in demo mode
-    if (isDemo) {
-      console.log('Demo mode: Skipping WebSocket connection');
-      return;
-    }
-
-    // WebSocket connection for real mode
+    // WebSocket connection (works for both demo and real mode)
     const connectWebSocket = () => {
       try {
         const ws = new WebSocket(WS_SERVER_URL);
@@ -22,6 +16,13 @@ function Controller({ rcCarConnected, isDemo }) {
 
         ws.onopen = () => {
           console.log('Controller WebSocket connected');
+          
+          // In demo mode, simulate RC car connection after a delay
+          if (isDemo) {
+            setTimeout(() => {
+              console.log('Demo mode: Simulating RC car connection');
+            }, 1000);
+          }
         };
 
         ws.onerror = (error) => {
@@ -116,23 +117,7 @@ function Controller({ rcCarConnected, isDemo }) {
   const sendCommand = (command) => {
     console.log('Sending command:', command);
     
-    // Demo mode: Send command via custom event
-    if (isDemo) {
-      window.dispatchEvent(new CustomEvent('demoCommand', { 
-        detail: { command } 
-      }));
-      setActiveCommand(command);
-      
-      // Visual feedback
-      if (command === 'stop') {
-        setTimeout(() => setActiveCommand(null), 100);
-      } else {
-        setTimeout(() => setActiveCommand(null), 300);
-      }
-      return;
-    }
-
-    // Real mode: Send via WebSocket
+    // Send via WebSocket (works for both demo and real mode)
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       console.warn('WebSocket not connected');
       return;
@@ -174,13 +159,13 @@ function Controller({ rcCarConnected, isDemo }) {
       <div className="d-pad">
         {/* Up */}
         <button
-          className={`d-pad-btn d-pad-up ${activeCommand === 'forward' ? 'active' : ''} ${!rcCarConnected ? 'disabled' : ''}`}
+          className={`d-pad-btn d-pad-up ${activeCommand === 'forward' ? 'active' : ''} ${!rcCarConnected && !isDemo ? 'disabled' : ''}`}
           onMouseDown={() => handleButtonPress('forward')}
           onMouseUp={handleButtonRelease}
           onMouseLeave={handleButtonRelease}
           onTouchStart={() => handleButtonPress('forward')}
           onTouchEnd={handleButtonRelease}
-          disabled={!rcCarConnected}
+          disabled={!rcCarConnected && !isDemo}
         >
           <span className="arrow">▲</span>
           <span className="label">Forward</span>
@@ -190,13 +175,13 @@ function Controller({ rcCarConnected, isDemo }) {
         <div className="d-pad-middle">
           {/* Left */}
           <button
-            className={`d-pad-btn d-pad-left ${activeCommand === 'left' ? 'active' : ''} ${!rcCarConnected ? 'disabled' : ''}`}
+            className={`d-pad-btn d-pad-left ${activeCommand === 'left' ? 'active' : ''} ${!rcCarConnected && !isDemo ? 'disabled' : ''}`}
             onMouseDown={() => handleButtonPress('left')}
             onMouseUp={handleButtonRelease}
             onMouseLeave={handleButtonRelease}
             onTouchStart={() => handleButtonPress('left')}
             onTouchEnd={handleButtonRelease}
-            disabled={!rcCarConnected}
+            disabled={!rcCarConnected && !isDemo}
           >
             <span className="arrow">◄</span>
             <span className="label">Left</span>
@@ -204,22 +189,22 @@ function Controller({ rcCarConnected, isDemo }) {
 
           {/* Stop */}
           <button
-            className={`d-pad-btn d-pad-center ${!rcCarConnected ? 'disabled' : ''}`}
+            className={`d-pad-btn d-pad-center ${!rcCarConnected && !isDemo ? 'disabled' : ''}`}
             onClick={() => handleButtonPress('stop')}
-            disabled={!rcCarConnected}
+            disabled={!rcCarConnected && !isDemo}
           >
             <span className="stop-icon">⬛</span>
           </button>
 
           {/* Right */}
           <button
-            className={`d-pad-btn d-pad-right ${activeCommand === 'right' ? 'active' : ''} ${!rcCarConnected ? 'disabled' : ''}`}
+            className={`d-pad-btn d-pad-right ${activeCommand === 'right' ? 'active' : ''} ${!rcCarConnected && !isDemo ? 'disabled' : ''}`}
             onMouseDown={() => handleButtonPress('right')}
             onMouseUp={handleButtonRelease}
             onMouseLeave={handleButtonRelease}
             onTouchStart={() => handleButtonPress('right')}
             onTouchEnd={handleButtonRelease}
-            disabled={!rcCarConnected}
+            disabled={!rcCarConnected && !isDemo}
           >
             <span className="arrow">►</span>
             <span className="label">Right</span>
@@ -228,13 +213,13 @@ function Controller({ rcCarConnected, isDemo }) {
 
         {/* Down */}
         <button
-          className={`d-pad-btn d-pad-down ${activeCommand === 'backward' ? 'active' : ''} ${!rcCarConnected ? 'disabled' : ''}`}
+          className={`d-pad-btn d-pad-down ${activeCommand === 'backward' ? 'active' : ''} ${!rcCarConnected && !isDemo ? 'disabled' : ''}`}
           onMouseDown={() => handleButtonPress('backward')}
           onMouseUp={handleButtonRelease}
           onMouseLeave={handleButtonRelease}
           onTouchStart={() => handleButtonPress('backward')}
           onTouchEnd={handleButtonRelease}
-          disabled={!rcCarConnected}
+          disabled={!rcCarConnected && !isDemo}
         >
           <span className="arrow">▼</span>
           <span className="label">Backward</span>
@@ -249,7 +234,7 @@ function Controller({ rcCarConnected, isDemo }) {
 
       {isDemo && (
         <div className="demo-notice">
-          ℹ️ Demo Mode: Control virtual RC car on screen
+          ℹ️ Demo Mode: Free access to control real RC car
         </div>
       )}
     </div>

@@ -28,6 +28,13 @@ function Play() {
     
     // Start timer
     setIsActive(true);
+    
+    // In demo mode, simulate RC car connection after a delay
+    if (isDemo) {
+      setTimeout(() => {
+        setRcCarConnected(true);
+      }, 2000); // 2초 후 연결된 것처럼 표시
+    }
   }, [isDemo, isConnected, navigate]);
   
   // Timer logic

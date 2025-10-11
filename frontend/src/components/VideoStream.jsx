@@ -10,20 +10,10 @@ function VideoStream({ onConnectionChange, isDemo }) {
   const lastFrameTimeRef = useRef(Date.now());
   const frameCountRef = useRef(0);
   
-  // Demo mode: Virtual RC car state
-  const [carPosition, setCarPosition] = useState({ x: 160, y: 120 }); // Center
-  const [carRotation, setCarRotation] = useState(0); // Degrees
-  const animationFrameRef = useRef(null);
+  // Demo mode state (no longer needed for virtual car)
 
   useEffect(() => {
-    if (isDemo) {
-      // Demo mode: Auto-connect and draw virtual car
-      onConnectionChange(true);
-      drawDemoView();
-      return;
-    }
-
-    // Real mode: WebSocket connection
+    // WebSocket connection (works for both real and demo mode)
     const connectWebSocket = () => {
       try {
         console.log('Connecting to WebSocket:', WS_SERVER_URL);
@@ -37,6 +27,13 @@ function VideoStream({ onConnectionChange, isDemo }) {
           setError(null);
           // Identify as web user
           ws.send(JSON.stringify({ type: 'client', device: 'web-user' }));
+          
+          // In demo mode, simulate RC car connection
+          if (isDemo) {
+            setTimeout(() => {
+              onConnectionChange(true);
+            }, 1000);
+          }
         };
 
         ws.onmessage = (event) => {
@@ -53,7 +50,7 @@ function VideoStream({ onConnectionChange, isDemo }) {
                 const connected = data.status === 'connected';
                 onConnectionChange(connected);
                 
-                if (!connected) {
+                if (!connected && !isDemo) {
                   clearCanvas();
                 }
               }
@@ -65,13 +62,17 @@ function VideoStream({ onConnectionChange, isDemo }) {
 
         ws.onerror = (error) => {
           console.error('WebSocket error:', error);
-          setError('WebSocket connection error');
+          if (!isDemo) {
+            setError('WebSocket connection error');
+          }
         };
 
         ws.onclose = () => {
           console.log('❌ WebSocket disconnected');
-          onConnectionChange(false);
-          clearCanvas();
+          if (!isDemo) {
+            onConnectionChange(false);
+            clearCanvas();
+          }
           
           // Retry connection after 3 seconds
           setTimeout(() => {
@@ -82,7 +83,9 @@ function VideoStream({ onConnectionChange, isDemo }) {
         };
       } catch (err) {
         console.error('WebSocket connection error:', err);
-        setError('Server connection failed');
+        if (!isDemo) {
+          setError('Server connection failed');
+        }
       }
     };
 
@@ -95,142 +98,6 @@ function VideoStream({ onConnectionChange, isDemo }) {
       }
     };
   }, [onConnectionChange, isDemo]);
-
-  // Demo mode: Draw virtual RC car view
-  const drawDemoView = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    
-    // Background (grid pattern like a track)
-    ctx.fillStyle = '#2a2a3e';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw grid
-    ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < canvas.width; x += 20) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += 20) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-    
-    // Draw virtual RC car
-    ctx.save();
-    ctx.translate(carPosition.x, carPosition.y);
-    ctx.rotate((carRotation * Math.PI) / 180);
-    
-    // Car body (rectangle)
-    ctx.fillStyle = '#ff6b6b';
-    ctx.fillRect(-20, -15, 40, 30);
-    
-    // Car front indicator (triangle)
-    ctx.fillStyle = '#4dabf7';
-    ctx.beginPath();
-    ctx.moveTo(20, 0);
-    ctx.lineTo(30, -8);
-    ctx.lineTo(30, 8);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Wheels
-    ctx.fillStyle = '#333';
-    ctx.fillRect(-18, -18, 10, 6); // Front left
-    ctx.fillRect(-18, 12, 10, 6);  // Front right
-    ctx.fillRect(8, -18, 10, 6);   // Back left
-    ctx.fillRect(8, 12, 10, 6);    // Back right
-    
-    ctx.restore();
-    
-    // Demo info text
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.font = '14px sans-serif';
-    ctx.fillText('🎮 Demo Mode - Virtual RC Car', 10, 20);
-    ctx.font = '12px sans-serif';
-    ctx.fillText(`Position: (${Math.round(carPosition.x)}, ${Math.round(carPosition.y)})`, 10, 40);
-    ctx.fillText(`Rotation: ${Math.round(carRotation)}°`, 10, 55);
-  };
-
-  // Demo mode: Handle movement commands
-  useEffect(() => {
-    if (!isDemo) return;
-
-    const handleDemoCommand = (event) => {
-      const data = event.detail;
-      if (!data || !data.command) return;
-
-      const speed = 3;
-      const turnSpeed = 5;
-
-      setCarPosition((prev) => {
-        let newX = prev.x;
-        let newY = prev.y;
-        let newRotation = carRotation;
-
-        switch (data.command) {
-          case 'forward':
-            newX += speed * Math.cos((carRotation * Math.PI) / 180);
-            newY += speed * Math.sin((carRotation * Math.PI) / 180);
-            break;
-          case 'backward':
-            newX -= speed * Math.cos((carRotation * Math.PI) / 180);
-            newY -= speed * Math.sin((carRotation * Math.PI) / 180);
-            break;
-          case 'left':
-            newRotation -= turnSpeed;
-            break;
-          case 'right':
-            newRotation += turnSpeed;
-            break;
-          case 'stop':
-            // No movement
-            break;
-        }
-
-        // Keep car within bounds
-        newX = Math.max(30, Math.min(canvasRef.current.width - 30, newX));
-        newY = Math.max(30, Math.min(canvasRef.current.height - 30, newY));
-
-        if (data.command === 'left' || data.command === 'right') {
-          setCarRotation(newRotation % 360);
-        }
-
-        return { x: newX, y: newY };
-      });
-    };
-
-    window.addEventListener('demoCommand', handleDemoCommand);
-
-    return () => {
-      window.removeEventListener('demoCommand', handleDemoCommand);
-    };
-  }, [isDemo, carRotation]);
-
-  // Demo mode: Continuous redraw
-  useEffect(() => {
-    if (!isDemo) return;
-
-    const animate = () => {
-      drawDemoView();
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isDemo, carPosition, carRotation]);
 
   const displayFrame = (arrayBuffer) => {
     const canvas = canvasRef.current;
@@ -245,7 +112,13 @@ function VideoStream({ onConnectionChange, isDemo }) {
       // Fit canvas size to image ratio
       canvas.width = img.width;
       canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+      
+      // Flip image vertically (mirror effect for RC car view)
+      ctx.save();
+      ctx.scale(-1, 1); // Flip horizontally (mirror)
+      ctx.drawImage(img, -canvas.width, 0); // Draw flipped
+      ctx.restore();
+      
       URL.revokeObjectURL(url);
     };
     img.onerror = () => {
