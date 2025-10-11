@@ -46,12 +46,12 @@ function Controller({ rcCarConnected, isDemo }) {
     };
   }, []);
 
-  // 키보드 이벤트
+  // Keyboard events
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (!rcCarConnected) return;
+      if (!rcCarConnected && !isDemo) return;
       
-      // 중복 방지
+      // Prevent duplicate
       if (pressedKeys.current.has(e.key)) return;
       pressedKeys.current.add(e.key);
 
@@ -105,15 +105,32 @@ function Controller({ rcCarConnected, isDemo }) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [rcCarConnected]);
+  }, [rcCarConnected, isDemo]);
 
   const sendCommand = (command) => {
+    console.log('Sending command:', command);
+    
+    // Demo mode: Send command via custom event
+    if (isDemo) {
+      window.dispatchEvent(new CustomEvent('demoCommand', { 
+        detail: { command } 
+      }));
+      setActiveCommand(command);
+      
+      // Visual feedback
+      if (command === 'stop') {
+        setTimeout(() => setActiveCommand(null), 100);
+      } else {
+        setTimeout(() => setActiveCommand(null), 300);
+      }
+      return;
+    }
+
+    // Real mode: Send via WebSocket
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       console.warn('WebSocket not connected');
       return;
     }
-
-    console.log('Sending command:', command);
     
     const message = JSON.stringify({
       type: 'control',
@@ -123,7 +140,7 @@ function Controller({ rcCarConnected, isDemo }) {
     wsRef.current.send(message);
     setActiveCommand(command);
 
-    // 시각 피드백 제거
+    // Visual feedback
     if (command === 'stop') {
       setTimeout(() => setActiveCommand(null), 100);
     } else {
@@ -132,12 +149,12 @@ function Controller({ rcCarConnected, isDemo }) {
   };
 
   const handleButtonPress = (command) => {
-    if (!rcCarConnected) return;
+    if (!rcCarConnected && !isDemo) return;
     sendCommand(command);
   };
 
   const handleButtonRelease = () => {
-    if (!rcCarConnected) return;
+    if (!rcCarConnected && !isDemo) return;
     sendCommand('stop');
   };
 
@@ -218,7 +235,7 @@ function Controller({ rcCarConnected, isDemo }) {
         </button>
       </div>
 
-      {!rcCarConnected && (
+      {!rcCarConnected && !isDemo && (
         <div className="controller-notice">
           ⚠️ RC car not connected
         </div>
@@ -226,7 +243,7 @@ function Controller({ rcCarConnected, isDemo }) {
 
       {isDemo && (
         <div className="demo-notice">
-          ℹ️ Demo Mode: UI preview without actual RC car
+          ℹ️ Demo Mode: Control virtual RC car on screen
         </div>
       )}
     </div>
