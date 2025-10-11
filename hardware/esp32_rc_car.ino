@@ -18,12 +18,12 @@
 #include <ArduinoJson.h>
 
 // ==================== 설정 ====================
-// WiFi 설정 (본인 WiFi로 변경 필요)
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+// WiFi 설정
+const char* ssid = "KT_WiFi_90EA";
+const char* password = "b67m03k763";
 
-// WebSocket 서버 설정 (Render 배포 후 변경)
-const char* ws_host = "your-render-app.onrender.com";
+// WebSocket 서버 설정 (Render)
+const char* ws_host = "base-revolt-server.onrender.com";
 const int ws_port = 443;
 const char* ws_path = "/";
 const bool ws_ssl = true;
