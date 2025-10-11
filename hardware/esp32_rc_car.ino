@@ -242,14 +242,29 @@ void setupCamera() {
   
   // 카메라 설정 (상하반전)
   sensor_t * s = esp_camera_sensor_get();
-  if (s->id.PID == OV3660_PID) {
-    s->set_vflip(s, 1);       // 상하반전 (1: 반전, 0: 정상)
-    s->set_hmirror(s, 1);     // 좌우반전 (1: 반전, 0: 정상)
-    s->set_brightness(s, 0);  // 밝기 조정 (-2 to 2)
-    s->set_contrast(s, 0);    // 대비 조정 (-2 to 2)
+  if (s != NULL) {
+    Serial.printf("Camera sensor PID: 0x%04x\n", s->id.PID);
+    
+    // 모든 카메라 모델에 대해 상하반전 적용
+    if (s->set_vflip != NULL) {
+      s->set_vflip(s, 1);       // 상하반전 (1: 반전, 0: 정상)
+      Serial.println("Vertical flip enabled");
+    }
+    if (s->set_hmirror != NULL) {
+      s->set_hmirror(s, 1);     // 좌우반전 (1: 반전, 0: 정상)
+      Serial.println("Horizontal mirror enabled");
+    }
+    if (s->set_brightness != NULL) {
+      s->set_brightness(s, 0);  // 밝기 조정 (-2 to 2)
+    }
+    if (s->set_contrast != NULL) {
+      s->set_contrast(s, 0);    // 대비 조정 (-2 to 2)
+    }
+  } else {
+    Serial.println("Warning: Camera sensor not found");
   }
   
-  Serial.println("Camera initialized successfully with vertical flip");
+  Serial.println("Camera initialized successfully with flip settings");
 }
 
 // ==================== 카메라 프레임 전송 ====================
