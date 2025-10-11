@@ -240,7 +240,16 @@ void setupCamera() {
     return;
   }
   
-  Serial.println("Camera initialized successfully");
+  // 카메라 설정 (상하반전)
+  sensor_t * s = esp_camera_sensor_get();
+  if (s->id.PID == OV3660_PID) {
+    s->set_vflip(s, 1);       // 상하반전 (1: 반전, 0: 정상)
+    s->set_hmirror(s, 1);     // 좌우반전 (1: 반전, 0: 정상)
+    s->set_brightness(s, 0);  // 밝기 조정 (-2 to 2)
+    s->set_contrast(s, 0);    // 대비 조정 (-2 to 2)
+  }
+  
+  Serial.println("Camera initialized successfully with vertical flip");
 }
 
 // ==================== 카메라 프레임 전송 ====================
