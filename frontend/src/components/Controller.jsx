@@ -8,7 +8,13 @@ function Controller({ rcCarConnected, isDemo }) {
   const pressedKeys = useRef(new Set());
 
   useEffect(() => {
-    // WebSocket 연결
+    // Skip WebSocket connection in demo mode
+    if (isDemo) {
+      console.log('Demo mode: Skipping WebSocket connection');
+      return;
+    }
+
+    // WebSocket connection for real mode
     const connectWebSocket = () => {
       try {
         const ws = new WebSocket(WS_SERVER_URL);
@@ -24,7 +30,7 @@ function Controller({ rcCarConnected, isDemo }) {
 
         ws.onclose = () => {
           console.log('Controller WebSocket disconnected');
-          // 재연결
+          // Reconnect
           setTimeout(() => {
             if (wsRef.current === ws) {
               connectWebSocket();
@@ -44,7 +50,7 @@ function Controller({ rcCarConnected, isDemo }) {
         wsRef.current = null;
       }
     };
-  }, []);
+  }, [isDemo]);
 
   // Keyboard events
   useEffect(() => {
