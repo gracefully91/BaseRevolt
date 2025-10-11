@@ -28,11 +28,13 @@ const int ws_port = 443;
 const char* ws_path = "/";
 const bool ws_ssl = true;
 
-// 모터 제어 핀
-#define MOTOR_LEFT_IN1  12
-#define MOTOR_LEFT_IN2  13
-#define MOTOR_RIGHT_IN3 14
-#define MOTOR_RIGHT_IN4 15
+// 모터 제어 핀 (Cirkit Designer 문서 기준)
+#define MOTOR_LEFT_IN1  13   // IN1
+#define MOTOR_LEFT_IN2  15   // IN2
+#define MOTOR_RIGHT_IN3 14   // IN3
+#define MOTOR_RIGHT_IN4 2    // IN4
+#define MOTOR_ENA       12   // ENA
+#define MOTOR_ENB       12   // ENB (ENA와 같은 핀)
 
 // AI-Thinker 모델 카메라 핀 정의
 #define PWDN_GPIO_NUM     32
@@ -260,6 +262,12 @@ void setupMotors() {
   pinMode(MOTOR_LEFT_IN2, OUTPUT);
   pinMode(MOTOR_RIGHT_IN3, OUTPUT);
   pinMode(MOTOR_RIGHT_IN4, OUTPUT);
+  pinMode(MOTOR_ENA, OUTPUT);
+  pinMode(MOTOR_ENB, OUTPUT);
+  
+  // Enable motors
+  digitalWrite(MOTOR_ENA, HIGH);
+  digitalWrite(MOTOR_ENB, HIGH);
   
   motorStop();
   
