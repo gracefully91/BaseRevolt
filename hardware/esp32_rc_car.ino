@@ -165,18 +165,20 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       break;
       
     case WStype_TEXT:
-      Serial.printf("[WS] Received text: %s\n", payload);
-      
-      // JSON 파싱
-      StaticJsonDocument<200> doc;
-      DeserializationError error = deserializeJson(doc, payload, length);
-      
-      if (!error) {
-        const char* type = doc["type"];
+      {
+        Serial.printf("[WS] Received text: %s\n", payload);
         
-        if (strcmp(type, "control") == 0) {
-          const char* command = doc["command"];
-          handleMotorCommand(command);
+        // JSON 파싱
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, payload, length);
+        
+        if (!error) {
+          const char* type = doc["type"];
+          
+          if (strcmp(type, "control") == 0) {
+            const char* command = doc["command"];
+            handleMotorCommand(command);
+          }
         }
       }
       break;
