@@ -1,0 +1,163 @@
+.controller {
+  width: 100%;
+  max-width: 350px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 30px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.controller-title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.controller-title h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.controller-hint {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.d-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.d-pad-middle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.d-pad-btn {
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.d-pad-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.5), rgba(118, 75, 162, 0.5));
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.d-pad-btn:active:not(:disabled),
+.d-pad-btn.active {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(0.95);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+}
+
+.d-pad-btn.disabled,
+.d-pad-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: rgba(100, 100, 100, 0.2);
+}
+
+.d-pad-btn .arrow {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.d-pad-btn .label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.d-pad-center {
+  background: rgba(239, 68, 68, 0.3) !important;
+}
+
+.d-pad-center:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.5) !important;
+}
+
+.d-pad-center:active:not(:disabled) {
+  background: rgba(239, 68, 68, 0.7) !important;
+}
+
+.stop-icon {
+  font-size: 2rem;
+}
+
+.controller-notice,
+.demo-notice {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.controller-notice {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.demo-notice {
+  background: rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #fcd34d;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .controller {
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  .d-pad-btn {
+    width: 80px;
+    height: 80px;
+  }
+
+  .d-pad-btn .arrow {
+    font-size: 1.8rem;
+  }
+
+  .d-pad-btn .label {
+    font-size: 0.7rem;
+  }
+}
+
+/* 터치 디바이스 최적화 */
+@media (hover: none) and (pointer: coarse) {
+  .d-pad-btn {
+    width: 85px;
+    height: 85px;
+  }
+  
+  .d-pad-btn:active {
+    transform: scale(0.9);
+  }
+}
+

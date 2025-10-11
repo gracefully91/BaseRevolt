@@ -1,0 +1,23 @@
+{
+  "name": "base-revolt-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for Base Revolt RC Car",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "websocket",
+    "esp32",
+    "rc-car"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.16.0",
+    "express": "^4.18.2"
+  }
+}
+
