@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseEther, formatEther } from 'viem';
+import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { parseEther } from 'viem';
 import { base } from 'wagmi/chains';
 import './PaymentModal.css';
 
@@ -8,12 +8,12 @@ export default function PaymentModal({
   open, 
   onClose, 
   onSuccess,
-  contractAddress,
+  contractAddress, // 실제로는 받는 지갑 주소
   contractABI,
   ticketPrice 
 }) {
   const { address, isConnected, chain } = useAccount();
-  const { writeContract, data: hash, error: writeError } = useWriteContract();
+  const { sendTransaction, data: hash, error: writeError } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
@@ -160,10 +160,9 @@ export default function PaymentModal({
       setStatus('sending');
       setError(null);
 
-      await writeContract({
-        address: contractAddress,
-        abi: contractABI,
-        functionName: 'buyTicket',
+      // 일반 ETH 송금 (스마트 컨트랙트 없이)
+      await sendTransaction({
+        to: contractAddress, // 받는 지갑 주소
         value: actualEthWei, // 실제 환율에 맞춘 ETH 금액
       });
 

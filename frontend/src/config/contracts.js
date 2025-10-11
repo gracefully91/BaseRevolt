@@ -1,7 +1,7 @@
 // 스마트 컨트랙트 설정
 // Base 메인넷에 배포 후 주소 업데이트 필요
 
-export const TICKET_CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000"; // TODO: 배포 후 업데이트
+export const TICKET_CONTRACT_ADDRESS = "0xF45222d623B0081C658b284e2fCb85d5E7B1d3b3"; // 결제 받을 지갑 주소
 
 export const TICKET_CONTRACT_ABI = [
   {
@@ -71,5 +71,5 @@ export const TICKET_CONTRACT_ABI = [
 ];
 
 // WebSocket 서버 설정
-export const WS_SERVER_URL = import.meta.env.VITE_WS_SERVER_URL || "wss://your-render-app.onrender.com";
+export const WS_SERVER_URL = import.meta.env.VITE_WS_SERVER_URL || "wss://base-revolt-server.onrender.com";
 
