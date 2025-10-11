@@ -28,13 +28,14 @@ const int ws_port = 443;
 const char* ws_path = "/";
 const bool ws_ssl = true;
 
-// 모터 제어 핀 (Cirkit Designer 문서 기준)
-#define MOTOR_LEFT_IN1  13   // IN1
-#define MOTOR_LEFT_IN2  15   // IN2
-#define MOTOR_RIGHT_IN3 14   // IN3
-#define MOTOR_RIGHT_IN4 2    // IN4
-#define MOTOR_ENA       12   // ENA
-#define MOTOR_ENB       12   // ENB (ENA와 같은 핀)
+// 모터 제어 핀 (AI-Thinker ESP32-CAM 기준)
+// ESP32-CAM에서 사용 가능한 GPIO: 2, 4, 12, 13, 14, 15
+#define MOTOR_LEFT_IN1  2    // IN1 (GPIO 2)
+#define MOTOR_LEFT_IN2  4    // IN2 (GPIO 4) 
+#define MOTOR_RIGHT_IN3 12   // IN3 (GPIO 12)
+#define MOTOR_RIGHT_IN4 13   // IN4 (GPIO 13)
+#define MOTOR_ENA       14   // ENA (GPIO 14)
+#define MOTOR_ENB       15   // ENB (GPIO 15)
 
 // AI-Thinker 모델 카메라 핀 정의
 #define PWDN_GPIO_NUM     32
