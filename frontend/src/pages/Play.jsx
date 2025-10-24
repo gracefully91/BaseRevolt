@@ -24,6 +24,9 @@ function Play() {
   const [rcCarConnected, setRcCarConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
   
+  // 제어 명령 전송 함수 (VideoStream에서 설정됨)
+  const sendCommandRef = useRef(null);
+  
   useEffect(() => {
     // If not demo and wallet not connected, redirect to home
     if (!isDemo && !isConnected) {
@@ -105,6 +108,7 @@ function Play() {
         <VideoStream 
           onConnectionChange={handleConnectionChange}
           isDemo={isDemo}
+          onSendCommand={(fn) => { sendCommandRef.current = fn; }}
         />
       </div>
       

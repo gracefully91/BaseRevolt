@@ -42,8 +42,8 @@
   top: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
+  background: transparent;
+  backdrop-filter: none;
   padding: 15px 20px;
   display: flex;
   justify-content: space-between;
@@ -80,7 +80,8 @@
   gap: 8px;
   padding: 8px 16px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   font-size: 0.95rem;
 }
 
@@ -126,7 +127,8 @@
 }
 
 .timer.timer-blue {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(59, 130, 246, 0.4);
   color: #3b82f6 !important;
 }
 
@@ -135,7 +137,8 @@
 }
 
 .timer.timer-yellow {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(251, 191, 36, 0.4);
   color: #fbbf24 !important;
 }
 
@@ -144,7 +147,8 @@
 }
 
 .timer.timer-red {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.4);
   color: #ef4444 !important;
 }
 
@@ -159,10 +163,11 @@
 .demo-badge {
   padding: 8px 16px;
   border-radius: 20px;
-  background: rgba(251, 191, 36, 0.2);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.4);
   font-size: 0.95rem;
   font-weight: 600;
+  color: #fbbf24;
 }
 
 .rotate-button {
@@ -227,9 +232,9 @@
 }
 
 .control-btn {
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  backdrop-filter: none;
+  border: 2px solid rgba(255, 255, 255, 0.6);
   color: white;
   padding: 25px;
   border-radius: 15px;
@@ -240,42 +245,81 @@
   width: 80px;
   height: 80px;
   text-align: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  /* 브라우저 기본 스타일 완전 제거 */
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-focus-ring-color: transparent !important;
 }
 
 .control-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.8);
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .control-btn:active {
   transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(59, 130, 246, 0.3);
+  border-color: #3b82f6;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+.control-btn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .forward-btn:hover {
-  background: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.2);
   border-color: #22c55e;
 }
 
 .backward-btn:hover {
-  background: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.2);
   border-color: #ef4444;
 }
 
 .left-btn:hover {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.2);
   border-color: #3b82f6;
 }
 
 .right-btn:hover {
-  background: rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.2);
   border-color: #a855f7;
+}
+
+/* 가로 모드 각 방향별 active 색상 */
+.forward-btn:active {
+  background: rgba(34, 197, 94, 0.3) !important;
+  border-color: #22c55e !important;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.5) !important;
+}
+
+.backward-btn:active {
+  background: rgba(239, 68, 68, 0.3) !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5) !important;
+}
+
+.left-btn:active {
+  background: rgba(59, 130, 246, 0.3) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5) !important;
+}
+
+.right-btn:active {
+  background: rgba(168, 85, 247, 0.3) !important;
+  border-color: #a855f7 !important;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.5) !important;
 }
 
 /* 화살표 스타일링 */
