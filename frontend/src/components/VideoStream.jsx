@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { WS_SERVER_URL } from '../config/contracts';
 import './VideoStream.css';
 
-function VideoStream({ onConnectionChange, isDemo, onSendCommand }) {
+function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls = true }) {
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
   const [error, setError] = useState(null);
@@ -25,6 +25,79 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand }) {
   useEffect(() => {
     onConnectionChangeRef.current = onConnectionChange;
   }, [onConnectionChange]);
+
+  // WASD 키보드 이벤트 핸들러
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        console.warn('❌ Cannot send command: WebSocket not connected');
+        return;
+      }
+      
+      let command = null;
+      
+      switch(event.key.toLowerCase()) {
+        case 'w':
+        case 'arrowup':
+          command = 'forward';
+          break;
+        case 's':
+        case 'arrowdown':
+          command = 'backward';
+          break;
+        case 'a':
+        case 'arrowleft':
+          command = 'left';
+          break;
+        case 'd':
+        case 'arrowright':
+          command = 'right';
+          break;
+        case ' ':
+          command = 'stop';
+          break;
+        default:
+          return;
+      }
+
+      if (command) {
+        console.log('🎮 Keyboard command:', command);
+        const message = JSON.stringify({ 
+          type: 'control',
+          command: command
+        });
+        wsRef.current.send(message);
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        return;
+      }
+      
+      const key = event.key.toLowerCase();
+      const isControlKey = ['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key);
+      
+      if (isControlKey) {
+        console.log('🎮 Keyboard release - sending stop');
+        const message = JSON.stringify({ 
+          type: 'control',
+          command: 'stop'
+        });
+        wsRef.current.send(message);
+      }
+    };
+
+    // 이벤트 리스너 등록
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+
+    // 클린업
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []); // sendCommand 의존성 제거
 
   useEffect(() => {
     // WebSocket connection (works for both real and demo mode)
@@ -213,24 +286,27 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand }) {
     }
   };
 
+  // 제어 명령 전송 함수
+  const sendCommand = (command) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.warn('❌ Cannot send command: WebSocket not connected');
+      return false;
+    }
+    
+    console.log(`🎮 Sending command: ${command}`);
+    const message = JSON.stringify({
+      type: 'control',
+      command: command
+    });
+    
+    wsRef.current.send(message);
+    return true;
+  };
+
   // 제어 명령 전송 함수를 부모 컴포넌트에 전달
   useEffect(() => {
     if (onSendCommand) {
-      onSendCommand((command) => {
-        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-          console.warn('❌ Cannot send command: WebSocket not connected');
-          return false;
-        }
-        
-        console.log(`🎮 Sending command: ${command}`);
-        const message = JSON.stringify({
-          type: 'control',
-          command: command
-        });
-        
-        wsRef.current.send(message);
-        return true;
-      });
+      onSendCommand(sendCommand);
     }
   }, [onSendCommand]);
 
@@ -257,6 +333,63 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand }) {
           <span className="demo-label">Virtual RC Car</span>
         )}
       </div>
+      
+      {/* Touch Control Buttons - Only show in landscape mode */}
+      {showControls && (
+        <div className="overlay-controls">
+          {/* Left Side - Forward/Backward Controls */}
+          <div className="overlay-controls-left">
+            <div className="control-group-vertical">
+              <button 
+                className="control-btn forward-btn"
+                onMouseDown={() => sendCommand('forward')}
+                onMouseUp={() => sendCommand('stop')}
+                onMouseLeave={() => sendCommand('stop')}
+                onTouchStart={() => sendCommand('forward')}
+                onTouchEnd={() => sendCommand('stop')}
+              >
+                <span className="arrow-up">▲</span>
+              </button>
+              <button 
+                className="control-btn backward-btn"
+                onMouseDown={() => sendCommand('backward')}
+                onMouseUp={() => sendCommand('stop')}
+                onMouseLeave={() => sendCommand('stop')}
+                onTouchStart={() => sendCommand('backward')}
+                onTouchEnd={() => sendCommand('stop')}
+              >
+                <span className="arrow-down">▼</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Right Side - Left/Right Controls */}
+          <div className="overlay-controls-right">
+            <div className="control-group-horizontal">
+              <button 
+                className="control-btn left-btn"
+                onMouseDown={() => sendCommand('left')}
+                onMouseUp={() => sendCommand('stop')}
+                onMouseLeave={() => sendCommand('stop')}
+                onTouchStart={() => sendCommand('left')}
+                onTouchEnd={() => sendCommand('stop')}
+              >
+                <span className="arrow-left">◀</span>
+              </button>
+              <button 
+                className="control-btn right-btn"
+                onMouseDown={() => sendCommand('right')}
+                onMouseUp={() => sendCommand('stop')}
+                onMouseLeave={() => sendCommand('stop')}
+                onTouchStart={() => sendCommand('right')}
+                onTouchEnd={() => sendCommand('stop')}
+              >
+                <span className="arrow-right">▶</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

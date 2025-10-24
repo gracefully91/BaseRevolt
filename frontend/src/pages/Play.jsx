@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import VideoStream from '../components/VideoStream';
-import Controller from '../components/Controller';
 import PortraitPlay from '../components/PortraitPlay';
 import Header from '../components/Header';
 import './Play.css';
@@ -109,6 +108,7 @@ function Play() {
           onConnectionChange={handleConnectionChange}
           isDemo={isDemo}
           onSendCommand={(fn) => { sendCommandRef.current = fn; }}
+          showControls={!showPortrait}
         />
       </div>
       
@@ -143,29 +143,7 @@ function Play() {
           </div>
         </div>
         
-        {/* Left Side - Forward/Backward Controls (세로) */}
-        <div className="overlay-controls-left">
-          <div className="control-group-vertical">
-            <button className="control-btn forward-btn">
-              <span className="arrow-up">▲</span>
-            </button>
-            <button className="control-btn backward-btn">
-              <span className="arrow-down">▼</span>
-            </button>
-          </div>
-        </div>
-        
-        {/* Right Side - Left/Right Controls (가로) */}
-        <div className="overlay-controls-right">
-          <div className="control-group-horizontal">
-            <button className="control-btn left-btn">
-              <span className="arrow-left">◀</span>
-            </button>
-            <button className="control-btn right-btn">
-              <span className="arrow-right">▶</span>
-            </button>
-          </div>
-        </div>
+        {/* Control Buttons - Integrated in VideoStream */}
       </div>
       
       {/* Connection Notice */}

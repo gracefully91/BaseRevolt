@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import VideoStream from './VideoStream';
 import './PortraitPlay.css';
@@ -9,6 +9,9 @@ export default function PortraitPlay({ onRotate }) {
   const [isConnected, setIsConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5분
+  
+  // 제어 명령 전송 함수 (VideoStream에서 설정됨)
+  const sendCommandRef = useRef(null);
 
   // 타이머
   useEffect(() => {
@@ -81,6 +84,8 @@ export default function PortraitPlay({ onRotate }) {
             <VideoStream 
               onConnectionChange={handleConnectionChange}
               isDemo={isDemo}
+              showControls={false}
+              onSendCommand={(fn) => { sendCommandRef.current = fn; }}
             />
           </div>
           {/* 연결 상태와 라이브 스트림 정보 */}
@@ -104,20 +109,48 @@ export default function PortraitPlay({ onRotate }) {
                 <div className="portrait-controls">
                   {/* 왼쪽 - 위아래 버튼 */}
                   <div className="portrait-controls-left">
-                    <button className="portrait-control-btn portrait-forward">
+                    <button 
+                      className="portrait-control-btn portrait-forward"
+                      onMouseDown={() => sendCommandRef.current?.('forward')}
+                      onMouseUp={() => sendCommandRef.current?.('stop')}
+                      onMouseLeave={() => sendCommandRef.current?.('stop')}
+                      onTouchStart={() => sendCommandRef.current?.('forward')}
+                      onTouchEnd={() => sendCommandRef.current?.('stop')}
+                    >
                       <span className="portrait-arrow-up">▲</span>
                     </button>
-                    <button className="portrait-control-btn portrait-backward">
+                    <button 
+                      className="portrait-control-btn portrait-backward"
+                      onMouseDown={() => sendCommandRef.current?.('backward')}
+                      onMouseUp={() => sendCommandRef.current?.('stop')}
+                      onMouseLeave={() => sendCommandRef.current?.('stop')}
+                      onTouchStart={() => sendCommandRef.current?.('backward')}
+                      onTouchEnd={() => sendCommandRef.current?.('stop')}
+                    >
                       <span className="portrait-arrow-down">▼</span>
                     </button>
                   </div>
                   
                   {/* 오른쪽 - 좌우 버튼 */}
                   <div className="portrait-controls-right">
-                    <button className="portrait-control-btn portrait-left">
+                    <button 
+                      className="portrait-control-btn portrait-left"
+                      onMouseDown={() => sendCommandRef.current?.('left')}
+                      onMouseUp={() => sendCommandRef.current?.('stop')}
+                      onMouseLeave={() => sendCommandRef.current?.('stop')}
+                      onTouchStart={() => sendCommandRef.current?.('left')}
+                      onTouchEnd={() => sendCommandRef.current?.('stop')}
+                    >
                       <span className="portrait-arrow-left">◀</span>
                     </button>
-                    <button className="portrait-control-btn portrait-right">
+                    <button 
+                      className="portrait-control-btn portrait-right"
+                      onMouseDown={() => sendCommandRef.current?.('right')}
+                      onMouseUp={() => sendCommandRef.current?.('stop')}
+                      onMouseLeave={() => sendCommandRef.current?.('stop')}
+                      onTouchStart={() => sendCommandRef.current?.('right')}
+                      onTouchEnd={() => sendCommandRef.current?.('stop')}
+                    >
                       <span className="portrait-arrow-right">▶</span>
                     </button>
                   </div>
