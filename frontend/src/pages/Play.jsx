@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import VideoStream from '../components/VideoStream';
 import Controller from '../components/Controller';
+import PortraitPlay from '../components/PortraitPlay';
+import Header from '../components/Header';
 import './Play.css';
 
 function Play() {
@@ -11,6 +13,8 @@ function Play() {
   const { isConnected } = useAccount();
   
   const isDemo = searchParams.get('demo') === 'true';
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [showPortrait, setShowPortrait] = useState(false);
   
   // 타이머 (10분 = 600초)
   const [timeRemaining, setTimeRemaining] = useState(600);
@@ -29,13 +33,14 @@ function Play() {
     // Start timer
     setIsActive(true);
     
-    // In demo mode, simulate RC car connection after a delay
-    if (isDemo) {
-      setTimeout(() => {
-        setRcCarConnected(true);
-      }, 2000); // 2초 후 연결된 것처럼 표시
-    }
+    // Demo 모드에서도 실제 연결 상태를 확인 (시뮬레이션 제거)
+    // VideoStream 컴포넌트에서 실제 연결 상태를 받아서 표시
   }, [isDemo, isConnected, navigate]);
+
+  // VideoStream에서 실제 연결 상태를 받는 핸들러
+  const handleConnectionChange = (connected) => {
+    setRcCarConnected(connected);
+  };
   
   // Timer logic
   useEffect(() => {
@@ -72,55 +77,89 @@ function Play() {
       navigate('/');
     }
   };
+
+  const handleRotate = () => {
+    setShowPortrait(!showPortrait);
+  };
   
+  // 세로화면 모드일 때 PortraitPlay 컴포넌트 렌더링
+  if (showPortrait) {
+    return (
+      <>
+        <Header />
+        <PortraitPlay onRotate={handleRotate} />
+      </>
+    );
+  }
+
   return (
-    <div className="play-container">
-      {/* Header */}
-      <div className="play-header">
-        <button className="back-button" onClick={handleBackHome}>
-          ← Back to Home
-        </button>
-        
-        <div className="status-bar">
-          <div className={`rc-status ${rcCarConnected ? 'connected' : 'disconnected'}`}>
-            <span className="status-dot"></span>
-            {rcCarConnected ? 'RC Car Connected' : 'Waiting for RC Car'}
-          </div>
-          
-          <div className="timer">
-            <span className="timer-icon">⏱️</span>
-            <span className="timer-text">{formatTime(timeRemaining)}</span>
-          </div>
-          
-          {isDemo && (
-            <div className="demo-badge">
-              🎮 Demo Mode
-            </div>
-          )}
-        </div>
+    <div className={`play-container ${isLandscape ? 'landscape' : 'portrait'}`}>
+      {/* Full Screen Video */}
+      <div className="video-fullscreen">
+        <VideoStream 
+          onConnectionChange={handleConnectionChange}
+          isDemo={isDemo}
+        />
       </div>
       
-      {/* Main Content */}
-      <div className="play-content">
-        {/* Video Stream */}
-        <div className="video-section">
-          <VideoStream 
-            onConnectionChange={setRcCarConnected}
-            isDemo={isDemo}
-          />
+      {/* Transparent Overlay Controls */}
+      <div className="play-overlay">
+        {/* Top Status Bar */}
+        <div className="overlay-status-bar">
+          <button className="back-button" onClick={handleBackHome}>
+            ←Home
+          </button>
+          
+          <div className="status-info">
+            <div className={`rc-status ${rcCarConnected ? 'connected' : 'disconnected'}`}>
+              <span className="status-dot"></span>
+              {rcCarConnected ? 'RC Car Connected' : 'Waiting for RC Car'}
+            </div>
+            
+            <div className={`timer ${timeRemaining > 300 ? 'timer-blue' : timeRemaining > 120 ? 'timer-yellow' : 'timer-red'}`}>
+              <span className="timer-icon">⏱️</span>
+              <span className="timer-text">{formatTime(timeRemaining)}</span>
+            </div>
+            
+            {isDemo && (
+              <div className="demo-badge">
+                🎮 Demo Mode
+              </div>
+            )}
+            
+            <button className="rotate-button" onClick={handleRotate}>
+              <img src="../../asset/rotate.png" alt="Rotate" className="rotate-icon" />
+            </button>
+          </div>
         </div>
         
-        {/* Controller */}
-        <div className="controller-section">
-          <Controller 
-            rcCarConnected={rcCarConnected}
-            isDemo={isDemo}
-          />
+        {/* Left Side - Forward/Backward Controls (세로) */}
+        <div className="overlay-controls-left">
+          <div className="control-group-vertical">
+            <button className="control-btn forward-btn">
+              <span className="arrow-up">▲</span>
+            </button>
+            <button className="control-btn backward-btn">
+              <span className="arrow-down">▼</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Right Side - Left/Right Controls (가로) */}
+        <div className="overlay-controls-right">
+          <div className="control-group-horizontal">
+            <button className="control-btn left-btn">
+              <span className="arrow-left">◀</span>
+            </button>
+            <button className="control-btn right-btn">
+              <span className="arrow-right">▶</span>
+            </button>
+          </div>
         </div>
       </div>
       
       {/* Connection Notice */}
-      {!rcCarConnected && (
+      {(!rcCarConnected || isDemo) && (
         <div className="connection-notice">
           <p>🔌 Please wait for RC car to connect...</p>
           <p className="notice-sub">Make sure the hardware is powered on and connected to WiFi</p>

@@ -245,14 +245,14 @@ void setupCamera() {
   if (s != NULL) {
     Serial.printf("Camera sensor PID: 0x%04x\n", s->id.PID);
     
-    // 모든 카메라 모델에 대해 상하반전 적용
+    // 모든 카메라 모델에 대해 상하반전 적용 (임시 비활성화)
     if (s->set_vflip != NULL) {
-      s->set_vflip(s, 1);       // 상하반전 (1: 반전, 0: 정상)
-      Serial.println("Vertical flip enabled");
+      s->set_vflip(s, 0);       // 상하반전 (0: 정상, 1: 반전) - 임시로 정상
+      Serial.println("Vertical flip disabled (normal view)");
     }
     if (s->set_hmirror != NULL) {
-      s->set_hmirror(s, 1);     // 좌우반전 (1: 반전, 0: 정상)
-      Serial.println("Horizontal mirror enabled");
+      s->set_hmirror(s, 0);     // 좌우반전 (0: 정상, 1: 반전) - 임시로 정상
+      Serial.println("Horizontal mirror disabled (normal view)");
     }
     if (s->set_brightness != NULL) {
       s->set_brightness(s, 0);  // 밝기 조정 (-2 to 2)

@@ -10,7 +10,8 @@ export default function PaymentModal({
   onSuccess,
   contractAddress, // Recipient wallet address
   contractABI,
-  ticketPrice 
+  ticketPrice,
+  selectedVehicle = null
 }) {
   const { address, isConnected, chain } = useAccount();
   const { sendTransaction, data: hash, error: writeError } = useSendTransaction();
@@ -227,6 +228,19 @@ export default function PaymentModal({
 
         {/* Step 2: Transaction details */}
         <div className="payment-details">
+          {selectedVehicle && (
+            <div className="payment-detail-item vehicle-info">
+              <span className="detail-icon">🚗</span>
+              <div className="vehicle-detail-content">
+                <span className="detail-text">Selected Vehicle: {selectedVehicle.name}</span>
+                <span className="vehicle-status-badge">
+                  {selectedVehicle.status === 'available' ? '🟢 Available' : 
+                   selectedVehicle.status === 'busy' ? '🔴 In Use' : 
+                   '🟡 Maintenance'}
+                </span>
+              </div>
+            </div>
+          )}
           <div className="payment-detail-item">
             <span className="detail-icon">🎫</span>
             <span className="detail-text">Play Time: 10 minutes</span>

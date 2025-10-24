@@ -1,37 +1,74 @@
 .play-container {
-  min-height: 100vh;
-  background: #1a1a2e;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
   color: white;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
+  /* 가로 모드 강제 */
+  transform: rotate(90deg);
+  transform-origin: center;
+  width: 100vh;
+  height: 100vw;
+  top: 50%;
+  left: 50%;
+  margin-top: -50vw;
+  margin-left: -50vh;
 }
 
-.play-header {
-  background: rgba(0, 0, 0, 0.3);
+.video-fullscreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.overlay-status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
   padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: auto;
 }
 
 .back-button {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  padding: 10px 20px;
+  padding: 10px 15px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
   font-weight: 600;
   transition: all 0.2s;
+  min-width: auto;
 }
 
 .back-button:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.status-bar {
+.status-info {
   display: flex;
   gap: 20px;
   align-items: center;
@@ -78,12 +115,40 @@
   padding: 8px 16px;
   border-radius: 20px;
   background: rgba(102, 126, 234, 0.2);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.timer.timer-blue {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #3b82f6 !important;
+}
+
+.timer.timer-blue .timer-text {
+  color: #3b82f6 !important;
+}
+
+.timer.timer-yellow {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fbbf24 !important;
+}
+
+.timer.timer-yellow .timer-text {
+  color: #fbbf24 !important;
+}
+
+.timer.timer-red {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ef4444 !important;
+}
+
+.timer.timer-red .timer-text {
+  color: #ef4444 !important;
 }
 
 .timer-icon {
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 .demo-badge {
@@ -95,29 +160,154 @@
   font-weight: 600;
 }
 
-.play-content {
-  flex: 1;
-  display: flex;
-  padding: 20px;
-  gap: 20px;
-}
-
-.video-section {
-  flex: 1;
+.rotate-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
+  min-width: 40px;
+  height: 40px;
+}
+
+.rotate-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: rotate(90deg);
+}
+
+.rotate-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  background: transparent;
+  mix-blend-mode: normal;
+}
+
+
+/* Overlay Controls - 가로 모드에 최적화 */
+.overlay-controls-left {
+  position: absolute;
+  left: 20px;
+  top: 75%;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.overlay-controls-right {
+  position: absolute;
+  right: 20px;
+  top: 75%;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.control-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.control-group-horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+}
+
+.control-btn {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 25px;
   border-radius: 15px;
-  overflow: hidden;
-  position: relative;
-}
-
-.controller-section {
-  width: 350px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  width: 80px;
+  height: 80px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.control-btn:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.forward-btn:hover {
+  background: rgba(34, 197, 94, 0.3);
+  border-color: #22c55e;
+}
+
+.backward-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+}
+
+.left-btn:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: #3b82f6;
+}
+
+.right-btn:hover {
+  background: rgba(168, 85, 247, 0.3);
+  border-color: #a855f7;
+}
+
+/* 화살표 스타일링 */
+.arrow-up,
+.arrow-down {
+  color: #3b82f6;
+  font-size: 2.8rem;
+  font-weight: bold;
+  text-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+}
+
+.arrow-left,
+.arrow-right {
+  color: #3b82f6;
+  font-size: 2.2rem;
+  font-weight: bold;
+  text-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+}
+
+.forward-btn:active .arrow-up {
+  color: #22c55e;
+  text-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
+}
+
+.backward-btn:active .arrow-down {
+  color: #ef4444;
+  text-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
+}
+
+.left-btn:active .arrow-left {
+  color: #3b82f6;
+  text-shadow: 0 0 6px rgba(59, 130, 246, 0.7);
+}
+
+.right-btn:active .arrow-right {
+  color: #a855f7;
+  text-shadow: 0 0 6px rgba(168, 85, 247, 0.7);
 }
 
 .connection-notice {
@@ -125,12 +315,13 @@
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(249, 115, 22, 0.95);
+  background: rgba(245, 125, 40, 0.7);
   padding: 20px 30px;
   border-radius: 15px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
+  z-index: 1000;
 }
 
 @keyframes slideUp {
@@ -148,6 +339,7 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
+  color: #ffffff;
 }
 
 .notice-sub {
@@ -157,39 +349,47 @@
   font-weight: 400 !important;
 }
 
-/* 모바일 반응형 */
-@media (max-width: 1024px) {
-  .play-content {
-    flex-direction: column;
-  }
+/* 조정화면 모드 설정 */
+.play-container.portrait {
+  /* 세로 모드 (기본) */
+  transform: rotate(90deg);
+  transform-origin: center;
+  width: 100vh;
+  height: 100vw;
+  top: 50%;
+  left: 50%;
+  margin-top: -50vw;
+  margin-left: -50vh;
+}
 
-  .controller-section {
-    width: 100%;
+.play-container.landscape {
+  /* 가로 모드 (원래 넓은 화면) */
+  transform: none;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  margin: 0;
+}
+
+/* 작은 화면에서 컨트롤 버튼 크기 조정 */
+@media (max-height: 600px) {
+  .control-btn {
+    width: 70px;
+    height: 70px;
+    padding: 15px;
+    font-size: 1.1rem;
+  }
+  
+  .overlay-controls-left {
+    left: 15px;
+  }
+  
+  .overlay-controls-right {
+    right: 15px;
   }
 }
 
-@media (max-width: 768px) {
-  .play-header {
-    flex-direction: column;
-    gap: 15px;
-  }
 
-  .status-bar {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-  }
 
-  .back-button {
-    width: 100%;
-  }
-
-  .play-content {
-    padding: 10px;
-  }
-
-  .video-section {
-    min-height: 250px;
-  }
-}
 

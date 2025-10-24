@@ -3,12 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { useAccount, useReadContract } from 'wagmi';
 import { TICKET_CONTRACT_ADDRESS, TICKET_CONTRACT_ABI } from '../config/contracts';
 import PaymentModal from '../components/PaymentModal';
+import VehicleSelectionModal from '../components/VehicleSelectionModal';
+import WaitingQueueModal from '../components/WaitingQueueModal';
+import QueueNotificationModal from '../components/QueueNotificationModal';
+import { vehicleManager } from '../utils/vehicleData';
 import './Home.css';
 
 function Home() {
   const navigate = useNavigate();
   const { isConnected } = useAccount();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showVehicleSelection, setShowVehicleSelection] = useState(false);
+  const [showWaitingQueue, setShowWaitingQueue] = useState(false);
+  const [showQueueNotification, setShowQueueNotification] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [currentUserId] = useState('user-' + Math.random().toString(36).substr(2, 9));
+  const [currentUserName] = useState('User' + Math.floor(Math.random() * 1000));
+  const [queueNotification, setQueueNotification] = useState(null);
   
   // 티켓 가격 조회
   const { data: ticketPrice } = useReadContract({
@@ -22,7 +33,72 @@ function Home() {
       alert('Please connect your wallet first!');
       return;
     }
-    setShowPaymentModal(true);
+    // 차량 선택 모달 열기
+    setShowVehicleSelection(true);
+  };
+
+  const handleVehicleSelect = (vehicle) => {
+    setSelectedVehicle(vehicle);
+    vehicleManager.selectVehicle(vehicle);
+    
+    // 차량이 사용 중이거나 대기열이 있는 경우 대기열 모달 표시
+    if (vehicle.status === 'busy' || (vehicle.waitingQueue && vehicle.waitingQueue.length > 0)) {
+      setShowWaitingQueue(true);
+    } else {
+      // 바로 사용 가능한 경우 결제 모달 열기
+      setShowPaymentModal(true);
+    }
+  };
+
+  const handleJoinQueue = (vehicleId, userId, userName) => {
+    const success = vehicleManager.addToWaitingQueue(vehicleId, userId, userName);
+    if (success) {
+      alert(`✅ Joined the queue! You'll be notified when it's your turn.`);
+      setShowWaitingQueue(false);
+    } else {
+      alert('❌ Failed to join the queue. Please try again.');
+    }
+  };
+
+  const handleLeaveQueue = (vehicleId, userId) => {
+    const success = vehicleManager.removeFromWaitingQueue(vehicleId, userId);
+    if (success) {
+      alert('✅ Left the queue successfully.');
+    } else {
+      alert('❌ Failed to leave the queue. Please try again.');
+    }
+  };
+
+  const handleQueueClose = () => {
+    setShowWaitingQueue(false);
+  };
+
+  const handleShowQueue = (vehicle) => {
+    setSelectedVehicle(vehicle);
+    setShowWaitingQueue(true);
+  };
+
+  const handleQueueNotificationAccept = () => {
+    if (queueNotification) {
+      // 대기열에서 제거하고 결제 페이지로 이동
+      vehicleManager.removeFromWaitingQueue(selectedVehicle.id, currentUserId);
+      setShowQueueNotification(false);
+      setShowPaymentModal(true);
+    }
+  };
+
+  const handleQueueNotificationDecline = () => {
+    if (queueNotification) {
+      // 대기열에서 제거
+      vehicleManager.removeFromWaitingQueue(selectedVehicle.id, currentUserId);
+      alert('❌ 대기열에서 제거되었습니다.');
+      setShowQueueNotification(false);
+    }
+  };
+
+  const handleQueueNotificationClose = () => {
+    setShowQueueNotification(false);
+    setQueueNotification(null);
   };
 
   const handlePaymentSuccess = (txHash) => {
@@ -106,6 +182,35 @@ function Home() {
           </div>
         </div>
 
+        {/* Vehicle Selection Modal */}
+        <VehicleSelectionModal
+          open={showVehicleSelection}
+          onClose={() => setShowVehicleSelection(false)}
+          onVehicleSelect={handleVehicleSelect}
+          onShowQueue={handleShowQueue}
+          vehicles={vehicleManager.getAvailableVehicles()}
+        />
+
+        {/* Waiting Queue Modal */}
+        <WaitingQueueModal
+          open={showWaitingQueue}
+          onClose={handleQueueClose}
+          vehicle={selectedVehicle}
+          userId={currentUserId}
+          userName={currentUserName}
+          onJoinQueue={handleJoinQueue}
+          onLeaveQueue={handleLeaveQueue}
+        />
+
+        {/* Queue Notification Modal */}
+        <QueueNotificationModal
+          open={showQueueNotification}
+          onClose={handleQueueNotificationClose}
+          notification={queueNotification}
+          onAccept={handleQueueNotificationAccept}
+          onDecline={handleQueueNotificationDecline}
+        />
+
         {/* Payment Modal */}
         <PaymentModal
           open={showPaymentModal}
@@ -114,6 +219,7 @@ function Home() {
           contractAddress={TICKET_CONTRACT_ADDRESS}
           contractABI={TICKET_CONTRACT_ABI}
           ticketPrice={ticketPrice}
+          selectedVehicle={selectedVehicle}
         />
       </div>
     </div>

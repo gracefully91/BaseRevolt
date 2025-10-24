@@ -1,0 +1,338 @@
+.waiting-queue-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  backdrop-filter: blur(6px);
+}
+
+.waiting-queue-modal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 500px;
+  width: 95%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.waiting-queue-header {
+  text-align: center;
+  margin-bottom: 25px;
+  flex-shrink: 0;
+}
+
+.waiting-queue-header h2 {
+  color: #fff;
+  font-size: 28px;
+  margin: 0 0 8px 0;
+  font-weight: 800;
+}
+
+.waiting-queue-header p {
+  color: #a0a0a0;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.waiting-queue-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* 차량 상태 섹션 - 작게 */
+.vehicle-status-section {
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+
+.status-card-small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.status-icon-small {
+  font-size: 1rem;
+}
+
+.status-info-small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-text {
+  color: #a0a0a0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.current-user {
+  color: #666;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* 대기열 정보 섹션 */
+.queue-info-section h3 {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+}
+
+.queue-details {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.queue-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.stat-label {
+  color: #a0a0a0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stat-value {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.queue-list h4 {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.queue-item.current-user {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.queue-position {
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 14px;
+  min-width: 30px;
+}
+
+.user-name {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  flex: 1;
+}
+
+.wait-time {
+  color: #ef4444;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.no-queue {
+  text-align: center;
+  padding: 30px 20px;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.no-queue p {
+  color: #22c55e;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* 사용자 액션 섹션 - 맨 위로 */
+.user-action-section {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.in-queue-status {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.queue-status-card {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.queue-status-card h3 {
+  color: #22c55e;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.queue-status-card p {
+  color: #a0a0a0;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 5px 0;
+}
+
+.join-queue-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.join-info {
+  text-align: center;
+}
+
+.join-info h3 {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.join-info p {
+  color: #a0a0a0;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.action-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.join-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.join-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.leave-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.leave-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* 액션 버튼들 */
+.waiting-queue-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 25px;
+  flex-shrink: 0;
+}
+
+.queue-btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.queue-btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #a0a0a0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.queue-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .waiting-queue-modal {
+    padding: 20px;
+    max-height: 85vh;
+  }
+  
+  .waiting-queue-header h2 {
+    font-size: 24px;
+  }
+  
+  .status-card {
+    padding: 15px;
+  }
+  
+  .queue-details {
+    padding: 15px;
+  }
+  
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}

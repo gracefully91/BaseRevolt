@@ -10,6 +10,11 @@ function VideoStream({ onConnectionChange, isDemo }) {
   const lastFrameTimeRef = useRef(Date.now());
   const frameCountRef = useRef(0);
   
+  // 안정적인 연결 상태 관리
+  const [isStableConnected, setIsStableConnected] = useState(false);
+  const connectionStartTimeRef = useRef(null);
+  const stableConnectionTimeoutRef = useRef(null);
+  
   // Demo mode state (no longer needed for virtual car)
 
   useEffect(() => {
@@ -28,12 +33,14 @@ function VideoStream({ onConnectionChange, isDemo }) {
           // Identify as web user
           ws.send(JSON.stringify({ type: 'client', device: 'web-user' }));
           
-          // In demo mode, simulate RC car connection
-          if (isDemo) {
-            setTimeout(() => {
-              onConnectionChange(true);
-            }, 1000);
-          }
+          // 연결 시작 시간 기록
+          connectionStartTimeRef.current = Date.now();
+          
+          // 10초 후에 안정적인 연결로 간주
+          stableConnectionTimeoutRef.current = setTimeout(() => {
+            setIsStableConnected(true);
+            onConnectionChange(true);
+          }, 10000);
         };
 
         ws.onmessage = (event) => {
@@ -69,8 +76,18 @@ function VideoStream({ onConnectionChange, isDemo }) {
 
         ws.onclose = () => {
           console.log('❌ WebSocket disconnected');
+          
+          // 연결이 끊어지면 즉시 연결 해제 상태로 변경
+          setIsStableConnected(false);
+          onConnectionChange(false);
+          
+          // 타이머 정리
+          if (stableConnectionTimeoutRef.current) {
+            clearTimeout(stableConnectionTimeoutRef.current);
+            stableConnectionTimeoutRef.current = null;
+          }
+          
           if (!isDemo) {
-            onConnectionChange(false);
             clearCanvas();
           }
           
@@ -95,6 +112,12 @@ function VideoStream({ onConnectionChange, isDemo }) {
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
+      }
+      
+      // 타이머 정리
+      if (stableConnectionTimeoutRef.current) {
+        clearTimeout(stableConnectionTimeoutRef.current);
+        stableConnectionTimeoutRef.current = null;
       }
     };
   }, [onConnectionChange, isDemo]);

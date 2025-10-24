@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
@@ -12,6 +12,21 @@ import Play from './pages/Play';
 
 const queryClient = new QueryClient();
 
+function AppContent() {
+  const location = useLocation();
+  const isPlayPage = location.pathname === '/play';
+  
+  return (
+    <>
+      {!isPlayPage && <Header />}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/play" element={<Play />} />
+      </Routes>
+    </>
+  );
+}
+
 function App() {
   return (
     <WagmiProvider config={config}>
@@ -23,11 +38,7 @@ function App() {
               v7_relativeSplatPath: true,
             }}
           >
-            <Header />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/play" element={<Play />} />
-            </Routes>
+            <AppContent />
           </BrowserRouter>
         </RainbowKitProvider>
       </QueryClientProvider>

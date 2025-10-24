@@ -177,6 +177,31 @@
   font-weight: 500;
 }
 
+/* 차량 정보 스타일 */
+.vehicle-info {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border: 1px solid #90caf9;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.vehicle-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vehicle-status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 8px;
+  display: inline-block;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
 .tx-hash-box {
   background: #e3f2fd;
   border: 1px solid #90caf9;
