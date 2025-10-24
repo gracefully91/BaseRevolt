@@ -16,27 +16,25 @@ function Controller({ rcCarConnected, isDemo }) {
 
         ws.onopen = () => {
           console.log('Controller WebSocket connected');
-          
-          // In demo mode, simulate RC car connection after a delay
-          if (isDemo) {
-            setTimeout(() => {
-              console.log('Demo mode: Simulating RC car connection');
-            }, 1000);
-          }
         };
 
         ws.onerror = (error) => {
           console.error('Controller WebSocket error:', error);
         };
 
-        ws.onclose = () => {
-          console.log('Controller WebSocket disconnected');
-          // Reconnect
-          setTimeout(() => {
-            if (wsRef.current === ws) {
-              connectWebSocket();
-            }
-          }, 3000);
+        ws.onclose = (event) => {
+          console.log('Controller WebSocket disconnected', event.code, event.reason);
+          // 정상적인 종료가 아닌 경우에만 재연결 시도
+          if (event.code !== 1000 && event.code !== 1001) {
+            console.log('Controller attempting to reconnect...');
+            setTimeout(() => {
+              if (wsRef.current === ws) {
+                connectWebSocket();
+              }
+            }, 3000);
+          } else {
+            console.log('Controller WebSocket closed normally, not reconnecting');
+          }
         };
       } catch (err) {
         console.error('Controller WebSocket connection error:', err);

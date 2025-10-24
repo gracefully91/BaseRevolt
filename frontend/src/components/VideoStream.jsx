@@ -14,8 +14,8 @@ function VideoStream({ onConnectionChange, isDemo }) {
   const [isStableConnected, setIsStableConnected] = useState(false);
   const connectionStartTimeRef = useRef(null);
   const stableConnectionTimeoutRef = useRef(null);
-  
-  // Demo mode state (no longer needed for virtual car)
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 5;
 
   useEffect(() => {
     // WebSocket connection (works for both real and demo mode)
@@ -30,13 +30,15 @@ function VideoStream({ onConnectionChange, isDemo }) {
         ws.onopen = () => {
           console.log('✅ WebSocket connected');
           setError(null);
+          reconnectAttemptsRef.current = 0; // 연결 성공 시 재시도 횟수 리셋
+          
           // Identify as web user
           ws.send(JSON.stringify({ type: 'client', device: 'web-user' }));
           
           // 연결 시작 시간 기록
           connectionStartTimeRef.current = Date.now();
           
-          // 10초 후에 안정적인 연결로 간주
+          // 10초 후에 안정적인 연결로 간주 (데모 모드와 실제 모드 동일)
           stableConnectionTimeoutRef.current = setTimeout(() => {
             setIsStableConnected(true);
             onConnectionChange(true);
@@ -69,13 +71,11 @@ function VideoStream({ onConnectionChange, isDemo }) {
 
         ws.onerror = (error) => {
           console.error('WebSocket error:', error);
-          if (!isDemo) {
-            setError('WebSocket connection error');
-          }
+          setError('WebSocket connection error');
         };
 
-        ws.onclose = () => {
-          console.log('❌ WebSocket disconnected');
+        ws.onclose = (event) => {
+          console.log('❌ WebSocket disconnected', event.code, event.reason);
           
           // 연결이 끊어지면 즉시 연결 해제 상태로 변경
           setIsStableConnected(false);
@@ -87,22 +87,28 @@ function VideoStream({ onConnectionChange, isDemo }) {
             stableConnectionTimeoutRef.current = null;
           }
           
-          if (!isDemo) {
-            clearCanvas();
-          }
+          clearCanvas();
           
-          // Retry connection after 3 seconds
-          setTimeout(() => {
-            if (wsRef.current === ws) {
-              connectWebSocket();
-            }
-          }, 3000);
+          // 정상적인 종료가 아닌 경우에만 재연결 시도
+          // 1000: 정상 종료, 1001: 서버 종료, 1006: 비정상 종료
+          if (event.code !== 1000 && event.code !== 1001 && reconnectAttemptsRef.current < maxReconnectAttempts) {
+            reconnectAttemptsRef.current++;
+            console.log(`Attempting to reconnect... (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+            setTimeout(() => {
+              if (wsRef.current === ws) {
+                connectWebSocket();
+              }
+            }, 3000);
+          } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+            console.log('Max reconnection attempts reached, stopping reconnection');
+            setError('Connection failed after multiple attempts');
+          } else {
+            console.log('WebSocket closed normally, not reconnecting');
+          }
         };
       } catch (err) {
         console.error('WebSocket connection error:', err);
-        if (!isDemo) {
-          setError('Server connection failed');
-        }
+        setError('Server connection failed');
       }
     };
 
@@ -112,12 +118,6 @@ function VideoStream({ onConnectionChange, isDemo }) {
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
-      }
-      
-      // 타이머 정리
-      if (stableConnectionTimeoutRef.current) {
-        clearTimeout(stableConnectionTimeoutRef.current);
-        stableConnectionTimeoutRef.current = null;
       }
     };
   }, [onConnectionChange, isDemo]);

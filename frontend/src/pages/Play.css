@@ -99,6 +99,11 @@
   background: #f87171;
 }
 
+.rc-status.stabilizing .status-dot {
+  background: #fbbf24;
+  animation: pulse 1s infinite;
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;

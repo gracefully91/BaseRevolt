@@ -7,6 +7,7 @@ export default function PortraitPlay({ onRotate }) {
   const navigate = useNavigate();
   const [isDemo, setIsDemo] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
+  const [isStableConnected, setIsStableConnected] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5분
 
   // 타이머
@@ -29,6 +30,11 @@ export default function PortraitPlay({ onRotate }) {
   // VideoStream에서 실제 연결 상태를 받는 핸들러
   const handleConnectionChange = (connected) => {
     setIsConnected(connected);
+    if (connected) {
+      setIsStableConnected(true);
+    } else {
+      setIsStableConnected(false);
+    }
   };
 
   const handleBackHome = () => {
@@ -80,10 +86,12 @@ export default function PortraitPlay({ onRotate }) {
           {/* 연결 상태와 라이브 스트림 정보 */}
           <div className="portrait-video-status-bar">
             <div className="portrait-connection-status">
-              {isConnected ? (
+              {isStableConnected ? (
                 <>
                   <span className="blinking-dot">🟢</span> Connected
                 </>
+              ) : isConnected ? (
+                '🟡 Stabilizing connection...'
               ) : (
                 '🔴 Connecting...'
               )}
@@ -117,13 +125,19 @@ export default function PortraitPlay({ onRotate }) {
       </div>
 
       {/* 연결 알림 */}
-      {!isConnected && (
+      {!isStableConnected && (
         <div className="portrait-connection-notice">
           <div className="portrait-connection-content">
             <div className="portrait-connection-icon">🔌</div>
             <div className="portrait-connection-text">
-              <div>Please wait for RC car to connect...</div>
-              <div>Make sure the hardware is powered on and connected to WiFi</div>
+              {isConnected ? (
+                <div>Stabilizing connection... Please wait 10 seconds</div>
+              ) : (
+                <>
+                  <div>Please wait for RC car to connect...</div>
+                  <div>Make sure the hardware is powered on and connected to WiFi</div>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -22,6 +22,7 @@ function Play() {
   
   // RC카 연결 상태
   const [rcCarConnected, setRcCarConnected] = useState(false);
+  const [isStableConnected, setIsStableConnected] = useState(false);
   
   useEffect(() => {
     // If not demo and wallet not connected, redirect to home
@@ -40,6 +41,11 @@ function Play() {
   // VideoStream에서 실제 연결 상태를 받는 핸들러
   const handleConnectionChange = (connected) => {
     setRcCarConnected(connected);
+    if (connected) {
+      setIsStableConnected(true);
+    } else {
+      setIsStableConnected(false);
+    }
   };
   
   // Timer logic
@@ -111,9 +117,9 @@ function Play() {
           </button>
           
           <div className="status-info">
-            <div className={`rc-status ${rcCarConnected ? 'connected' : 'disconnected'}`}>
+            <div className={`rc-status ${isStableConnected ? 'connected' : rcCarConnected ? 'stabilizing' : 'disconnected'}`}>
               <span className="status-dot"></span>
-              {rcCarConnected ? 'RC Car Connected' : 'Waiting for RC Car'}
+              {isStableConnected ? 'RC Car Connected' : rcCarConnected ? 'Stabilizing Connection...' : 'Waiting for RC Car'}
             </div>
             
             <div className={`timer ${timeRemaining > 300 ? 'timer-blue' : timeRemaining > 120 ? 'timer-yellow' : 'timer-red'}`}>
