@@ -32,12 +32,15 @@ export class VehicleManager {
         vehicle.waitingQueue = [];
         
         for (let i = 0; i < queueSize; i++) {
-          const userNames = ['Alex', 'Sarah', 'Mike', 'Emma', 'David', 'Lisa', 'Tom', 'Anna'];
-          const randomName = userNames[Math.floor(Math.random() * userNames.length)];
+          // 실제 지갑 주소 생성 (0x + 40자리 hex)
+          const walletAddress = '0x' + Array.from({length: 40}, () => 
+            Math.floor(Math.random() * 16).toString(16)
+          ).join('');
           
           vehicle.waitingQueue.push({
             id: `user-${Date.now()}-${i}`,
-            name: randomName,
+            walletAddress: walletAddress,
+            name: `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`, // 0x1234...5678 형태
             joinedAt: new Date(Date.now() - Math.random() * 3600000), // 최근 1시간 내
             queuePosition: i + 1,
             estimatedWaitTime: (i + 1) * 10 // 10분씩 증가
@@ -129,8 +132,8 @@ export class VehicleManager {
     return null;
   }
 
-  // 대기열에 사용자 추가
-  addToWaitingQueue(vehicleId, userId, userName) {
+  // 대기열에 사용자 추가 (실제 지갑 주소 사용)
+  addToWaitingQueue(vehicleId, userId, walletAddress) {
     const vehicle = this.getVehicleById(vehicleId);
     if (!vehicle) return false;
     
@@ -143,7 +146,8 @@ export class VehicleManager {
     
     vehicle.waitingQueue.push({
       id: userId,
-      name: userName,
+      walletAddress: walletAddress,
+      name: `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`, // 0x1234...5678 형태
       joinedAt: new Date(),
       queuePosition,
       estimatedWaitTime: estimatedWait
@@ -211,10 +215,11 @@ export class VehicleManager {
     const nextUser = vehicle.waitingQueue[0];
     
     // 실제로는 여기서 푸시 알림, 이메일, SMS 등을 보냄
-    console.log(`🔔 알림: ${nextUser.name}님, 차량 사용 차례입니다!`);
+    console.log(`🔔 알림: ${nextUser.name} (${nextUser.walletAddress}), 차량 사용 차례입니다!`);
     
     return {
       userId: nextUser.id,
+      walletAddress: nextUser.walletAddress,
       userName: nextUser.name,
       message: '차량 사용 차례가 되었습니다! 3분 내에 접속해주세요.',
       vehicleName: vehicle.name,
