@@ -1,5 +1,87 @@
 /* 세로화면용 스타일 - 초기 화면과 유사한 레이아웃 */
 
+/* Portrait Exit Modal */
+.portrait-exit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(6px);
+}
+
+.portrait-exit-modal {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  animation: slideUp 0.3s ease;
+}
+
+.portrait-exit-modal-header h3 {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.portrait-exit-modal-content p {
+  color: #a0a0a0;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.portrait-exit-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.portrait-exit-cancel-btn, .portrait-exit-confirm-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.portrait-exit-cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #a0a0a0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.portrait-exit-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.portrait-exit-confirm-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.portrait-exit-confirm-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
 .portrait-play-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -43,9 +125,10 @@
 .portrait-status-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: nowrap;
   min-width: 0;
+  height: 36px;
 }
 
 .rc-status {
@@ -87,6 +170,10 @@
   font-weight: 600;
   transition: color 0.3s ease;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
 }
 
 .timer-blue {
@@ -104,12 +191,15 @@
 .demo-badge {
   background: rgba(251, 191, 36, 0.2);
   color: #fbbf24;
-  padding: 3px 6px;
+  padding: 6px 8px;
   border-radius: 10px;
   font-size: 0.7rem;
   font-weight: 600;
   border: 1px solid rgba(251, 191, 36, 0.3);
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .rotate-button {

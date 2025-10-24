@@ -3,32 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import VideoStream from './VideoStream';
 import './PortraitPlay.css';
 
-export default function PortraitPlay({ onRotate }) {
+export default function PortraitPlay({ onRotate, isDemo, timeRemaining }) {
   const navigate = useNavigate();
-  const [isDemo, setIsDemo] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300); // 5분
+  const [showExitModal, setShowExitModal] = useState(false);
   
   // 제어 명령 전송 함수 (VideoStream에서 설정됨)
   const sendCommandRef = useRef(null);
-
-  // 타이머
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          setIsDemo(false);
-          // 타이머가 끝나면 홈으로 이동
-          navigate('/');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [navigate]);
 
   // VideoStream에서 실제 연결 상태를 받는 핸들러
   const handleConnectionChange = (connected) => {
@@ -41,7 +23,20 @@ export default function PortraitPlay({ onRotate }) {
   };
 
   const handleBackHome = () => {
+    setShowExitModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitModal(false);
+    // 파캐스터/모바일 환경에서 명확한 피드백
+    if (navigator.userAgent.includes('Farcaster') || navigator.userAgent.includes('Mobile')) {
+      alert('✅ Play session ended. Returning to home...');
+    }
     navigate('/');
+  };
+
+  const handleCancelExit = () => {
+    setShowExitModal(false);
   };
 
   const handleRotate = () => {
@@ -55,19 +50,42 @@ export default function PortraitPlay({ onRotate }) {
   };
 
   return (
-    <div className="portrait-play-container">
-      {/* 상단바 */}
-      <div className="portrait-header">
+    <>
+      {/* Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className="portrait-exit-modal-overlay">
+          <div className="portrait-exit-modal">
+            <div className="portrait-exit-modal-header">
+              <h3>🚗 End Play Session?</h3>
+            </div>
+            <div className="portrait-exit-modal-content">
+              <p>Are you sure you want to end your play session and return to home?</p>
+              <div className="portrait-exit-modal-actions">
+                <button className="portrait-exit-cancel-btn" onClick={handleCancelExit}>
+                  Cancel
+                </button>
+                <button className="portrait-exit-confirm-btn" onClick={handleConfirmExit}>
+                  End Session
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="portrait-play-container">
+        {/* 상단바 */}
+        <div className="portrait-header">
         <button className="back-button" onClick={handleBackHome}>
           ←Home
         </button>
         <div className="portrait-status-info">
-          <div className={`timer ${timeLeft > 300 ? 'timer-blue' : timeLeft > 120 ? 'timer-yellow' : 'timer-red'}`}>
-            ⏱️ {formatTime(timeLeft)}
+          <div className={`timer ${timeRemaining > 300 ? 'timer-blue' : timeRemaining > 120 ? 'timer-yellow' : 'timer-red'}`}>
+            ⏱️ {formatTime(timeRemaining)}
           </div>
           {isDemo && (
             <div className="demo-badge">
-              🎮 Demo Mode
+              🎮 Demo
             </div>
           )}
           <button className="rotate-button" onClick={handleRotate}>
@@ -175,6 +193,7 @@ export default function PortraitPlay({ onRotate }) {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

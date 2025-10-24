@@ -22,6 +22,7 @@ function Play() {
   // RC카 연결 상태
   const [rcCarConnected, setRcCarConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
   
   // 제어 명령 전송 함수 (VideoStream에서 설정됨)
   const sendCommandRef = useRef(null);
@@ -81,9 +82,20 @@ function Play() {
   };
   
   const handleBackHome = () => {
-    if (confirm('End play session and return to home?')) {
-      navigate('/');
+    setShowExitModal(true);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitModal(false);
+    // 파캐스터/모바일 환경에서 명확한 피드백
+    if (navigator.userAgent.includes('Farcaster') || navigator.userAgent.includes('Mobile')) {
+      alert('✅ Play session ended. Returning to home...');
     }
+    navigate('/');
+  };
+
+  const handleCancelExit = () => {
+    setShowExitModal(false);
   };
 
   const handleRotate = () => {
@@ -95,22 +107,49 @@ function Play() {
     return (
       <>
         <Header />
-        <PortraitPlay onRotate={handleRotate} />
+        <PortraitPlay 
+          onRotate={handleRotate} 
+          isDemo={isDemo}
+          timeRemaining={timeRemaining}
+        />
       </>
     );
   }
 
   return (
-    <div className={`play-container ${isLandscape ? 'landscape' : 'portrait'}`}>
-      {/* Full Screen Video */}
-      <div className="video-fullscreen">
-        <VideoStream 
-          onConnectionChange={handleConnectionChange}
-          isDemo={isDemo}
-          onSendCommand={(fn) => { sendCommandRef.current = fn; }}
-          showControls={!showPortrait}
-        />
-      </div>
+    <>
+      {/* Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className="exit-modal-overlay">
+          <div className="exit-modal">
+            <div className="exit-modal-header">
+              <h3>🚗 End Play Session?</h3>
+            </div>
+            <div className="exit-modal-content">
+              <p>Are you sure you want to end your play session and return to home?</p>
+              <div className="exit-modal-actions">
+                <button className="exit-cancel-btn" onClick={handleCancelExit}>
+                  Cancel
+                </button>
+                <button className="exit-confirm-btn" onClick={handleConfirmExit}>
+                  End Session
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`play-container ${isLandscape ? 'landscape' : 'portrait'}`}>
+        {/* Full Screen Video */}
+        <div className="video-fullscreen">
+          <VideoStream 
+            onConnectionChange={handleConnectionChange}
+            isDemo={isDemo}
+            onSendCommand={(fn) => { sendCommandRef.current = fn; }}
+            showControls={!showPortrait}
+          />
+        </div>
       
       {/* Transparent Overlay Controls */}
       <div className="play-overlay">
@@ -153,7 +192,8 @@ function Play() {
           <p className="notice-sub">Make sure the hardware is powered on and connected to WiFi</p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

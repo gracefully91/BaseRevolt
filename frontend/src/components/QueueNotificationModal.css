@@ -103,7 +103,6 @@
 
 .vehicle-info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.05);
@@ -136,7 +135,6 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 8px;
 }
 
 .timer-icon {
