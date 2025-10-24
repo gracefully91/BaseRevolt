@@ -71,7 +71,7 @@ export default function PortraitPlay({ onRotate }) {
             </div>
           )}
           <button className="rotate-button" onClick={handleRotate}>
-            <img src="../../asset/rotate.png" alt="Rotate" className="rotate-icon" />
+            <img src="/rotate.png" alt="Rotate" className="rotate-icon" />
           </button>
         </div>
       </div>
