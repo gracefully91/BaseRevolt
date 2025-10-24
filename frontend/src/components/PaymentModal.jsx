@@ -297,22 +297,24 @@ export default function PaymentModal({
             Cancel
           </button>
           
-          {/* Skip Payment for Local Testing */}
-          <button
-            className="payment-btn payment-btn-skip"
-            onClick={() => {
-              console.log('🚀 Skipping payment for local testing');
-              onSuccess('0x0000000000000000000000000000000000000000000000000000000000000000');
-            }}
-            style={{
-              background: 'linear-gradient(135deg, #10b981, #059669)',
-              color: 'white',
-              border: 'none',
-              marginRight: '10px'
-            }}
-          >
-            🚀 Skip Payment (Local Test)
-          </button>
+          {/* Skip Payment for Local Testing - Only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              className="payment-btn payment-btn-skip"
+              onClick={() => {
+                console.log('🚀 Skipping payment for local testing');
+                onSuccess('0x0000000000000000000000000000000000000000000000000000000000000000');
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: 'white',
+                border: 'none',
+                marginRight: '10px'
+              }}
+            >
+              🚀 Skip Payment (Local Test)
+            </button>
+          )}
           
           <button
             className="payment-btn payment-btn-pay"

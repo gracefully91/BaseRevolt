@@ -59,6 +59,7 @@ Base Revolt/
 - **Vite** - 빌드 도구
 - **OnchainKit** - Coinbase Web3 라이브러리
 - **Wagmi** - Ethereum React Hooks
+- **React Router** - 페이지 라우팅
 - **Vercel** - 프론트엔드 호스팅 (무료)
 
 ### 블록체인
@@ -171,8 +172,9 @@ Vercel 배포 URL로 접속 (예: `https://your-app.vercel.app`)
 
 ### 4. RC카 조종
 - **키보드**: W/A/S/D 또는 방향키
-- **터치**: 화면 버튼
+- **터치**: 화면 버튼 (가로/세로 모드 지원)
 - **실시간 영상**: ESP32-CAM 카메라 뷰
+- **화면 회전**: 가로/세로 모드 전환 가능
 
 ### 5. 데모 모드
 결제 없이 "데모 체험하기" 클릭 → UI만 체험 가능
@@ -260,6 +262,12 @@ graph TD
 **Q: 영상 안보임**
 - A: RC카가 켜져있는지, WebSocket 연결 확인
 
+**Q: 세로 모드에서 버튼 안보임**
+- A: 화면 회전 버튼(🔄) 클릭하여 세로 모드 전환
+
+**Q: 조종이 안됨**
+- A: WASD 키보드 또는 화면 버튼 사용, WebSocket 연결 상태 확인
+
 ### 서버 관련
 
 **Q: Render 서버 sleep**
@@ -286,6 +294,10 @@ npm install
 npm run dev
 # http://localhost:3000
 ```
+
+**로컬 테스트 모드:**
+- 개발 환경에서 "Skip Payment" 버튼 사용 가능
+- 프로덕션에서는 실제 결제만 가능
 
 **ESP32 테스트:**
 - 로컬 개발 시 `ws_host`를 본인 PC IP로 변경
@@ -333,7 +345,7 @@ MIT License
 
 ## 👤 개발자
 
-1인 개발 프로젝트 - Cursor AI 기반 바이브 코딩 🚀
+1인 개발 프로젝트
 
 ---
 
@@ -341,9 +353,11 @@ MIT License
 
 ### MVP (현재)
 - [x] ESP32-CAM 영상 스트리밍
-- [x] 원격 RC카 조종
+- [x] 원격 RC카 조종 (키보드 + 터치)
+- [x] 가로/세로 모드 지원
 - [x] Base 결제 시스템
 - [x] 10분 타이머
+- [x] 로컬 테스트 모드 (Skip Payment)
 
 ### Phase 2 (계획)
 - [ ] AR 아이템 오버레이
@@ -353,7 +367,6 @@ MIT License
 
 ### Phase 3 (미래)
 - [ ] Builder Mode (샌드박스)
-- [ ] AI 자율주행 미션
 - [ ] C2E (Create-to-Earn)
 - [ ] 글로벌 아레나
 
