@@ -232,7 +232,7 @@ export default function PaymentModal({
             <div className="payment-detail-item vehicle-info">
               <span className="detail-icon">🚗</span>
               <div className="vehicle-detail-content">
-                <span className="detail-text">Selected Vehicle: {selectedVehicle.name}</span>
+                <span className="detail-text">Vehicle: {selectedVehicle.name}</span>
                 <span className="vehicle-status-badge">
                   {selectedVehicle.status === 'available' ? '🟢 Available' : 
                    selectedVehicle.status === 'busy' ? '🔴 In Use' : 
