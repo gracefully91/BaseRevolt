@@ -1,376 +1,503 @@
-# 🚗 Base Revolt MVP
+# 🚗 Base Revolt
 
-> Web3와 현실을 연결하는 실물 연동 AR 게이밍 플랫폼
+> **AR Gaming Platform Connecting Web3 and Reality**
 
-ESP32-CAM 기반 RC카를 웹에서 실시간으로 조종하고, Base 블록체인으로 플레이 티켓을 구매하는 풀스택 Web3 애플리케이션입니다.
+Base Revolt is a full-stack Web3 application that enables real-time remote control of physical RC cars via web browser, powered by Base blockchain for payment processing and ownership verification.
 
----
-
-## 📋 목차
-
-1. [프로젝트 구조](#프로젝트-구조)
-2. [기술 스택](#기술-스택)
-3. [빠른 시작](#빠른-시작)
-4. [배포 가이드](#배포-가이드)
-5. [하드웨어 조립](#하드웨어-조립)
-6. [트러블슈팅](#트러블슈팅)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-blue)](https://base-revolt.vercel.app)
+[![Base Network](https://img.shields.io/badge/Network-Base-blue)](https://base.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-## 📁 프로젝트 구조
+## ✅ Proof of Deployment (Base Testnet)
+
+- **Network:** Base Sepolia (testnet)
+- **Tx Hash:** [`0x8cdf57d3...b62aa8`](https://sepolia.basescan.org/tx/0x8cdf57d3296911edbc9631871f961cc5b2d23213d1db2033af502fcd98b62aa8)
+- **Block:** 32801960 · **Status:** ✅ Success
+- **Timestamp:** 2025-10-25 06:03:28 UTC
+- **From:** `0xd10d3381C1e824143D22350e9149413310F14F22`
+- **To:** `0xF45222d623B0081C658b284e2fCb85d5E7B1d3b3`
+- **Amount:** 5.0 ETH (testnet)
+
+---
+
+## 🎯 Overview
+
+Base Revolt transforms onchain ownership into real-world motion. Users connect their Base wallet, purchase play tickets with crypto, and control actual RC cars with live video streaming - all through a web browser.
+
+### Key Features
+
+- 🎮 **Real-time RC Car Control** - WASD/Arrow keys or touch controls
+- 📹 **Live Video Streaming** - ESP32-CAM 15 FPS video feed
+- 💰 **Base Blockchain Payment** - $0.01 mainnet / $5.00 testnet tickets
+- 🔗 **Farcaster Integration** - Social + Onchain login experience
+- 📱 **Cross-platform** - Desktop, mobile, portrait/landscape modes
+- ⛓️ **Multi-network Support** - Base Mainnet & Base Sepolia testnet
+- 🎨 **Farcaster Mini App** - Integrated as a Frame mini app
+
+---
+
+## 📋 Table of Contents
+
+1. [Architecture](#architecture)
+2. [Technology Stack](#technology-stack)
+3. [Quick Start](#quick-start)
+4. [Deployment Guide](#deployment-guide)
+5. [Features](#features)
+6. [Roadmap](#roadmap)
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐
+│   Web Browser   │ ← User Interface (React + Wagmi + RainbowKit)
+└────────┬────────┘
+         │ WebSocket
+┌────────▼────────┐
+│  Node.js Server │ ← WebSocket Relay (Render.com)
+└────────┬────────┘
+         │ WebSocket
+┌────────▼────────┐
+│   ESP32-CAM     │ ← RC Car Hardware (Real Device)
+│   + L298N       │
+│   + DC Motors   │
+└─────────────────┘
+
+┌─────────────────┐
+│  Base Network   │ ← Payment & Ownership
+│  Smart Contract │
+└─────────────────┘
+```
+
+### Project Structure
 
 ```
 Base Revolt/
-├── hardware/              # ESP32-CAM 펌웨어
-│   ├── esp32_rc_car.ino  # Arduino 코드
+├── hardware/              # ESP32-CAM firmware (Arduino)
+│   ├── esp32_rc_car.ino  # Main firmware code
 │   └── README.md
-├── server/               # WebSocket 서버 (Node.js)
+├── server/               # WebSocket relay server (Node.js)
 │   ├── index.js
 │   ├── package.json
-│   └── render.yaml       # Render 배포 설정
-├── contracts/            # 스마트 컨트랙트 (Solidity)
+│   └── render.yaml       # Render deployment config
+├── contracts/            # Smart contracts (Solidity)
 │   ├── TicketSale.sol
 │   └── README.md
-└── frontend/             # React 웹앱
+└── frontend/             # React web application
     ├── src/
     │   ├── pages/
     │   ├── components/
     │   └── config/
+    ├── public/
+    │   ├── manifest.json  # Farcaster mini app manifest
+    │   └── icon.png
     ├── package.json
     └── vite.config.js
 ```
 
 ---
 
-## 🛠️ 기술 스택
+## 🛠️ Technology Stack
 
-### 하드웨어
-- **ESP32-CAM** - 영상 스트리밍 및 WiFi 통신
-- **L298N** - 모터 드라이버
-- **RC카 섀시** - 2륜 구동
+### Hardware
+- **ESP32-CAM** - Video streaming & WiFi communication
+- **L298N Motor Driver** - DC motor control
+- **RC Car Chassis** - 2-wheel drive platform
+- **DC Motors (2x)** - Left/Right wheel motors
 
-### 백엔드
-- **Node.js** - WebSocket 서버
-- **ws** - WebSocket 라이브러리
-- **Render** - 서버 호스팅 (무료)
+### Backend
+- **Node.js** - WebSocket relay server
+- **ws** - WebSocket library
+- **Render.com** - Free server hosting
 
-### 프론트엔드
-- **React** - UI 프레임워크
-- **Vite** - 빌드 도구
-- **OnchainKit** - Coinbase Web3 라이브러리
-- **Wagmi** - Ethereum React Hooks
-- **React Router** - 페이지 라우팅
-- **Vercel** - 프론트엔드 호스팅 (무료)
+### Frontend
+- **React 19** - UI framework
+- **Vite** - Build tool & dev server
+- **Wagmi** - React hooks for Ethereum
+- **RainbowKit** - Wallet connection UI
+- **@farcaster/auth-kit** - Farcaster social login
+- **Viem** - Ethereum interactions
+- **React Router** - Client-side routing
+- **Vercel** - Frontend hosting
 
-### 블록체인
-- **Solidity** - 스마트 컨트랙트
-- **Base Mainnet** - L2 블록체인
-- **Remix IDE** - 컨트랙트 배포
+### Blockchain
+- **Solidity** - Smart contract language
+- **Base Mainnet** - L2 blockchain (production)
+- **Base Sepolia** - L2 testnet (testing)
+- **Remix IDE** - Contract deployment
 
 ---
 
-## 🚀 빠른 시작
+## 🚀 Quick Start
 
-### 1️⃣ 하드웨어 준비
+### Prerequisites
 
-필요한 부품:
-- ESP32-CAM 모듈
-- L298N 모터 드라이버
-- RC카 섀시 (DC 모터 2개 포함)
-- FTDI USB 어댑터 (펌웨어 업로드용)
-- 배터리 (7-12V)
+- Node.js 18+ & npm
+- Arduino IDE (for ESP32)
+- MetaMask or Coinbase Wallet
+- Base ETH (mainnet or testnet)
 
-회로 연결:
+### 1️⃣ Hardware Setup
+
+**Required Components:**
+- ESP32-CAM module ($10)
+- L298N motor driver ($5)
+- RC car chassis with 2 DC motors ($15)
+- FTDI USB adapter ($5)
+- 7-12V battery pack ($10)
+- Jumper wires ($3)
+
+**Wiring Diagram:**
 ```
-ESP32-CAM          L298N
-GPIO 12    →      IN1
-GPIO 13    →      IN2
-GPIO 14    →      IN3
-GPIO 15    →      IN4
-5V         →      VCC
-GND        →      GND
+ESP32-CAM Pin    →    L298N Pin
+─────────────────────────────────
+GPIO 12          →    IN1 (Left Motor)
+GPIO 13          →    IN2 (Left Motor)
+GPIO 14          →    IN3 (Right Motor)
+GPIO 15          →    IN4 (Right Motor)
+GPIO 2           →    ENA (Left Enable)
+GPIO 4           →    ENB (Right Enable)
+5V               →    5V
+GND              →    GND
 ```
 
-자세한 조립 방법: [hardware/README.md](hardware/README.md)
+Detailed guide: [hardware/README.md](hardware/README.md)
 
-### 2️⃣ 서버 배포 (Render)
+### 2️⃣ Deploy WebSocket Server (Render)
 
-1. **Render 가입**: https://render.com
-2. **New Web Service** 생성
-3. GitHub 리포지토리 연결
-4. 설정:
+1. Sign up at https://render.com
+2. Create **New Web Service**
+3. Connect your GitHub repository
+4. Configure:
    - **Environment**: Node
    - **Root Directory**: `server`
    - **Build Command**: `npm install`
    - **Start Command**: `npm start`
-5. Deploy 클릭
-6. 배포 완료 후 URL 복사 (예: `https://your-app.onrender.com`)
+5. Click **Deploy**
+6. Copy the deployed URL (e.g., `https://base-revolt-server.onrender.com`)
 
-자세한 가이드: [server/README.md](server/README.md)
+### 3️⃣ Deploy Smart Contract (Base)
 
-### 3️⃣ 스마트 컨트랙트 배포 (Base)
+1. Open [Remix IDE](https://remix.ethereum.org)
+2. Copy `contracts/TicketSale.sol`
+3. Compile with Solidity 0.8.20
+4. Switch MetaMask to **Base Network**
+5. Deploy contract
+6. Copy deployed contract address
 
-1. **Remix IDE** 접속: https://remix.ethereum.org
-2. `contracts/TicketSale.sol` 파일 복사
-3. Solidity 컴파일러 0.8.20 선택 후 컴파일
-4. MetaMask에서 **Base Mainnet** 선택
-5. Deploy & Run Transactions에서 배포
-6. 배포된 컨트랙트 주소 복사
+### 4️⃣ Upload ESP32 Firmware
 
-자세한 가이드: [contracts/README.md](contracts/README.md)
-
-### 4️⃣ ESP32 펌웨어 업로드
-
-1. **Arduino IDE** 설치
-2. ESP32 보드 매니저 설치
-3. 필요한 라이브러리 설치:
+1. Install **Arduino IDE**
+2. Install ESP32 board support
+3. Install required libraries:
    - WebSockets by Markus Sattler
    - ArduinoJson by Benoit Blanchon
-4. `hardware/esp32_rc_car.ino` 파일 열기
-5. 코드 수정:
+4. Open `hardware/esp32_rc_car.ino`
+5. Update WiFi & WebSocket settings:
    ```cpp
    const char* ssid = "YOUR_WIFI_SSID";
    const char* password = "YOUR_WIFI_PASSWORD";
-   const char* ws_host = "your-app.onrender.com"; // Render URL
+   const char* ws_host = "base-revolt-server.onrender.com";
    ```
-6. FTDI로 ESP32 연결 후 업로드
+6. Connect ESP32 via FTDI and upload
 
-자세한 가이드: [hardware/README.md](hardware/README.md)
+### 5️⃣ Deploy Frontend (Vercel)
 
-### 5️⃣ 프론트엔드 배포 (Vercel)
-
-1. **OnchainKit API Key** 발급: https://portal.cdp.coinbase.com/
-2. `frontend/src/config/contracts.js` 수정:
+1. Update `frontend/src/config/contracts.js`:
    ```javascript
-   export const TICKET_CONTRACT_ADDRESS = "0x..."; // 배포한 컨트랙트 주소
-   export const WS_SERVER_URL = "wss://your-app.onrender.com"; // Render URL
+   export const TICKET_CONTRACT_ADDRESS = "0x..."; // Your contract
+   export const WS_SERVER_URL = "wss://base-revolt-server.onrender.com";
    ```
-3. **Vercel** 가입: https://vercel.com
-4. GitHub 리포지토리 Import
-5. 설정:
+2. Sign up at https://vercel.com
+3. Import GitHub repository
+4. Configure:
    - **Framework**: Vite
    - **Root Directory**: `frontend`
-6. 환경 변수 추가:
-   - `VITE_ONCHAINKIT_API_KEY`: OnchainKit API Key
-   - `VITE_WS_SERVER_URL`: `wss://your-app.onrender.com`
-7. Deploy 클릭
-
-자세한 가이드: [frontend/README.md](frontend/README.md)
+5. Add environment variable:
+   - `VITE_WS_SERVER_URL`: `wss://base-revolt-server.onrender.com`
+6. Click **Deploy**
 
 ---
 
-## 🎮 사용 방법
+## 🎮 How to Use
 
-### 1. 웹 앱 접속
-Vercel 배포 URL로 접속 (예: `https://your-app.vercel.app`)
+### 1. Open Web App
+Visit your Vercel deployment URL (e.g., `https://base-revolt.vercel.app`)
 
-### 2. 지갑 연결
-"Connect Wallet" 버튼 클릭 → Coinbase Wallet 연결
+### 2. Sign In with Farcaster (Optional)
+Click **"Sign in with Farcaster"** for social login integration
 
-### 3. 티켓 구매
-"티켓 구매하기" 버튼 클릭 → $0.5 결제 (10분 플레이)
+### 3. Connect Wallet
+Click **"Connect Wallet"** → Connect with RainbowKit
 
-### 4. RC카 조종
-- **키보드**: W/A/S/D 또는 방향키
-- **터치**: 화면 버튼 (가로/세로 모드 지원)
-- **실시간 영상**: ESP32-CAM 카메라 뷰
-- **화면 회전**: 가로/세로 모드 전환 가능
+### 4. Select Network
+- **Base Mainnet**: Real payments ($0.01 per ticket)
+- **Base Sepolia**: Test payments ($5.00 testnet ETH)
 
-### 5. 데모 모드
-결제 없이 "데모 체험하기" 클릭 → UI만 체험 가능
+### 5. Purchase Ticket
+Click **"Buy Ticket"** → Confirm payment → 10 minutes of play time
 
----
+### 6. Control RC Car
+- **Keyboard**: W/A/S/D or Arrow keys
+- **Touch**: On-screen buttons (mobile)
+- **Live Video**: Real-time camera feed from ESP32-CAM
+- **Screen Rotation**: Toggle portrait/landscape modes
 
-## 📦 배포 가이드
-
-### 전체 배포 순서
-
-```mermaid
-graph TD
-    A[1. Render: WebSocket 서버 배포] --> B[2. Remix: 스마트 컨트랙트 배포]
-    B --> C[3. Arduino: ESP32 펌웨어 업로드]
-    C --> D[4. Vercel: 프론트엔드 배포]
-    D --> E[✅ 완료!]
-```
-
-### 배포 체크리스트
-
-- [ ] Render 서버 배포 완료
-- [ ] Render URL 복사 (WebSocket 주소)
-- [ ] Base 메인넷에 스마트 컨트랙트 배포
-- [ ] 컨트랙트 주소 복사
-- [ ] ESP32 펌웨어에 WiFi + WebSocket URL 입력
-- [ ] ESP32에 펌웨어 업로드
-- [ ] OnchainKit API Key 발급
-- [ ] 프론트엔드 설정 파일 업데이트
-- [ ] Vercel 배포 + 환경 변수 설정
-- [ ] 전체 시스템 테스트
+### 7. Demo Mode
+Click **"Try Demo"** to explore UI without payment (hardware connection required for actual control)
 
 ---
 
-## 🔧 하드웨어 조립
+## 🌟 Features
 
-### 필요한 부품
+### Web3 Integration
 
-| 부품 | 수량 | 예상 가격 |
-|------|------|----------|
-| ESP32-CAM | 1 | $10 |
-| L298N 모터 드라이버 | 1 | $5 |
-| RC카 섀시 | 1 | $15 |
-| FTDI 어댑터 | 1 | $5 |
-| 배터리 | 1 | $10 |
-| 점퍼 케이블 | 1세트 | $3 |
-| **총합** | | **~$48** |
+#### Multi-Network Support
+- **Base Mainnet** - Production environment ($0.01 tickets)
+- **Base Sepolia** - Testnet for development ($5.00 test tickets)
+- Automatic network detection and price adjustment
+- Dynamic ETH/USD conversion with real-time pricing
 
-### 회로도
+#### Wallet Integration
+- RainbowKit for seamless wallet connections
+- Support for MetaMask, Coinbase Wallet, WalletConnect
+- Smart wallet compatibility
+- Network switching prompts
 
-```
-         ESP32-CAM
-            |
-            | (WiFi)
-            |
-         L298N
-         /    \
-    Motor1  Motor2
-```
+#### Farcaster Social Login
+- Sign in with Farcaster account
+- Social + Onchain identity integration
+- QR code authentication via Warpcast
+- 7-day session persistence
 
-자세한 배선도: [hardware/README.md](hardware/README.md)
+### Hardware Control
 
----
+#### Real-time Communication
+- WebSocket for low-latency commands (<50ms)
+- Binary video streaming (JPEG frames)
+- 15 FPS live camera feed
+- Bidirectional control signals
 
-## 🐛 트러블슈팅
+#### RC Car Control
+- **Forward/Backward**: Dual motor synchronization
+- **Left/Right**: Differential wheel rotation
+- **Stop**: Emergency brake on all motors
+- **Speed Control**: PWM motor speed regulation (80/255)
 
-### ESP32 관련
+### User Experience
 
-**Q: 카메라 초기화 실패**
-- A: 5V 전원 확인 (3.3V는 부족)
+#### Cross-Platform UI
+- **Desktop**: Keyboard controls (WASD/Arrows)
+- **Mobile**: Touch controls with responsive buttons
+- **Portrait Mode**: Vertical layout optimization
+- **Landscape Mode**: Full-width video display
 
-**Q: WiFi 연결 안됨**
-- A: 2.4GHz WiFi만 지원 (5GHz 불가)
+#### Real-time Status
+- Connection indicators (WebSocket, RC Car)
+- 10-minute play timer with MM:SS display
+- FPS counter for video stream quality
+- Transaction confirmation with block explorer links
 
-**Q: WebSocket 연결 실패**
-- A: Render URL이 `wss://`로 시작하는지 확인
-
-### 프론트엔드 관련
-
-**Q: 지갑 연결 안됨**
-- A: OnchainKit API Key 확인, Base 네트워크 선택
-
-**Q: 티켓 구매 실패**
-- A: 컨트랙트 주소 확인, Base ETH 잔액 확인
-
-**Q: 영상 안보임**
-- A: RC카가 켜져있는지, WebSocket 연결 확인
-
-**Q: 세로 모드에서 버튼 안보임**
-- A: 화면 회전 버튼(🔄) 클릭하여 세로 모드 전환
-
-**Q: 조종이 안됨**
-- A: WASD 키보드 또는 화면 버튼 사용, WebSocket 연결 상태 확인
-
-### 서버 관련
-
-**Q: Render 서버 sleep**
-- A: 무료 플랜은 15분 비활성 시 sleep → 첫 연결 시 재시작 대기
+#### Farcaster Mini App
+- Integrated as Farcaster Frame
+- Manifest at `/manifest.json`
+- Custom splash screen and icon
+- Deep linking support
 
 ---
 
-## 💡 개발 팁
+## 🗺️ Roadmap
 
-### 로컬 개발
+### ✅ MVP (Current - Q4 2024)
+- [x] ESP32-CAM video streaming (15 FPS)
+- [x] Remote RC car control (keyboard + touch)
+- [x] Portrait/landscape mode support
+- [x] Base blockchain payment system
+- [x] 10-minute play timer
+- [x] Multi-network support (Mainnet + Testnet)
+- [x] Farcaster social login
+- [x] Farcaster Mini App integration
+- [x] Local demo mode
 
-**서버 로컬 실행:**
+### 🚧 Phase 2 (Q1 2025)
+- [ ] AR overlay items in video feed
+- [ ] Multiple RC car fleet management
+- [ ] Vehicle selection modal with status indicators
+- [ ] Queue system for busy vehicles
+- [ ] Enhanced video quality (30 FPS, 720p)
+
+### 🔮 Phase 3 (Q2 2025)
+- [ ] Multiplayer racing mode
+- [ ] NFT ownership for RC cars
+- [ ] Leaderboard & achievements
+- [ ] Custom tracks & obstacles
+
+### 🌟 Phase 4 (Q3 2025+)
+- [ ] Builder mode (create custom tracks)
+- [ ] C2E (Create-to-Earn) rewards
+- [ ] Global arena competitions
+- [ ] Mobile AR integration (ARKit/ARCore)
+
+---
+
+## 📊 Testnet Transactions
+
+All testnet transactions are verifiable on Base Sepolia:
+
+- **Latest Test Tx**: [`0x8cdf57d3296911edbc9631871f961cc5b2d23213d1db2033af502fcd98b62aa8`](https://sepolia.basescan.org/tx/0x8cdf57d3296911edbc9631871f961cc5b2d23213d1db2033af502fcd98b62aa8)
+- **Test Payment Amount**: 5.0 ETH (testnet)
+- **Recipient Wallet**: `0xF45222d623B0081C658b284e2fCb85d5E7B1d3b3`
+
+---
+
+## 🐛 Troubleshooting
+
+### Hardware Issues
+
+**Q: Camera initialization failed**
+- Check 5V power supply (3.3V insufficient)
+- Verify camera cable connection
+- Try power cycle
+
+**Q: WiFi connection failed**
+- Use 2.4GHz WiFi only (5GHz not supported)
+- Check SSID/password in firmware
+- Verify router settings
+
+**Q: WebSocket connection timeout**
+- Confirm Render URL uses `wss://`
+- Check server deployment status
+- Verify firewall settings
+
+### Frontend Issues
+
+**Q: Wallet connection rejected**
+- Ensure Base network is added to wallet
+- Check network RPC settings
+- Try different wallet provider
+
+**Q: Payment transaction failed**
+- Verify sufficient Base ETH balance
+- Check contract address in config
+- Confirm correct network selected
+
+**Q: Video stream not displaying**
+- Verify RC car is powered on
+- Check WebSocket connection status
+- Confirm ESP32 uploaded successfully
+
+**Q: Farcaster login not working**
+- Check Optimism RPC configuration
+- Verify Farcaster account is active
+- Try clearing browser cache
+
+### Server Issues
+
+**Q: Render server sleeping**
+- Free tier sleeps after 15 minutes inactivity
+- First connection wakes server (30s delay)
+- Consider upgrading for 24/7 uptime
+
+---
+
+## 💡 Development Tips
+
+### Local Development
+
+**Run server locally:**
 ```bash
 cd server
 npm install
 npm start
-# ws://localhost:8080
+# Server running on ws://localhost:8080
 ```
 
-**프론트엔드 로컬 실행:**
+**Run frontend locally:**
 ```bash
 cd frontend
 npm install
 npm run dev
-# http://localhost:3000
+# App running on http://localhost:3000
 ```
 
-**로컬 테스트 모드:**
-- 개발 환경에서 "Skip Payment" 버튼 사용 가능
-- 프로덕션에서는 실제 결제만 가능
+**Test Mode:**
+- Development environment shows "Skip Payment" button
+- Production requires actual blockchain payment
 
-**ESP32 테스트:**
-- 로컬 개발 시 `ws_host`를 본인 PC IP로 변경
-- 예: `192.168.1.100`
+**ESP32 Local Testing:**
+- Update `ws_host` to your local IP
+- Example: `192.168.1.100:8080`
+- Disable SSL for local connections
 
-### 비용 절약
+### Cost Optimization
 
-- **Render 무료티어**: 750시간/월 (충분함)
-- **Vercel 무료티어**: 100GB 대역폭/월
-- **Base 가스비**: 트랜잭션당 ~$0.01
+- **Render Free Tier**: 750 hours/month (sufficient for MVP)
+- **Vercel Free Tier**: 100GB bandwidth/month
+- **Base Gas Fees**: ~$0.001 per transaction
+- **Total Monthly Cost**: ~$0 (free tiers + minimal gas)
 
 ---
 
-## 📚 참고 자료
+## 📚 Resources
 
-### 공식 문서
-- [ESP32-CAM 가이드](https://randomnerdtutorials.com/esp32-cam-video-streaming-face-recognition-arduino-ide/)
-- [OnchainKit Docs](https://onchainkit.xyz/)
-- [Base Network](https://base.org/)
+### Official Documentation
+- [ESP32-CAM Guide](https://randomnerdtutorials.com/esp32-cam-video-streaming-face-recognition-arduino-ide/)
+- [Base Network Docs](https://docs.base.org/)
 - [Wagmi Documentation](https://wagmi.sh/)
+- [RainbowKit Docs](https://www.rainbowkit.com/)
+- [Farcaster Docs](https://docs.farcaster.xyz/)
 
-### 커뮤니티
-- [Discord](#) (준비 중)
-- [GitHub Issues](https://github.com/your-repo/issues)
-
----
-
-## 📄 라이센스
-
-MIT License
+### Community
+- [Base Discord](https://discord.gg/buildonbase)
+- [GitHub Issues](https://github.com/gracefully91/BaseRevolt/issues)
 
 ---
 
-## 🤝 기여
+## 📄 License
 
-기여는 언제나 환영합니다!
+MIT License - see [LICENSE](LICENSE) file for details
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
-## 👤 개발자
+## 👤 Author
 
-1인 개발 프로젝트
-
----
-
-## 🎯 로드맵
-
-### MVP (현재)
-- [x] ESP32-CAM 영상 스트리밍
-- [x] 원격 RC카 조종 (키보드 + 터치)
-- [x] 가로/세로 모드 지원
-- [x] Base 결제 시스템
-- [x] 10분 타이머
-- [x] 로컬 테스트 모드 (Skip Payment)
-
-### Phase 2 (계획)
-- [ ] AR 아이템 오버레이
-- [ ] 멀티플레이어 레이싱
-- [ ] NFT 소유권 증명
-- [ ] 리더보드
-
-### Phase 3 (미래)
-- [ ] Builder Mode (샌드박스)
-- [ ] C2E (Create-to-Earn)
-- [ ] 글로벌 아레나
+**Base Revolt Team**
+- Solo developer project
+- Built for Base Onchain Builder Hackathon
+- Farcaster FID: 1107308
 
 ---
 
-**🚗 Let's Revolt! 🚙**
+## 🏆 Hackathon Submission
 
+### Category
+**Base Track** - Onchain Builder Hackathon
+
+### Judging Criteria
+- ✅ **Proof of Deployment**: Verified testnet transaction
+- ✅ **Innovation**: Real-world hardware + Web3 integration
+- ✅ **Technical Execution**: Full-stack implementation
+- ✅ **Social + Onchain**: Farcaster login integration
+- ✅ **Multi-network**: Mainnet & Testnet support
+- ✅ **User Experience**: Cross-platform responsive design
+
+---
+
+**🚗 Let's Revolt! Drive the future of Web3 gaming. 🚙**
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/gracefully91/BaseRevolt)
