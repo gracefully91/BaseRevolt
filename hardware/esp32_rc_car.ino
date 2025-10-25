@@ -5,7 +5,7 @@
  * - WiFi 연결
  * - WebSocket 클라이언트로 서버 연결
  * - 카메라 JPEG 스트리밍
- * - L298N 모터 제어 (forward, backward, left, right, stop)
+ * - L298N 모터 제어 (양쪽 바퀴 각각 제어)
  * 
  * 회로:
  * - GPIO 12, 13: 좌측 모터 (IN1, IN2)
@@ -19,8 +19,8 @@
 
 // ==================== 설정 ====================
 // WiFi 설정
-const char* ssid = "KT_WiFi_90EA";
-const char* password = "b67m03k763";
+const char* ssid = "cagongzok_2.4G";
+const char* password = "cagong567@@";
 
 // WebSocket 서버 설정 (Render)
 const char* ws_host = "base-revolt-server.onrender.com";
@@ -28,14 +28,21 @@ const int ws_port = 443;
 const char* ws_path = "/";
 const bool ws_ssl = true;
 
-// 모터 제어 핀 (AI-Thinker ESP32-CAM 기준)
-// ESP32-CAM에서 사용 가능한 GPIO: 2, 4, 12, 13, 14, 15
-#define MOTOR_LEFT_IN1  2    // IN1 (GPIO 2)
-#define MOTOR_LEFT_IN2  4    // IN2 (GPIO 4) 
-#define MOTOR_RIGHT_IN3 12   // IN3 (GPIO 12)
-#define MOTOR_RIGHT_IN4 13   // IN4 (GPIO 13)
-#define MOTOR_ENA       14   // ENA (GPIO 14)
-#define MOTOR_ENB       15   // ENB (GPIO 15)
+// 모터 제어 핀 (양쪽 바퀴 각각 제어)
+#define MOTOR_LEFT_IN1  12   // 왼쪽 모터 IN1
+#define MOTOR_LEFT_IN2  13   // 왼쪽 모터 IN2
+#define MOTOR_RIGHT_IN3 14   // 오른쪽 모터 IN3
+#define MOTOR_RIGHT_IN4 15   // 오른쪽 모터 IN4
+#define MOTOR_ENA       2    // 왼쪽 모터 Enable (ENA)
+#define MOTOR_ENB       4    // 오른쪽 모터 Enable (ENB)
+
+// 디버깅용 핀 상태 확인
+void checkPinStates() {
+  Serial.printf("Pin States - IN1:%d, IN2:%d, IN3:%d, IN4:%d, ENA:%d, ENB:%d\n",
+                digitalRead(MOTOR_LEFT_IN1), digitalRead(MOTOR_LEFT_IN2),
+                digitalRead(MOTOR_RIGHT_IN3), digitalRead(MOTOR_RIGHT_IN4),
+                digitalRead(MOTOR_ENA), digitalRead(MOTOR_ENB));
+}
 
 // AI-Thinker 모델 카메라 핀 정의
 #define PWDN_GPIO_NUM     32
@@ -240,31 +247,7 @@ void setupCamera() {
     return;
   }
   
-  // 카메라 설정 (상하반전)
-  sensor_t * s = esp_camera_sensor_get();
-  if (s != NULL) {
-    Serial.printf("Camera sensor PID: 0x%04x\n", s->id.PID);
-    
-    // 모든 카메라 모델에 대해 상하반전 적용 (임시 비활성화)
-    if (s->set_vflip != NULL) {
-      s->set_vflip(s, 0);       // 상하반전 (0: 정상, 1: 반전) - 임시로 정상
-      Serial.println("Vertical flip disabled (normal view)");
-    }
-    if (s->set_hmirror != NULL) {
-      s->set_hmirror(s, 0);     // 좌우반전 (0: 정상, 1: 반전) - 임시로 정상
-      Serial.println("Horizontal mirror disabled (normal view)");
-    }
-    if (s->set_brightness != NULL) {
-      s->set_brightness(s, 0);  // 밝기 조정 (-2 to 2)
-    }
-    if (s->set_contrast != NULL) {
-      s->set_contrast(s, 0);    // 대비 조정 (-2 to 2)
-    }
-  } else {
-    Serial.println("Warning: Camera sensor not found");
-  }
-  
-  Serial.println("Camera initialized successfully with flip settings");
+  Serial.println("Camera initialized successfully");
 }
 
 // ==================== 카메라 프레임 전송 ====================
@@ -290,9 +273,9 @@ void setupMotors() {
   pinMode(MOTOR_ENA, OUTPUT);
   pinMode(MOTOR_ENB, OUTPUT);
   
-  // Enable motors
-  digitalWrite(MOTOR_ENA, HIGH);
-  digitalWrite(MOTOR_ENB, HIGH);
+  // Enable motors (초기에는 정지)
+  analogWrite(MOTOR_ENA, 0);  // 초기 정지
+  analogWrite(MOTOR_ENB, 0);
   
   motorStop();
   
@@ -316,40 +299,97 @@ void handleMotorCommand(const char* command) {
   }
 }
 
+// ==================== 모터 제어 로직 ====================
 void motorStop() {
+  // 모든 모터 정지
   digitalWrite(MOTOR_LEFT_IN1, LOW);
   digitalWrite(MOTOR_LEFT_IN2, LOW);
   digitalWrite(MOTOR_RIGHT_IN3, LOW);
   digitalWrite(MOTOR_RIGHT_IN4, LOW);
+  
+  // Enable 핀도 0으로 설정 (완전 정지)
+  analogWrite(MOTOR_ENA, 0);
+  analogWrite(MOTOR_ENB, 0);
+  
+  Serial.println("STOP: All motors stopped - ENA=0, ENB=0");
 }
 
 void motorForward() {
+  // 전진: 양쪽 모두 전진
+  // 왼쪽 모터: IN1=HIGH, IN2=LOW (전진)
+  // 오른쪽 모터: IN3=HIGH, IN4=LOW (전진)
+  
+  // 먼저 모든 핀을 LOW로 설정
+  digitalWrite(MOTOR_LEFT_IN1, LOW);
+  digitalWrite(MOTOR_LEFT_IN2, LOW);
+  digitalWrite(MOTOR_RIGHT_IN3, LOW);
+  digitalWrite(MOTOR_RIGHT_IN4, LOW);
+  delay(10); // 짧은 지연
+  
+  // 전진 설정
   digitalWrite(MOTOR_LEFT_IN1, HIGH);
   digitalWrite(MOTOR_LEFT_IN2, LOW);
   digitalWrite(MOTOR_RIGHT_IN3, HIGH);
   digitalWrite(MOTOR_RIGHT_IN4, LOW);
+  
+  // Enable 모터들 (속도 80)
+  analogWrite(MOTOR_ENA, 80);
+  analogWrite(MOTOR_ENB, 80);
+  
+  Serial.println("FORWARD: Left(IN1=HIGH,IN2=LOW) Right(IN3=HIGH,IN4=LOW)");
+  checkPinStates();
 }
 
 void motorBackward() {
+  // 후진: 양쪽 모두 후진
+  // 왼쪽 모터: IN1=LOW, IN2=HIGH (후진)
+  // 오른쪽 모터: IN3=LOW, IN4=HIGH (후진)
+  
+  // 먼저 모든 핀을 LOW로 설정
+  digitalWrite(MOTOR_LEFT_IN1, LOW);
+  digitalWrite(MOTOR_LEFT_IN2, LOW);
+  digitalWrite(MOTOR_RIGHT_IN3, LOW);
+  digitalWrite(MOTOR_RIGHT_IN4, LOW);
+  delay(10); // 짧은 지연
+  
+  // 후진 설정
   digitalWrite(MOTOR_LEFT_IN1, LOW);
   digitalWrite(MOTOR_LEFT_IN2, HIGH);
   digitalWrite(MOTOR_RIGHT_IN3, LOW);
   digitalWrite(MOTOR_RIGHT_IN4, HIGH);
+  
+  // Enable 모터들 (속도 80)
+  analogWrite(MOTOR_ENA, 80);
+  analogWrite(MOTOR_ENB, 80);
+  
+  Serial.println("BACKWARD: Left(IN1=LOW,IN2=HIGH) Right(IN3=LOW,IN4=HIGH)");
+  checkPinStates();
 }
 
 void motorLeft() {
-  // 좌측 모터 후진, 우측 모터 전진 (제자리 회전)
+  // 좌회전: 왼쪽 후진, 오른쪽 전진
+  // 왼쪽 모터: IN1=LOW, IN2=HIGH (후진)
+  // 오른쪽 모터: IN3=HIGH, IN4=LOW (전진)
   digitalWrite(MOTOR_LEFT_IN1, LOW);
   digitalWrite(MOTOR_LEFT_IN2, HIGH);
   digitalWrite(MOTOR_RIGHT_IN3, HIGH);
   digitalWrite(MOTOR_RIGHT_IN4, LOW);
+  
+  // Enable 모터들 (속도 80)
+  analogWrite(MOTOR_ENA, 80);
+  analogWrite(MOTOR_ENB, 80);
 }
 
 void motorRight() {
-  // 좌측 모터 전진, 우측 모터 후진 (제자리 회전)
+  // 우회전: 왼쪽 전진, 오른쪽 후진
+  // 왼쪽 모터: IN1=HIGH, IN2=LOW (전진)
+  // 오른쪽 모터: IN3=LOW, IN4=HIGH (후진)
   digitalWrite(MOTOR_LEFT_IN1, HIGH);
   digitalWrite(MOTOR_LEFT_IN2, LOW);
   digitalWrite(MOTOR_RIGHT_IN3, LOW);
   digitalWrite(MOTOR_RIGHT_IN4, HIGH);
+  
+  // Enable 모터들 (속도 80)
+  analogWrite(MOTOR_ENA, 80);
+  analogWrite(MOTOR_ENB, 80);
 }
-

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useSendTransaction, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { parseEther } from 'viem';
-import { base } from 'wagmi/chains';
+import { base, baseSepolia } from 'wagmi/chains';
 import './PaymentModal.css';
 
 export default function PaymentModal({ 
@@ -25,7 +25,7 @@ export default function PaymentModal({
   const [priceSource, setPriceSource] = useState('CoinGecko');
   const [lastUpdate, setLastUpdate] = useState(null);
   const [countdown, setCountdown] = useState(30);
-  const [usdAmount, setUsdAmount] = useState(0.01); // $0.01
+  const [usdAmount, setUsdAmount] = useState(0.01); // $0.01 for mainnet, $5 for testnet
 
   // Fetch ETH price from multiple sources
   const fetchEthPrice = async () => {
@@ -151,8 +151,9 @@ export default function PaymentModal({
       return;
     }
 
-    if (chain?.id !== base.id) {
-      setError('Please switch to Base network');
+    // 현재 연결된 네트워크가 Base 또는 Base Sepolia인지 확인
+    if (chain?.id !== base.id && chain?.id !== baseSepolia.id) {
+      setError('Please switch to Base network or Base Sepolia testnet');
       setStatus('error');
       return;
     }
@@ -177,9 +178,10 @@ export default function PaymentModal({
   if (!open) return null;
 
   // Calculate ETH amount dynamically based on actual exchange rate
-  const usdTargetAmount = 0.01; // $0.01 target
-  const calculatedEthAmount = ethPrice ? (usdTargetAmount / ethPrice).toFixed(8) : '0.00000351';
-  const calculatedUsd = ethPrice ? usdTargetAmount.toFixed(4) : '0.01';
+  const isTestnet = chain?.id === baseSepolia.id;
+  const usdTargetAmount = isTestnet ? 5.00 : 0.01; // $5 for testnet, $0.01 for mainnet
+  const calculatedEthAmount = ethPrice ? (usdTargetAmount / ethPrice).toFixed(8) : (isTestnet ? '0.001' : '0.00000351');
+  const calculatedUsd = ethPrice ? usdTargetAmount.toFixed(2) : (isTestnet ? '5.00' : '0.01');
   
   // Actual ETH amount to pay (converted to wei)
   const actualEthWei = ethPrice ? parseEther(calculatedEthAmount.toString()) : ticketPrice;
@@ -207,12 +209,13 @@ export default function PaymentModal({
           {ethPrice && (
             <div className="payment-info-note">
               <div>Current ETH Price: ${ethPrice.toLocaleString()}</div>
-              <div>Price Source: {priceSource}</div>
-              {lastUpdate && (
-                <div>
-                  Last Update: {new Date(lastUpdate).toLocaleTimeString()}
-                </div>
-              )}
+              <div className="price-source-row">
+                <span>Price Source: {priceSource}</span>
+                <span className="separator">•</span>
+                {lastUpdate && (
+                  <span>Last Update: {new Date(lastUpdate).toLocaleTimeString()}</span>
+                )}
+              </div>
               <div className="countdown-container">
                 <span className="countdown-label">Next refresh in:</span>
                 <span className={`countdown-timer ${countdown <= 5 ? 'warning' : ''}`}>
@@ -247,7 +250,9 @@ export default function PaymentModal({
           </div>
           <div className="payment-detail-item">
             <span className="detail-icon">🔗</span>
-            <span className="detail-text">Network: Base Mainnet</span>
+            <span className="detail-text">
+              Network: {isTestnet ? 'Base Sepolia (Testnet)' : 'Base Mainnet'}
+            </span>
           </div>
           <div className="payment-detail-item">
             <span className="detail-icon">👤</span>
@@ -260,13 +265,19 @@ export default function PaymentModal({
           <div className="tx-hash-box">
             <div className="tx-hash-label">Transaction Hash:</div>
             <a 
-              href={`https://basescan.org/tx/${hash}`} 
+              href={isTestnet 
+                ? `https://sepolia.basescan.org/tx/${hash}` 
+                : `https://basescan.org/tx/${hash}`
+              } 
               target="_blank" 
               rel="noopener noreferrer"
               className="tx-hash-link"
             >
               {hash.slice(0, 10)}...{hash.slice(-8)}
             </a>
+            <div className="tx-network-info">
+              View on {isTestnet ? 'BaseScan Testnet' : 'BaseScan'}
+            </div>
           </div>
         )}
 

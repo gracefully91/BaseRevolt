@@ -3,12 +3,12 @@
 }
 
 .connect-button {
-  padding: 10px 24px;
+  padding: 6px 16px;
   background: linear-gradient(135deg, #0052ff 0%, #0041cc 100%);
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -77,10 +77,10 @@
 .wallet-connected-container {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 4px 12px;
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 

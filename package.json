@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@farcaster/auth-kit": "^0.8.1"
+  }
+}

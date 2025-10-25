@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, useChainId } from 'wagmi';
+import { useProfile, SignInButton } from '@farcaster/auth-kit';
+import { base, baseSepolia } from 'wagmi/chains';
 import { TICKET_CONTRACT_ADDRESS, TICKET_CONTRACT_ABI } from '../config/contracts';
 import PaymentModal from '../components/PaymentModal';
 import VehicleSelectionModal from '../components/VehicleSelectionModal';
@@ -12,6 +14,8 @@ import './Home.css';
 function Home() {
   const navigate = useNavigate();
   const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const { isAuthenticated, profile } = useProfile();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showVehicleSelection, setShowVehicleSelection] = useState(false);
   const [showWaitingQueue, setShowWaitingQueue] = useState(false);
@@ -27,6 +31,22 @@ function Home() {
     abi: TICKET_CONTRACT_ABI,
     functionName: 'ticketPrice',
   });
+
+  // 네트워크에 따른 가격 계산
+  const getTicketPrice = () => {
+    if (chainId === baseSepolia.id) {
+      return { amount: '$5.00', isTestnet: true };
+    } else if (chainId === base.id) {
+      return { amount: '$0.01', isTestnet: false };
+    } else {
+      return { amount: '$0.01', isTestnet: false }; // 기본값
+    }
+  };
+
+  const priceInfo = getTicketPrice();
+
+  // 디버깅: Farcaster 로그인 상태 확인
+  console.log('Farcaster Auth:', { isAuthenticated, profile });
 
   const handleBuyTicket = () => {
     if (!isConnected) {
@@ -116,7 +136,10 @@ function Home() {
       <div className="home-content">
         <div className="hero-section">
           <h1 className="title">🚗 Base Revolt</h1>
-          <p className="subtitle">AR Gaming Platform Connecting Web3 and Reality</p>
+          <p className="subtitle">
+            <span className="desktop-only">AR Gaming Platform Connecting Web3 and Reality</span>
+            <span className="mobile-only">AR Gaming Platform<br />Connecting Web3 and Reality</span>
+          </p>
           <p className="description">
             Control real RC cars remotely from the web,<br />
             Prove ownership with Base blockchain
@@ -128,17 +151,28 @@ function Home() {
             <div className="ticket-card">
               <h2>🎫 Play Ticket</h2>
               <div className="price">
-                <span className="amount">$0.01</span>
+                <span className="amount">{priceInfo.amount}</span>
                 <span className="duration">/ 10 min</span>
-                <span className="test-badge">TEST</span>
+                {priceInfo.isTestnet && <span className="test-badge testnet">TESTNET</span>}
+                {!priceInfo.isTestnet && <span className="test-badge mainnet">MAINNET</span>}
               </div>
               
-              <button 
-                className="buy-button"
-                onClick={handleBuyTicket}
-              >
-                💳 Buy Ticket
-              </button>
+              <div className="auth-button-container">
+                {!isAuthenticated ? (
+                  <SignInButton 
+                    onSuccess={(res) => {
+                      console.log('Farcaster login success:', res);
+                    }}
+                  />
+                ) : (
+                  <button 
+                    className="buy-button"
+                    onClick={handleBuyTicket}
+                  >
+                    💳 Buy Ticket
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="info-section">

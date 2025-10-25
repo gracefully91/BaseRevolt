@@ -310,7 +310,7 @@
 
 .selection-indicator {
   position: absolute;
-  top: 8px;
+  bottom: 8px;
   right: 8px;
   font-size: 18px;
   color: #22c55e;

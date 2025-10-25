@@ -49,6 +49,71 @@
   text-align: center;
 }
 
+/* Network Info Styles */
+.network-info-box {
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  border: 1px solid #d1e7ff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.network-info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.network-info-icon {
+  font-size: 24px;
+}
+
+.network-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.network-info-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.network-info-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.testnet-info {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #d1e7ff;
+}
+
+.testnet-warning {
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  color: #ef6c00;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.testnet-warning a {
+  color: #ef6c00;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.testnet-warning a:hover {
+  color: #d84315;
+}
+
 .payment-info-box {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 14px;
@@ -60,6 +125,7 @@
 .payment-info-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 6px;
 }
 
@@ -87,6 +153,19 @@
   opacity: 0.8;
   text-align: center;
   line-height: 1.2;
+}
+
+.price-source-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.separator {
+  opacity: 0.6;
+  font-weight: bold;
 }
 
 .countdown-container {
@@ -231,6 +310,14 @@
 
 .tx-hash-link:hover {
   text-decoration: underline;
+}
+
+.tx-network-info {
+  font-size: 11px;
+  color: #1976d2;
+  margin-top: 4px;
+  text-align: center;
+  font-weight: 500;
 }
 
 .payment-error {
