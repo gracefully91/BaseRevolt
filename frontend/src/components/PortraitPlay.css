@@ -465,16 +465,28 @@
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(245, 125, 40, 0.837);
+  background: rgba(245, 125, 40, 0.6);
   color: #ffffff;
   padding: 15px 20px;
   border-radius: 12px;
-  border: 1px solid rgba(245, 125, 40, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.15);
   font-size: 0.9rem;
   font-weight: 600;
   z-index: 1000;
   max-width: 90%;
   text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.portrait-connection-notice:hover {
+  background: rgba(245, 125, 40, 0.8);
+  transform: translateX(-50%) scale(1.05);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.portrait-connection-notice:active {
+  transform: translateX(-50%) scale(0.95);
 }
 
 .portrait-connection-content {
@@ -491,6 +503,15 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.portrait-notice-click {
+  font-size: 0.75rem !important;
+  opacity: 0.8;
+  font-weight: 500 !important;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9) !important;
+  margin-top: 4px;
 }
 
 /* 반응형 */

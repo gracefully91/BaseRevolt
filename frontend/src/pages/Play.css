@@ -462,6 +462,19 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
   z-index: 1000;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.connection-notice:hover {
+  background: rgba(245, 125, 40, 0.9);
+  transform: translateX(-50%) scale(1.05);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.connection-notice:active {
+  transform: translateX(-50%) scale(0.95);
 }
 
 @keyframes slideUp {
@@ -487,6 +500,15 @@
   font-size: 0.9rem !important;
   opacity: 0.9;
   font-weight: 400 !important;
+}
+
+.notice-click {
+  margin-top: 8px !important;
+  font-size: 0.8rem !important;
+  opacity: 0.8;
+  font-weight: 500 !important;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 /* 조정화면 모드 설정 */

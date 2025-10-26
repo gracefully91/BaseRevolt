@@ -19,8 +19,8 @@
 
 // ==================== 설정 ====================
 // WiFi 설정
-const char* ssid = "cagongzok_2.4G";
-const char* password = "cagong567@@";
+const char* ssid = "JIN";
+const char* password = "J13245678!";
 
 // WebSocket 서버 설정 (Render)
 const char* ws_host = "base-revolt-server.onrender.com";
@@ -28,20 +28,18 @@ const int ws_port = 443;
 const char* ws_path = "/";
 const bool ws_ssl = true;
 
-// 모터 제어 핀 (양쪽 바퀴 각각 제어)
+// 모터 제어 핀 (안정적인 핀만 사용)
 #define MOTOR_LEFT_IN1  12   // 왼쪽 모터 IN1
 #define MOTOR_LEFT_IN2  13   // 왼쪽 모터 IN2
 #define MOTOR_RIGHT_IN3 14   // 오른쪽 모터 IN3
 #define MOTOR_RIGHT_IN4 15   // 오른쪽 모터 IN4
-#define MOTOR_ENA       2    // 왼쪽 모터 Enable (ENA)
-#define MOTOR_ENB       4    // 오른쪽 모터 Enable (ENB)
+// ENA/ENB는 점퍼로 HIGH 설정 - 코드에서 제어하지 않음
 
 // 디버깅용 핀 상태 확인
 void checkPinStates() {
-  Serial.printf("Pin States - IN1:%d, IN2:%d, IN3:%d, IN4:%d, ENA:%d, ENB:%d\n",
+  Serial.printf("Pin States - IN1:%d, IN2:%d, IN3:%d, IN4:%d\n",
                 digitalRead(MOTOR_LEFT_IN1), digitalRead(MOTOR_LEFT_IN2),
-                digitalRead(MOTOR_RIGHT_IN3), digitalRead(MOTOR_RIGHT_IN4),
-                digitalRead(MOTOR_ENA), digitalRead(MOTOR_ENB));
+                digitalRead(MOTOR_RIGHT_IN3), digitalRead(MOTOR_RIGHT_IN4));
 }
 
 // AI-Thinker 모델 카메라 핀 정의
@@ -81,6 +79,8 @@ void motorForward();
 void motorBackward();
 void motorLeft();
 void motorRight();
+void setDir(bool L1, bool L2, bool R3, bool R4);
+void quickSelfTest();
 
 // ==================== Setup ====================
 void setup() {
@@ -98,6 +98,10 @@ void setup() {
   
   // WebSocket 연결
   setupWebSocket();
+  
+  // 자가진단 테스트 (배선 확인용)
+  Serial.println("=== Running Self Test ===");
+  quickSelfTest();
   
   Serial.println("=== Setup Complete ===\n");
 }
@@ -266,20 +270,18 @@ void sendCameraFrame() {
 
 // ==================== 모터 Setup ====================
 void setupMotors() {
+  Serial.println("Setting up motors...");
+  
+  // 모터 핀들을 출력으로 설정 (ENA/ENB는 점퍼로 HIGH)
   pinMode(MOTOR_LEFT_IN1, OUTPUT);
   pinMode(MOTOR_LEFT_IN2, OUTPUT);
   pinMode(MOTOR_RIGHT_IN3, OUTPUT);
   pinMode(MOTOR_RIGHT_IN4, OUTPUT);
-  pinMode(MOTOR_ENA, OUTPUT);
-  pinMode(MOTOR_ENB, OUTPUT);
   
-  // Enable motors (초기에는 정지)
-  analogWrite(MOTOR_ENA, 0);  // 초기 정지
-  analogWrite(MOTOR_ENB, 0);
-  
+  // 모든 모터 정지
   motorStop();
   
-  Serial.println("Motors initialized");
+  Serial.println("Motors initialized (ENA/ENB via jumper)");
 }
 
 // ==================== 모터 제어 함수 ====================
@@ -307,89 +309,79 @@ void motorStop() {
   digitalWrite(MOTOR_RIGHT_IN3, LOW);
   digitalWrite(MOTOR_RIGHT_IN4, LOW);
   
-  // Enable 핀도 0으로 설정 (완전 정지)
-  analogWrite(MOTOR_ENA, 0);
-  analogWrite(MOTOR_ENB, 0);
-  
-  Serial.println("STOP: All motors stopped - ENA=0, ENB=0");
+  Serial.println("STOP: All motors stopped");
 }
 
 void motorForward() {
-  // 전진: 양쪽 모두 전진
-  // 왼쪽 모터: IN1=HIGH, IN2=LOW (전진)
-  // 오른쪽 모터: IN3=HIGH, IN4=LOW (전진)
-  
-  // 먼저 모든 핀을 LOW로 설정
+  // 전진: (Left Forward) + (Right Forward) - 검증된 로직
   digitalWrite(MOTOR_LEFT_IN1, LOW);
-  digitalWrite(MOTOR_LEFT_IN2, LOW);
-  digitalWrite(MOTOR_RIGHT_IN3, LOW);
-  digitalWrite(MOTOR_RIGHT_IN4, LOW);
-  delay(10); // 짧은 지연
-  
-  // 전진 설정
-  digitalWrite(MOTOR_LEFT_IN1, HIGH);
-  digitalWrite(MOTOR_LEFT_IN2, LOW);
+  digitalWrite(MOTOR_LEFT_IN2, HIGH);
   digitalWrite(MOTOR_RIGHT_IN3, HIGH);
   digitalWrite(MOTOR_RIGHT_IN4, LOW);
   
-  // Enable 모터들 (속도 80)
-  analogWrite(MOTOR_ENA, 80);
-  analogWrite(MOTOR_ENB, 80);
-  
-  Serial.println("FORWARD: Left(IN1=HIGH,IN2=LOW) Right(IN3=HIGH,IN4=LOW)");
-  checkPinStates();
+  Serial.println("FORWARD: L(Fwd) + R(Fwd)");
 }
 
 void motorBackward() {
-  // 후진: 양쪽 모두 후진
-  // 왼쪽 모터: IN1=LOW, IN2=HIGH (후진)
-  // 오른쪽 모터: IN3=LOW, IN4=HIGH (후진)
-  
-  // 먼저 모든 핀을 LOW로 설정
-  digitalWrite(MOTOR_LEFT_IN1, LOW);
-  digitalWrite(MOTOR_LEFT_IN2, LOW);
-  digitalWrite(MOTOR_RIGHT_IN3, LOW);
-  digitalWrite(MOTOR_RIGHT_IN4, LOW);
-  delay(10); // 짧은 지연
-  
-  // 후진 설정
-  digitalWrite(MOTOR_LEFT_IN1, LOW);
-  digitalWrite(MOTOR_LEFT_IN2, HIGH);
-  digitalWrite(MOTOR_RIGHT_IN3, LOW);
-  digitalWrite(MOTOR_RIGHT_IN4, HIGH);
-  
-  // Enable 모터들 (속도 80)
-  analogWrite(MOTOR_ENA, 80);
-  analogWrite(MOTOR_ENB, 80);
-  
-  Serial.println("BACKWARD: Left(IN1=LOW,IN2=HIGH) Right(IN3=LOW,IN4=HIGH)");
-  checkPinStates();
-}
-
-void motorLeft() {
-  // 좌회전: 왼쪽 후진, 오른쪽 전진
-  // 왼쪽 모터: IN1=LOW, IN2=HIGH (후진)
-  // 오른쪽 모터: IN3=HIGH, IN4=LOW (전진)
-  digitalWrite(MOTOR_LEFT_IN1, LOW);
-  digitalWrite(MOTOR_LEFT_IN2, HIGH);
-  digitalWrite(MOTOR_RIGHT_IN3, HIGH);
-  digitalWrite(MOTOR_RIGHT_IN4, LOW);
-  
-  // Enable 모터들 (속도 80)
-  analogWrite(MOTOR_ENA, 80);
-  analogWrite(MOTOR_ENB, 80);
-}
-
-void motorRight() {
-  // 우회전: 왼쪽 전진, 오른쪽 후진
-  // 왼쪽 모터: IN1=HIGH, IN2=LOW (전진)
-  // 오른쪽 모터: IN3=LOW, IN4=HIGH (후진)
+  // 후진: (Left Backward) + (Right Backward) - 검증된 로직
   digitalWrite(MOTOR_LEFT_IN1, HIGH);
   digitalWrite(MOTOR_LEFT_IN2, LOW);
   digitalWrite(MOTOR_RIGHT_IN3, LOW);
   digitalWrite(MOTOR_RIGHT_IN4, HIGH);
   
-  // Enable 모터들 (속도 80)
-  analogWrite(MOTOR_ENA, 80);
-  analogWrite(MOTOR_ENB, 80);
+  Serial.println("BACKWARD: L(Bwd) + R(Bwd)");
+}
+
+void motorLeft() {
+  // 좌회전: (Left Backward) + (Right Forward) - 검증된 로직
+  digitalWrite(MOTOR_LEFT_IN1, HIGH);   // Left Backward 로직
+  digitalWrite(MOTOR_LEFT_IN2, LOW);
+  digitalWrite(MOTOR_RIGHT_IN3, HIGH);  // Right Forward 로직
+  digitalWrite(MOTOR_RIGHT_IN4, LOW);
+  
+  Serial.println("LEFT: L(Bwd) + R(Fwd)");
+}
+
+void motorRight() {
+  // 우회전: (Left Forward) + (Right Backward) - 검증된 로직
+  digitalWrite(MOTOR_LEFT_IN1, LOW);    // Left Forward 로직
+  digitalWrite(MOTOR_LEFT_IN2, HIGH);
+  digitalWrite(MOTOR_RIGHT_IN3, LOW);   // Right Backward 로직
+  digitalWrite(MOTOR_RIGHT_IN4, HIGH);
+  
+  Serial.println("RIGHT: L(Fwd) + R(Bwd)");
+}
+
+// ==================== 새로운 핀 매핑용 함수들 ====================
+void setDir(bool L1, bool L2, bool R3, bool R4) {
+  digitalWrite(MOTOR_LEFT_IN1, L1);
+  digitalWrite(MOTOR_LEFT_IN2, L2);
+  digitalWrite(MOTOR_RIGHT_IN3, R3);
+  digitalWrite(MOTOR_RIGHT_IN4, R4);
+}
+
+void quickSelfTest() {
+  Serial.println("=== Quick Self Test ===");
+  
+  // Left wheel only (Forward)
+  Serial.println("Testing Left wheel Forward...");
+  setDir(LOW, HIGH, LOW, LOW);
+  delay(700);
+  
+  // Right wheel only (Forward)
+  Serial.println("Testing Right wheel Forward...");
+  setDir(LOW, LOW, HIGH, LOW);
+  delay(700);
+  
+  // Both Forward
+  Serial.println("Testing Both Forward...");
+  setDir(LOW, HIGH, HIGH, LOW);
+  delay(700);
+  
+  // Stop
+  Serial.println("Stopping...");
+  setDir(LOW, LOW, LOW, LOW);
+  delay(300);
+  
+  Serial.println("=== Self Test Complete ===");
 }

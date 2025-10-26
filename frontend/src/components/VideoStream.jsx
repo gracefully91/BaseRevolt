@@ -19,6 +19,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
   
   const connectionStartTimeRef = useRef(null);
   const stableConnectionTimeoutRef = useRef(null);
+  const lastCommandTimeRef = useRef(null);
   
   // onConnectionChange를 ref로 저장하여 stale closure 방지
   const onConnectionChangeRef = useRef(onConnectionChange);
@@ -67,6 +68,20 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
           command: command
         });
         wsRef.current.send(message);
+        
+        // 명령 전송 시 연결 상태 즉시 확인 (하드웨어가 움직이면 연결됨)
+        lastCommandTimeRef.current = Date.now();
+        if (rcCarConnected && !isStableConnected) {
+          console.log('✅ Command sent - considering connection stable');
+          setIsStableConnected(true);
+          onConnectionChangeRef.current?.(true);
+          
+          // 기존 타이머 정리
+          if (stableConnectionTimeoutRef.current) {
+            clearTimeout(stableConnectionTimeoutRef.current);
+            stableConnectionTimeoutRef.current = null;
+          }
+        }
       }
     };
 
@@ -152,15 +167,15 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
                     clearCanvas();
                   }
                 } else {
-                  // RC카 연결됨 - 10초 대기 후 안정적인 연결로 간주
-                  console.log('⏳ RC Car connected, waiting 10 seconds for stable connection...');
+                  // RC카 연결됨 - 3초 대기 후 안정적인 연결로 간주 (더 관대하게)
+                  console.log('⏳ RC Car connected, waiting 3 seconds for stable connection...');
                   connectionStartTimeRef.current = Date.now();
                   
                   stableConnectionTimeoutRef.current = setTimeout(() => {
                     console.log('✅ RC Car connection is stable');
                     setIsStableConnected(true);
                     onConnectionChangeRef.current?.(true);
-                  }, 10000);
+                  }, 3000);
                 }
               }
             } catch (e) {
@@ -300,6 +315,21 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
     });
     
     wsRef.current.send(message);
+    
+    // 명령 전송 시 연결 상태 즉시 확인 (하드웨어가 움직이면 연결됨)
+    lastCommandTimeRef.current = Date.now();
+    if (rcCarConnected && !isStableConnected) {
+      console.log('✅ Command sent - considering connection stable');
+      setIsStableConnected(true);
+      onConnectionChangeRef.current?.(true);
+      
+      // 기존 타이머 정리
+      if (stableConnectionTimeoutRef.current) {
+        clearTimeout(stableConnectionTimeoutRef.current);
+        stableConnectionTimeoutRef.current = null;
+      }
+    }
+    
     return true;
   };
 

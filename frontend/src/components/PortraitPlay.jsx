@@ -8,6 +8,7 @@ export default function PortraitPlay({ onRotate, isDemo, timeRemaining }) {
   const [isConnected, setIsConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showConnectionNotice, setShowConnectionNotice] = useState(true);
   
   // 제어 명령 전송 함수 (VideoStream에서 설정됨)
   const sendCommandRef = useRef(null);
@@ -17,8 +18,10 @@ export default function PortraitPlay({ onRotate, isDemo, timeRemaining }) {
     setIsConnected(connected);
     if (connected) {
       setIsStableConnected(true);
+      setShowConnectionNotice(false); // 연결되면 알림 숨김
     } else {
       setIsStableConnected(false);
+      setShowConnectionNotice(true); // 연결 끊어지면 알림 표시
     }
   };
 
@@ -41,6 +44,10 @@ export default function PortraitPlay({ onRotate, isDemo, timeRemaining }) {
 
   const handleRotate = () => {
     onRotate();
+  };
+
+  const handleConnectionNoticeClick = () => {
+    setShowConnectionNotice(false);
   };
 
   const formatTime = (seconds) => {
@@ -176,19 +183,20 @@ export default function PortraitPlay({ onRotate, isDemo, timeRemaining }) {
       </div>
 
       {/* 연결 알림 */}
-      {!isStableConnected && (
-        <div className="portrait-connection-notice">
+      {!isStableConnected && showConnectionNotice && (
+        <div className="portrait-connection-notice" onClick={handleConnectionNoticeClick}>
           <div className="portrait-connection-content">
             <div className="portrait-connection-icon">🔌</div>
             <div className="portrait-connection-text">
               {isConnected ? (
-                <div>Stabilizing connection... Please wait 10 seconds</div>
+                <div>Stabilizing connection... Please wait 3 seconds</div>
               ) : (
                 <>
                   <div>Please wait for RC car to connect...</div>
                   <div>Make sure the hardware is powered on and connected to WiFi</div>
                 </>
               )}
+              <div className="portrait-notice-click">Tap to dismiss</div>
             </div>
           </div>
         </div>

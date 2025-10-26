@@ -23,6 +23,7 @@ function Play() {
   const [rcCarConnected, setRcCarConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showConnectionNotice, setShowConnectionNotice] = useState(true);
   
   // 제어 명령 전송 함수 (VideoStream에서 설정됨)
   const sendCommandRef = useRef(null);
@@ -46,8 +47,10 @@ function Play() {
     setRcCarConnected(connected);
     if (connected) {
       setIsStableConnected(true);
+      setShowConnectionNotice(false); // 연결되면 알림 숨김
     } else {
       setIsStableConnected(false);
+      setShowConnectionNotice(true); // 연결 끊어지면 알림 표시
     }
   };
   
@@ -100,6 +103,10 @@ function Play() {
 
   const handleRotate = () => {
     setShowPortrait(!showPortrait);
+  };
+
+  const handleConnectionNoticeClick = () => {
+    setShowConnectionNotice(false);
   };
   
   // 세로화면 모드일 때 PortraitPlay 컴포넌트 렌더링
@@ -162,7 +169,7 @@ function Play() {
           <div className="status-info">
             <div className={`rc-status ${isStableConnected ? 'connected' : rcCarConnected ? 'stabilizing' : 'disconnected'}`}>
               <span className="status-dot"></span>
-              {isStableConnected ? 'RC Car Connected' : rcCarConnected ? 'Stabilizing Connection...' : 'Waiting for RC Car'}
+              {isStableConnected ? 'RC Car Ready' : rcCarConnected ? 'Connecting...' : 'Waiting for RC Car'}
             </div>
             
             <div className={`timer ${timeRemaining > 300 ? 'timer-blue' : timeRemaining > 120 ? 'timer-yellow' : 'timer-red'}`}>
@@ -185,11 +192,12 @@ function Play() {
         {/* Control Buttons - Integrated in VideoStream */}
       </div>
       
-      {/* Connection Notice */}
-      {(!rcCarConnected || isDemo) && (
-        <div className="connection-notice">
+      {/* Connection Notice - 더 관대한 조건 */}
+      {(!rcCarConnected && !isDemo && showConnectionNotice) && (
+        <div className="connection-notice" onClick={handleConnectionNoticeClick}>
           <p>🔌 Please wait for RC car to connect...</p>
           <p className="notice-sub">Make sure the hardware is powered on and connected to WiFi</p>
+          <p className="notice-click">Click to dismiss</p>
         </div>
       )}
       </div>
