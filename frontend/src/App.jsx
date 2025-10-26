@@ -3,7 +3,9 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { AuthKitProvider } from '@farcaster/auth-kit';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { config } from './config/wagmi';
+import { useEffect } from 'react';
 
 import '@rainbow-me/rainbowkit/styles.css';
 import '@farcaster/auth-kit/styles.css';
@@ -17,6 +19,22 @@ const queryClient = new QueryClient();
 function AppContent() {
   const location = useLocation();
   const isPlayPage = location.pathname === '/play';
+  
+  // Farcaster Mini App SDK 초기화
+  useEffect(() => {
+    const initializeSDK = async () => {
+      try {
+        // 앱이 완전히 로드된 후 스플래시 화면 숨기기
+        await sdk.actions.ready();
+        console.log('✅ Farcaster Mini App SDK ready');
+      } catch (error) {
+        console.warn('⚠️ Farcaster Mini App SDK not available:', error);
+        // SDK가 없어도 앱은 정상 작동 (일반 웹 브라우저에서)
+      }
+    };
+
+    initializeSDK();
+  }, []);
   
   return (
     <>
