@@ -1,0 +1,32 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjExMDczMDgsInR5cGUiOiJhdXRoIiwia2V5IjoiMHhGNDUyMjJkNjIzQjAwODFDNjU4YjI4NGUyZkNiODVkNUU3QjFkM2IzIn0",
+    "payload": "eyJkb21haW4iOiJiYXNlLXJldm9sdC52ZXJjZWwuYXBwIn0",
+    "signature": "PTZHnwUYVE3P1FZzMT7GkGzakvX1jpMjlfw5GcXYv/052ot6eVxq69ptNRYFKfCjQ1haZQ0KQqx2PPvbRQuePBw="
+  },
+  "miniapp": {
+    "name": "BaseRevolt",
+    "version": "1",
+    "iconUrl": "https://base-revolt.vercel.app/icon.png",
+    "homeUrl": "https://base-revolt.vercel.app",
+    "imageUrl": "https://base-revolt.vercel.app/image.png",
+    "buttonTitle": "🚗 Drive RC Car",
+    "splashImageUrl": "https://base-revolt.vercel.app/splash.png",
+    "splashBackgroundColor": "#6200EA",
+    "subtitle": "Drive real RC cars with your Base wallet",
+    "description": "Base Revolt turns onchain ownership into real-world motion. Connect your Base wallet, see live video from an RC car, and control it in your space with AR overlays. Built on Base.",
+    "primaryCategory": "games",
+    "tags": [
+      "web3",
+      "base",
+      "racing",
+      "robotics"
+    ],
+    "tagline": "Own it on-chain, drive it",
+    "ogTitle": "Own it, drive it in real",
+    "ogImageUrl": "https://base-revolt.vercel.app/image.png"
+  },
+  "baseBuilder": {
+    "ownerAddress": "0xF0f6BB22357F83A792EDE0760c30eFD4576b955B"
+  }
+}

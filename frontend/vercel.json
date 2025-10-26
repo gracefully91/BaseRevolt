@@ -1,9 +1,1 @@
-{
-  "redirects": [
-    {
-      "source": "/.well-known/farcaster.json",
-      "destination": "/farcaster.json",
-      "statusCode": 200
-    }
-  ]
-}
+{}
