@@ -347,6 +347,12 @@
   gap: 20px;
 }
 
+.footer-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .vehicle-btn {
   padding: 14px 32px;
   border: none;
@@ -358,12 +364,54 @@
   min-width: 120px;
 }
 
+.vehicle-btn-refresh {
+  background: transparent !important;
+  color: #fff;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 28px !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: unset !important;
+  width: 36px !important;
+  height: 36px !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.vehicle-btn-refresh:hover:not(:disabled) {
+  transform: scale(1.15);
+  filter: brightness(1.2);
+}
+
+.vehicle-btn-refresh:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vehicle-btn-refresh:disabled {
+  animation: spin 1s linear infinite;
+}
+
 .vehicle-btn-cancel {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 8px 16px;
   font-size: 14px;
+  min-width: 70px;
 }
 
 .vehicle-btn-cancel:hover {

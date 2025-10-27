@@ -6,10 +6,10 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-container">
-        <Link to="/" className="logo">
-          <span className="logo-icon">🚗</span>
-          <span className="logo-text">Base Revolt</span>
-        </Link>
+          <Link to="/" className="logo">
+            <span className="logo-icon">🚙</span>
+            <span className="logo-text">Base Revolt</span>
+          </Link>
 
         <nav className="nav">
           <WalletConnectButton />

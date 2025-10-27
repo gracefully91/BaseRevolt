@@ -20,27 +20,57 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   text-decoration: none;
   transition: transform 0.2s ease;
 }
 
 .logo:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
+}
+
+/* 로고 아이콘 반짝이는 효과 */
+@keyframes logo-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(0, 82, 255, 0.3))
+            drop-shadow(0 0 8px rgba(0, 212, 255, 0.2));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(0, 82, 255, 0.6))
+            drop-shadow(0 0 16px rgba(0, 212, 255, 0.4));
+    transform: scale(1.05);
+  }
 }
 
 .logo-icon {
-  font-size: 32px;
+  font-size: 48px;
   line-height: 1;
+  animation: logo-glow 2.5s ease-in-out infinite;
+}
+
+/* 로고 텍스트 반짝이는 효과 */
+@keyframes text-glow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(0, 82, 255, 0.3),
+                 0 0 20px rgba(0, 212, 255, 0.2);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(0, 82, 255, 0.6),
+                 0 0 40px rgba(0, 212, 255, 0.4),
+                 0 0 60px rgba(0, 212, 255, 0.3);
+  }
 }
 
 .logo-text {
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 38px;
+  font-weight: 900;
   background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: -0.5px;
+  animation: text-glow 2.5s ease-in-out infinite;
 }
 
 .nav {
@@ -57,6 +87,80 @@
   background: none;
   border: none;
   backdrop-filter: none;
+}
+
+/* 헤더용 OnchainKit ConnectWallet 버튼 스타일 */
+.nav [data-testid="ockConnectWallet"],
+.nav button[data-testid="ockConnectWallet"],
+.nav .wallet-connect-container button {
+  background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%) !important;
+  color: white !important;
+  border: none !important;
+  padding: 6px 18px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  box-shadow: 0 4px 16px rgba(0, 82, 255, 0.35) !important;
+  min-width: 130px !important;
+  justify-content: center !important;
+  height: 34px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  letter-spacing: 0.3px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  animation: glow-pulse 2s ease-in-out infinite !important;
+}
+
+/* 헤더용 빛나는 펄스 애니메이션 */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(0, 82, 255, 0.35),
+                0 0 20px rgba(0, 82, 255, 0.2),
+                0 0 30px rgba(0, 212, 255, 0.1) !important;
+  }
+  50% {
+    box-shadow: 0 6px 24px rgba(0, 82, 255, 0.5),
+                0 0 40px rgba(0, 82, 255, 0.4),
+                0 0 60px rgba(0, 212, 255, 0.3) !important;
+  }
+}
+
+.nav [data-testid="ockConnectWallet"]:hover,
+.nav button[data-testid="ockConnectWallet"]:hover,
+.nav .wallet-connect-container button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 28px rgba(0, 82, 255, 0.5), 0 0 40px rgba(0, 212, 255, 0.3) !important;
+  background: linear-gradient(135deg, #0047e6 0%, #00b8e6 100%) !important;
+  animation: none !important;
+}
+
+.nav [data-testid="ockConnectWallet"]:active,
+.nav button[data-testid="ockConnectWallet"]:active,
+.nav .wallet-connect-container button:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 4px 16px rgba(0, 82, 255, 0.35) !important;
+  animation: none !important;
+}
+
+/* 빛나는 효과 */
+.nav [data-testid="ockConnectWallet"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.nav [data-testid="ockConnectWallet"]:hover::before {
+  left: 100%;
 }
 
 /* 헤더용 Connect Wallet 버튼 스타일 */
@@ -105,7 +209,7 @@
 .nav .wallet-connected-container [data-ock-wallet] {
   background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%);
   border-radius: 8px;
-  padding: 6px 16px;
+  padding: 4px 12px;
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -117,8 +221,8 @@
   gap: 6px;
   min-width: 120px;
   justify-content: center;
-  height: 36px;
-  font-size: 16px;
+  height: 28px;
+  font-size: 14px;
 }
 
 .nav .wallet-connected-container [data-ock-wallet]:hover {
@@ -149,11 +253,21 @@
   }
 
   .logo-icon {
-    font-size: 24px;
+    font-size: 32px;
   }
 
   .logo-text {
-    font-size: 18px;
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-icon {
+    font-size: 28px;
+  }
+
+  .logo-text {
+    font-size: 20px;
   }
 }
 

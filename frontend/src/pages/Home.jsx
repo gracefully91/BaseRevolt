@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccount, useReadContract, useChainId } from 'wagmi';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { base, baseSepolia } from 'wagmi/chains';
-import { TICKET_CONTRACT_ADDRESS, TICKET_CONTRACT_ABI } from '../config/contracts';
+import { TICKET_CONTRACT_ADDRESS, TICKET_CONTRACT_ABI, WS_SERVER_URL } from '../config/contracts';
 import PaymentModal from '../components/PaymentModal';
 import VehicleSelectionModal from '../components/VehicleSelectionModal';
 import WaitingQueueModal from '../components/WaitingQueueModal';
@@ -25,6 +25,9 @@ function Home() {
   const [currentUserId] = useState('user-' + Math.random().toString(36).substr(2, 9));
   const [currentUserName] = useState('User' + Math.floor(Math.random() * 1000));
   const [queueNotification, setQueueNotification] = useState(null);
+  const [queueStatus, setQueueStatus] = useState(null);
+  const wsRef = useRef(null);
+  const isConnectingRef = useRef(false);
   
   // 티켓 가격 조회
   const { data: ticketPrice } = useReadContract({
@@ -36,11 +39,11 @@ function Home() {
   // 네트워크에 따른 가격 계산
   const getTicketPrice = () => {
     if (chainId === baseSepolia.id) {
-      return { amount: '$5.00', isTestnet: true };
+      return { amount: '$1.00', isTestnet: true };
     } else if (chainId === base.id) {
-      return { amount: '$0.01', isTestnet: false };
+      return { amount: '$4.99', isTestnet: false };
     } else {
-      return { amount: '$0.01', isTestnet: false }; // 기본값
+      return { amount: '$4.99', isTestnet: false }; // 기본값
     }
   };
 
@@ -98,11 +101,128 @@ function Home() {
     authenticateUser();
   }, []);
 
-  // 디버깅: 인증 상태 확인
-  console.log('Farcaster Auth:', { user, isLoading });
-  
-  // 디버깅: 지갑 연결 상태 확인
-  console.log('Wallet Status:', { isConnected, chainId });
+  // 디버깅: 인증 상태 확인 (필요시만)
+  // console.log('Farcaster Auth:', { user, isLoading });
+  // console.log('Wallet Status:', { isConnected, chainId });
+
+  // Vehicle Selection 모달이 열릴 때만 WebSocket 연결
+  useEffect(() => {
+    if (!showVehicleSelection) {
+      // 모달이 닫히면 연결 정리
+      if (wsRef.current) {
+        console.log('🧹 Closing WebSocket connection (modal closed)');
+        wsRef.current.close();
+        wsRef.current = null;
+        isConnectingRef.current = false;
+      }
+      return;
+    }
+
+    // 이미 연결 시도했거나 연결 중이면 재시도 안 함
+    if (isConnectingRef.current) {
+      console.log('⏳ WebSocket connection already attempted');
+      return;
+    }
+    
+    if (wsRef.current) {
+      console.log('✅ WebSocket connection already attempted');
+      return;
+    }
+
+    isConnectingRef.current = true;
+    console.log('🔌 Connecting to WebSocket for queue status...');
+    
+    try {
+      const ws = new WebSocket(WS_SERVER_URL);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('✅ WebSocket connected for queue status');
+        isConnectingRef.current = false;
+        // 대기열 상태 요청
+        ws.send(JSON.stringify({
+          type: 'getQueueStatus',
+          carId: 'car01'
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // 대기열 상태 업데이트
+          if (data.type === 'queueStatus' || data.type === 'queueUpdate') {
+            console.log('📊 Queue status received:', data.status);
+            setQueueStatus(data.status);
+            
+            // vehicleManager 업데이트
+            updateVehicleFromQueueStatus(data.status);
+          }
+        } catch (e) {
+          console.error('Error parsing queue message:', e);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('❌ WebSocket disconnected');
+        wsRef.current = null;
+        isConnectingRef.current = false;
+      };
+
+      ws.onerror = (error) => {
+        console.error('❌ WebSocket connection failed');
+        isConnectingRef.current = false;
+        // 서버가 꺼져있으면 연결하지 않음
+        ws.close();
+      };
+    } catch (error) {
+      console.error('❌ WebSocket connection error:', error);
+      isConnectingRef.current = false;
+    }
+  }, [showVehicleSelection]);
+
+  // 서버 대기열 상태로 차량 정보 업데이트
+  const updateVehicleFromQueueStatus = (status) => {
+    const vehicle = vehicleManager.getVehicleById('car-001');
+    if (!vehicle) return;
+
+    // 현재 사용자 정보 업데이트
+    if (status.currentUser) {
+      vehicle.currentUser = {
+        name: status.currentUser.wallet,
+        tier: status.currentUser.tier
+      };
+      vehicle.status = 'busy';
+    } else {
+      vehicle.currentUser = null;
+      vehicle.status = 'available';
+    }
+
+    // 대기열 정보 업데이트
+    vehicle.waitingQueue = status.queue.map(item => ({
+      id: item.wallet,
+      walletAddress: item.wallet,
+      name: item.wallet,
+      queuePosition: item.position,
+      estimatedWaitTime: item.estimatedWaitTime,
+      tier: item.tier
+    }));
+
+    vehicle.estimatedWaitTime = status.queue.length > 0 
+      ? status.queue[0].estimatedWaitTime 
+      : 0;
+  };
+
+  // 새로고침 함수
+  const refreshQueueStatus = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log('🔄 Requesting queue status refresh...');
+      wsRef.current.send(JSON.stringify({
+        type: 'getQueueStatus',
+        carId: 'car01'
+      }));
+    }
+  };
 
   const handleBuyTicket = () => {
     if (!isConnected) {
@@ -221,7 +341,7 @@ function Home() {
                 <span className="amount">{priceInfo.amount}</span>
                 <span className="duration">/ 10 min</span>
                 {priceInfo.isTestnet && <span className="test-badge testnet">TESTNET</span>}
-                {!priceInfo.isTestnet && <span className="test-badge mainnet">MAINNET</span>}
+                {!priceInfo.isTestnet && <span className="test-badge base">BASE</span>}
               </div>
               
                <div className="auth-button-container">
@@ -319,7 +439,21 @@ function Home() {
           onClose={() => setShowVehicleSelection(false)}
           onVehicleSelect={handleVehicleSelect}
           onShowQueue={handleShowQueue}
-          vehicles={vehicleManager.getAvailableVehicles()}
+          vehicles={vehicleManager.getVehicles()}
+          onRefresh={async () => {
+            // 서버에서 실시간 대기열 상태 가져오기
+            await refreshQueueStatus();
+            // 잠시 대기 후 UI 업데이트
+            return new Promise(resolve => {
+              setTimeout(() => {
+                setShowVehicleSelection(false);
+                setTimeout(() => {
+                  setShowVehicleSelection(true);
+                  resolve();
+                }, 0);
+              }, 500);
+            });
+          }}
         />
 
         {/* Waiting Queue Modal */}

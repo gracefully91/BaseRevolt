@@ -23,35 +23,14 @@ export class VehicleManager {
     this.initializeRealData();
   }
 
-  // 실제 데이터 초기화 (랜덤 대기열 시뮬레이션)
+  // 실제 데이터 초기화 (서버에서 받은 데이터만 사용)
   initializeRealData() {
     this.vehicles.forEach(vehicle => {
-      // 30% 확률로 대기열이 있음
-      if (Math.random() < 0.3) {
-        const queueSize = Math.floor(Math.random() * 3) + 1; // 1-3명
-        vehicle.waitingQueue = [];
-        
-        for (let i = 0; i < queueSize; i++) {
-          // 실제 지갑 주소 생성 (0x + 40자리 hex)
-          const walletAddress = '0x' + Array.from({length: 40}, () => 
-            Math.floor(Math.random() * 16).toString(16)
-          ).join('');
-          
-          vehicle.waitingQueue.push({
-            id: `user-${Date.now()}-${i}`,
-            walletAddress: walletAddress,
-            name: `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`, // 0x1234...5678 형태
-            joinedAt: new Date(Date.now() - Math.random() * 3600000), // 최근 1시간 내
-            queuePosition: i + 1,
-            estimatedWaitTime: (i + 1) * 10 // 10분씩 증가
-          });
-        }
-        
-        vehicle.estimatedWaitTime = queueSize * 10;
-      } else {
-        vehicle.waitingQueue = [];
-        vehicle.estimatedWaitTime = 0;
-      }
+      // 더미 데이터 제거 - 서버의 실제 대기열만 사용
+      vehicle.waitingQueue = [];
+      vehicle.estimatedWaitTime = 0;
+      vehicle.currentUser = null;
+      vehicle.status = 'available';
     });
   }
 
@@ -274,15 +253,11 @@ export class VehicleManager {
     return user ? user.queuePosition : -1;
   }
 
-  // 대기열 데이터 새로고침 (실제 서비스에서는 API 호출)
+  // 대기열 데이터 새로고침 (서버에서 받은 데이터로 업데이트)
   refreshWaitingData() {
-    this.vehicles.forEach(vehicle => {
-      // 실제로는 서버에서 최신 대기열 정보를 가져와야 함
-      // 여기서는 간단히 랜덤하게 업데이트
-      if (Math.random() < 0.1) { // 10% 확률로 대기열 변경
-        this.initializeRealData();
-      }
-    });
+    // 실제로는 서버에서 최신 대기열 정보를 가져와야 함
+    // Home.jsx의 WebSocket에서 queueStatus를 받아서 업데이트
+    console.log('🔄 대기열 데이터 새로고침 (서버에서 실시간 업데이트)');
   }
 
   // 대기열 통계 조회

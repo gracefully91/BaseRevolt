@@ -67,11 +67,17 @@
   }
 }
 
+/* 모달이 헤더 위에 나오도록 z-index 설정 */
+[data-radix-portal] {
+  z-index: 9999 !important;
+}
+
 /* 모달 오버레이 커스터마이징 */
 [data-radix-portal] > div:first-child {
   background: rgba(0, 0, 0, 0.7) !important;
   backdrop-filter: blur(12px) !important;
   animation: fadeIn 0.3s ease-out !important;
+  z-index: 9999 !important;
 }
 
 /* 모달 컨텐츠 커스터마이징 */
@@ -83,6 +89,7 @@
   animation: slideUp 0.3s ease-out !important;
   max-width: 400px !important;
   margin: 20px !important;
+  z-index: 9999 !important;
 }
 
 /* 모달 헤더 커스터마이징 */
@@ -148,11 +155,12 @@
   box-shadow: 0 12px 30px rgba(0, 82, 255, 0.4) !important;
 }
 
-/* 지갑 아이콘 */
+/* 지갑 아이콘 크기 증가 - 24px → 40px */
 [data-radix-portal] img {
-  border-radius: 8px !important;
-  width: 24px !important;
-  height: 24px !important;
+  border-radius: 10px !important;
+  width: 40px !important;
+  height: 40px !important;
+  object-fit: contain !important;
 }
 
 /* 애니메이션 */
@@ -183,5 +191,11 @@
   [data-radix-portal] button {
     padding: 14px 18px !important;
     font-size: 15px !important;
+  }
+  
+  /* 모바일에서 아이콘 크기 조금 작게 */
+  [data-radix-portal] img {
+    width: 36px !important;
+    height: 36px !important;
   }
 }

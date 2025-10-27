@@ -47,11 +47,61 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
       }
+      
+      /* 지갑 버튼 빛나는 효과 - 강제 적용 */
+      @keyframes wallet-glow {
+        0%, 100% {
+          box-shadow: 0 4px 16px rgba(0, 82, 255, 0.35),
+                      0 0 20px rgba(0, 82, 255, 0.2),
+                      0 0 30px rgba(0, 212, 255, 0.1) !important;
+        }
+        50% {
+          box-shadow: 0 6px 24px rgba(0, 82, 255, 0.5),
+                      0 0 40px rgba(0, 82, 255, 0.4),
+                      0 0 60px rgba(0, 212, 255, 0.3) !important;
+        }
+      }
+      
+      button[class*="ock"],
+      button[data-testid*="ock"],
+      div[data-ock-wallet] button,
+      .wallet-connect-container button {
+        animation: wallet-glow 2s ease-in-out infinite !important;
+      }
+      
+      button[class*="ock"]:hover,
+      button[data-testid*="ock"]:hover,
+      div[data-ock-wallet] button:hover,
+      .wallet-connect-container button:hover {
+        animation: none !important;
+      }
     </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // 지갑 버튼에 강제로 빛나는 효과 적용
+      setTimeout(() => {
+        const buttons = document.querySelectorAll('button[class*="ock"], button[data-testid*="ock"], div[data-ock-wallet] button, .wallet-connect-container button');
+        buttons.forEach(btn => {
+          btn.style.animation = 'wallet-glow 2s ease-in-out infinite';
+        });
+        console.log('✨ 지갑 버튼 빛나는 효과 적용:', buttons.length, '개');
+      }, 1000);
+      
+      // MutationObserver로 동적으로 추가되는 버튼도 감지
+      const observer = new MutationObserver(() => {
+        const buttons = document.querySelectorAll('button[class*="ock"], button[data-testid*="ock"], div[data-ock-wallet] button, .wallet-connect-container button');
+        buttons.forEach(btn => {
+          if (!btn.style.animation || btn.style.animation === 'none') {
+            btn.style.animation = 'wallet-glow 2s ease-in-out infinite';
+          }
+        });
+      });
+      
+      observer.observe(document.body, { childList: true, subtree: true });
+    </script>
   </body>
 </html>
 

@@ -6,9 +6,11 @@ export default function VehicleSelectionModal({
   onClose, 
   onVehicleSelect,
   onShowQueue,
-  vehicles = [] 
+  vehicles = [],
+  onRefresh
 }) {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleVehicleSelect = (vehicle) => {
     setSelectedVehicle(vehicle);
@@ -18,6 +20,14 @@ export default function VehicleSelectionModal({
   const handleCancel = () => {
     setSelectedVehicle(null);
     onClose();
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    if (onRefresh) {
+      await onRefresh();
+    }
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
   if (!open) return null;
@@ -98,12 +108,22 @@ export default function VehicleSelectionModal({
           <div className="vehicle-selection-note">
             <p>💡 Click on a vehicle to select<br></br>and proceed to payment</p>
           </div>
-          <button 
-            className="vehicle-btn vehicle-btn-cancel"
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
+          <div className="footer-buttons">
+            <button 
+              className="vehicle-btn vehicle-btn-refresh"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh vehicle status"
+            >
+              🔄
+            </button>
+            <button 
+              className="vehicle-btn vehicle-btn-cancel"
+              onClick={handleCancel}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </div>

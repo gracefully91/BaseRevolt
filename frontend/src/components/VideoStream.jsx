@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAccount } from 'wagmi';
 import { WS_SERVER_URL } from '../config/contracts';
 import './VideoStream.css';
 
-function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls = true }) {
+function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls = true, sessionId, setSessionId, sessionTier }) {
+  const { address } = useAccount();
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
   const [error, setError] = useState(null);
   const [fps, setFps] = useState(0);
   const lastFrameTimeRef = useRef(Date.now());
   const frameCountRef = useRef(0);
+  const heartbeatIntervalRef = useRef(null);
   
   // WebSocket 연결 상태 관리 (서버 연결)
   const [wsConnected, setWsConnected] = useState(false);
@@ -65,7 +68,8 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
         console.log('🎮 Keyboard command:', command);
         const message = JSON.stringify({ 
           type: 'control',
-          command: command
+          command: command,
+          sessionId: sessionId
         });
         wsRef.current.send(message);
         
@@ -97,7 +101,8 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
         console.log('🎮 Keyboard release - sending stop');
         const message = JSON.stringify({ 
           type: 'control',
-          command: 'stop'
+          command: 'stop',
+          sessionId: sessionId
         });
         wsRef.current.send(message);
       }
@@ -112,7 +117,34 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
     };
-  }, []); // sendCommand 의존성 제거
+  }, [sessionId]); // sessionId 의존성 추가
+  
+  // 하트비트 함수들
+  const startHeartbeat = (sid) => {
+    console.log(`💓 Starting heartbeat for session: ${sid}`);
+    
+    // 기존 하트비트 정리
+    stopHeartbeat();
+    
+    // 3초마다 하트비트 전송
+    heartbeatIntervalRef.current = setInterval(() => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'heartbeat',
+          sessionId: sid
+        }));
+        console.log('💓 Heartbeat sent');
+      }
+    }, 3000);
+  };
+  
+  const stopHeartbeat = () => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+      console.log('💔 Heartbeat stopped');
+    }
+  };
 
   useEffect(() => {
     // WebSocket connection (works for both real and demo mode)
@@ -132,8 +164,19 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
           // Identify as web user
           ws.send(JSON.stringify({ type: 'client', device: 'web-user' }));
           
-          // WebSocket은 연결되었지만, RC카 연결 상태는 서버로부터 메시지를 받아야 함
-          console.log('⏳ Waiting for RC car connection status from server...');
+          // 세션 요청
+          const wallet = isDemo 
+            ? 'demo-user-' + Math.random().toString(36).substr(2, 9) 
+            : (address || 'anonymous-' + Math.random().toString(36).substr(2, 9));
+          
+          console.log(`📝 Requesting session: ${sessionTier}, wallet: ${wallet.substring(0, 10)}...`);
+          
+          ws.send(JSON.stringify({
+            type: 'requestSession',
+            carId: 'car01',
+            wallet: wallet,
+            tier: sessionTier
+          }));
         };
 
         ws.onmessage = (event) => {
@@ -146,7 +189,82 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
             try {
               const data = JSON.parse(event.data);
               
-              if (data.type === 'rc-car-status') {
+              // 세션 승인
+              if (data.type === 'sessionGranted') {
+                console.log(`✅ Session granted: ${data.sessionId}`);
+                setSessionId(data.sessionId);
+                
+                // 대기열에서 자동 할당된 경우 알림
+                if (data.fromQueue) {
+                  alert(`🎉 It's your turn! Your session has started.`);
+                }
+                
+                // 하트비트 시작
+                startHeartbeat(data.sessionId);
+              }
+              // 세션 거부
+              else if (data.type === 'sessionDenied') {
+                console.log(`❌ Session denied: ${data.reason}`);
+                
+                // 대기열 옵션이 있는 경우
+                if (data.canJoinQueue) {
+                  const join = confirm(
+                    `${data.message}\n\n` +
+                    `Current queue: ${data.queueStatus?.queueLength || 0} people\n` +
+                    `Would you like to join the waiting queue?`
+                  );
+                  
+                  if (join) {
+                    // 대기열 가입
+                    const wallet = isDemo 
+                      ? 'demo-user-' + Math.random().toString(36).substr(2, 9) 
+                      : (address || 'anonymous-' + Math.random().toString(36).substr(2, 9));
+                    
+                    wsRef.current.send(JSON.stringify({
+                      type: 'joinQueue',
+                      carId: 'car01',
+                      wallet: wallet,
+                      tier: sessionTier
+                    }));
+                  } else {
+                    window.location.href = '/';
+                  }
+                } else {
+                  alert(data.message);
+                  window.location.href = '/';
+                }
+              }
+              // 대기열 가입 성공
+              else if (data.type === 'queueJoined') {
+                console.log(`✅ Joined queue at position ${data.position}`);
+                alert(
+                  `You've joined the queue!\n\n` +
+                  `Position: #${data.position}\n` +
+                  `Estimated wait: ~${data.estimatedWaitTime} minutes\n\n` +
+                  `You'll be notified when it's your turn!`
+                );
+                // 대기열 페이지로 이동 (나중에 구현)
+                window.location.href = '/';
+              }
+              // 대기열 업데이트
+              else if (data.type === 'queueUpdate') {
+                console.log(`📊 Queue updated:`, data.status);
+                // 대기열 상태 업데이트 (UI에 표시)
+              }
+              // 선점 경고
+              else if (data.type === 'preempt') {
+                console.log(`⚠️ Preempt warning: ${data.message}`);
+                alert(data.message);
+              }
+              // 세션 종료
+              else if (data.type === 'sessionEnd') {
+                console.log(`🔴 Session ended: ${data.reason}`);
+                stopHeartbeat();
+                alert(data.message);
+                window.location.href = '/';
+              }
+              // RC카 상태
+              else if (data.type === 'rc-car-status') {
                 const connected = data.status === 'connected';
                 console.log(`🚗 RC Car status: ${connected ? 'connected' : 'disconnected'}`);
                 
@@ -194,6 +312,9 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
         ws.onclose = () => {
           console.log('❌ WebSocket disconnected from server');
           
+          // 하트비트 정리
+          stopHeartbeat();
+          
           // WebSocket 연결이 끊어지면 모든 상태 초기화
           setWsConnected(false);
           setRcCarConnected(false);
@@ -230,6 +351,10 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
 
     return () => {
       console.log('🧹 Cleaning up VideoStream WebSocket');
+      
+      // 하트비트 정리
+      stopHeartbeat();
+      
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;

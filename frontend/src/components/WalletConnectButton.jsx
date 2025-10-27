@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useDisconnect, useConnect, useSwitchChain } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
 import { 
@@ -20,24 +20,44 @@ import './WalletConnectButton.css';
 export default function WalletConnectButton() {
   const { address, isConnected, chain, connector } = useAccount();
   const { disconnect } = useDisconnect();
-  const { connect, connectors, isPending } = useConnect();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
-  const [showModal, setShowModal] = useState(false);
+  const [showChainDropdown, setShowChainDropdown] = useState(false);
 
-  // 디버깅: 연결 상태 확인
-  console.log('🔍 지갑 연결 상태:', { 
-    address, 
-    isConnected, 
-    chain, 
-    connector: connector?.name,
-    connectorId: connector?.id 
-  });
+  // 지갑 연결 시 자동으로 Base Mainnet으로 전환 (선택적)
+  // 주석 처리: 사용자가 수동으로 네트워크 선택하도록 함
+  // useEffect(() => {
+  //   if (isConnected && chain && chain.id !== base.id && typeof switchChain === 'function') {
+  //     console.log('🔄 Base Mainnet으로 자동 전환 중...');
+  //     try {
+  //       const result = switchChain({ chainId: base.id });
+  //       if (result && typeof result.then === 'function') {
+  //         result
+  //           .then(() => console.log('✅ Base Mainnet으로 자동 전환 완료'))
+  //           .catch((error) => {
+  //             console.warn('⚠️ Base Mainnet 자동 전환 실패:', error);
+  //           });
+  //       }
+  //     } catch (error) {
+  //       console.warn('⚠️ switchChain 호출 실패:', error);
+  //     }
+  //   }
+  // }, [isConnected, chain]);
+
+  // 디버깅: 연결 상태 확인 (필요시만)
+  // console.log('🔍 지갑 연결 상태:', { 
+  //   address, 
+  //   isConnected, 
+  //   chain, 
+  //   connector: connector?.name,
+  //   connectorId: connector?.id 
+  // });
 
   // 체인 변경 함수들
   const switchToBase = async () => {
     try {
       await switchChain({ chainId: base.id });
       console.log('✅ Base 메인넷으로 변경 완료');
+      setShowChainDropdown(false);
     } catch (error) {
       console.error('❌ Base 메인넷 변경 실패:', error);
     }
@@ -47,82 +67,31 @@ export default function WalletConnectButton() {
     try {
       await switchChain({ chainId: baseSepolia.id });
       console.log('✅ Base Sepolia 테스트넷으로 변경 완료');
+      setShowChainDropdown(false);
     } catch (error) {
       console.error('❌ Base Sepolia 변경 실패:', error);
     }
   };
 
-  // 연결되지 않은 경우 - 커스텀 모달 사용
+  // 현재 체인 정보 가져오기
+  const getCurrentChainInfo = () => {
+    if (chain?.id === base.id) {
+      return { icon: '🔵', name: 'Base Mainnet', id: base.id };
+    } else if (chain?.id === baseSepolia.id) {
+      return { icon: '🧪', name: 'Base Sepolia', id: baseSepolia.id };
+    }
+    return { icon: '❓', name: 'Unknown Network', id: chain?.id };
+  };
+
+  const currentChain = getCurrentChainInfo();
+
+  // 연결되지 않은 경우 - OnchainKit 기본 모달 사용
   if (!isConnected) {
     return (
-      <div className="wallet-connect-container">
-        {/* 커스텀 Connect Wallet 버튼 */}
-        <button 
-          onClick={() => setShowModal(true)}
-          className="custom-connect-button"
-        >
-          <span>Connect Wallet</span>
-        </button>
-
-        {/* 커스텀 지갑 선택 모달 */}
-        {showModal && (
-          <div className="custom-wallet-modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="custom-wallet-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>Connect your wallet</h2>
-                <button 
-                  className="close-button"
-                  onClick={() => setShowModal(false)}
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="wallet-grid">
-                {connectors.map((connector) => (
-                  <button
-                    key={connector.id}
-                    onClick={() => {
-                      connect({ connector });
-                      setShowModal(false);
-                    }}
-                    className="wallet-option"
-                    disabled={isPending}
-                  >
-                    <div className="wallet-icon">
-                      {connector.name === 'MetaMask' && <span className="metamask-icon">🦊</span>}
-                      {connector.name === 'Coinbase Wallet' && <span className="coinbase-icon">🔵</span>}
-                      {connector.name === 'Rabby' && <span className="rabby-icon">🐰</span>}
-                      {connector.name === 'Trust Wallet' && <span className="trust-icon">🛡️</span>}
-                      {connector.name === 'Frame' && <span className="frame-icon">🟢</span>}
-                      {connector.name === 'WalletConnect' && <span className="walletconnect-icon">🔗</span>}
-                      {connector.name === 'Safe' && <span className="safe-icon">🛡️</span>}
-                      {connector.name === 'Phantom' && <span className="phantom-icon">👻</span>}
-                      {connector.name === 'Brave Wallet' && <span className="brave-icon">🦁</span>}
-                      {connector.name === 'Opera Wallet' && <span className="opera-icon">🎭</span>}
-                      {connector.name === 'Bitget Wallet' && <span className="bitget-icon">🟡</span>}
-                      {connector.name === 'BitKeep' && <span className="bitkeep-icon">🟣</span>}
-                      {connector.name === 'Crypto.com DeFi Wallet' && <span className="crypto-icon">🔷</span>}
-                      {connector.name === 'Blockchain.com' && <span className="blockchain-icon">💎</span>}
-                      {connector.name === 'Kresus' && <span className="kresus-icon">🔵</span>}
-                      {!['MetaMask', 'Coinbase Wallet', 'Rabby', 'Trust Wallet', 'Frame', 'WalletConnect', 'Safe', 'Phantom', 'Brave Wallet', 'Opera Wallet', 'Bitget Wallet', 'BitKeep', 'Crypto.com DeFi Wallet', 'Blockchain.com', 'Kresus'].includes(connector.name) && 
-                        <span className="default-icon">🔗</span>}
-                    </div>
-                    <span className="wallet-name">{connector.name}</span>
-                  </button>
-                ))}
-              </div>
-              
-              <div className="modal-footer">
-                <p>
-                  By connecting a wallet, you agree to our{' '}
-                  <a href="#" className="link">Terms of Service</a> and{' '}
-                  <a href="#" className="link">Privacy Policy</a>.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      <div className="wallet-connect-container custom-wallet-button">
+        <Wallet>
+          <ConnectWallet className="custom-connect-wallet-btn" />
+        </Wallet>
       </div>
     );
   }
@@ -145,31 +114,40 @@ export default function WalletConnectButton() {
             <EthBalance />
           </Identity>
           
-          {/* 체인 변경 섹션 */}
+          {/* 체인 변경 섹션 - 개선된 UI */}
           <div className="chain-switch-section">
-            <div className="chain-switch-header">
-              <span className="chain-switch-title">🌐 Switch Network</span>
+            <div className="current-chain-display" onClick={() => setShowChainDropdown(!showChainDropdown)}>
+              <div className="current-chain-info">
+                <span className="chain-icon">{currentChain.icon}</span>
+                <span className="chain-name">{currentChain.name}</span>
+              </div>
+              <div className="chain-dropdown-toggle">
+                <span className={`dropdown-arrow ${showChainDropdown ? 'open' : ''}`}>▼</span>
+              </div>
             </div>
-            <div className="chain-switch-buttons">
-              <button
-                onClick={switchToBase}
-                disabled={isSwitchingChain || chain?.id === base.id}
-                className={`chain-switch-button ${chain?.id === base.id ? 'active' : ''}`}
-              >
-                <span className="chain-icon">🔵</span>
-                <span className="chain-name">Base Mainnet</span>
-                {chain?.id === base.id && <span className="current-badge">Current</span>}
-              </button>
-              <button
-                onClick={switchToBaseSepolia}
-                disabled={isSwitchingChain || chain?.id === baseSepolia.id}
-                className={`chain-switch-button ${chain?.id === baseSepolia.id ? 'active' : ''}`}
-              >
-                <span className="chain-icon">🧪</span>
-                <span className="chain-name">Base Sepolia</span>
-                {chain?.id === baseSepolia.id && <span className="current-badge">Current</span>}
-              </button>
-            </div>
+            
+            {showChainDropdown && (
+              <div className="chain-dropdown">
+                <button
+                  onClick={switchToBase}
+                  disabled={isSwitchingChain || chain?.id === base.id}
+                  className={`chain-option ${chain?.id === base.id ? 'active' : ''}`}
+                >
+                  <span className="chain-icon">🔵</span>
+                  <span className="chain-name">Base Mainnet</span>
+                  {chain?.id === base.id && <span className="current-badge">Current</span>}
+                </button>
+                <button
+                  onClick={switchToBaseSepolia}
+                  disabled={isSwitchingChain || chain?.id === baseSepolia.id}
+                  className={`chain-option ${chain?.id === baseSepolia.id ? 'active' : ''}`}
+                >
+                  <span className="chain-icon">🧪</span>
+                  <span className="chain-name">Base Sepolia</span>
+                  {chain?.id === baseSepolia.id && <span className="current-badge">Current</span>}
+                </button>
+              </div>
+            )}
           </div>
           
           <WalletDropdownBasename />

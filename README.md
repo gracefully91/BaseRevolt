@@ -273,6 +273,43 @@ Click **"Try Demo"** to explore UI without payment (hardware connection required
 - QR code authentication via Warpcast
 - 7-day session persistence
 
+### Session Management & Queue System
+
+#### Session Control
+- **Paid Sessions**: 10 minutes of exclusive play time ($4.99)
+- **Demo Sessions**: 5 minutes of free play (once per 24 hours)
+- **Heartbeat Monitoring**: Auto-disconnect inactive users (10s timeout)
+- **Session Validation**: All control commands require valid session ID
+- **Auto-expiration**: Sessions end automatically after time limit
+
+#### Priority System
+- **Paid User Preemption**: Paid users can take over demo sessions with 5-second warning
+- **Fair Queuing**: Same-tier users wait in FIFO order
+- **Demo Quota**: One free session per wallet per day
+- **Session Extension**: Same wallet can extend paid sessions
+
+#### Queue Management
+- **Real-time Queue Status**: Live updates of waiting users and positions
+- **Automatic Assignment**: Next user gets control when session ends
+- **Estimated Wait Time**: Dynamic calculation based on current session
+- **Queue Notifications**: Users notified when it's their turn
+- **Leave Queue**: Users can exit queue anytime
+
+#### WebSocket Events
+```javascript
+// Session flow
+requestSession → sessionGranted/sessionDenied
+heartbeat (every 3s)
+control (with sessionId validation)
+endSession → auto-assign next in queue
+
+// Queue flow  
+joinQueue → queueJoined
+queueUpdate (real-time broadcast)
+getQueueStatus → queueStatus
+leaveQueue → queueLeft
+```
+
 ### Hardware Control
 
 #### Real-time Communication
@@ -322,11 +359,15 @@ Click **"Try Demo"** to explore UI without payment (hardware connection required
 - [x] Farcaster Mini App integration
 - [x] Local demo mode
 
-### 🚧 Phase 2 (Q1 2025)
+### ✅ Phase 2 (Completed - Q1 2025)
+- [x] Session management system
+- [x] Queue system for busy vehicles
+- [x] Paid user priority (preemption)
+- [x] Demo quota system (once per day)
+- [x] Heartbeat monitoring
 - [ ] AR overlay items in video feed
 - [ ] Multiple RC car fleet management
 - [ ] Vehicle selection modal with status indicators
-- [ ] Queue system for busy vehicles
 - [ ] Enhanced video quality (30 FPS, 720p)
 
 ### 🔮 Phase 3 (Q2 2025)
@@ -501,3 +542,410 @@ Contributions are welcome! Please follow these steps:
 **🚗 Let's Revolt! Drive the future of Web3 gaming. 🚙**
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/gracefully91/BaseRevolt)
+
+---
+---
+
+# 🚙 Base Revolt (한국어)
+
+> **Web3와 현실을 연결하는 AR 게이밍 플랫폼**
+
+Base Revolt는 웹 브라우저를 통해 실제 RC 카를 원격 제어할 수 있는 풀스택 Web3 애플리케이션입니다. Base 블록체인을 활용한 결제 처리 및 소유권 검증 기능을 제공합니다.
+
+[![라이브 데모](https://img.shields.io/badge/Live-Demo-blue)](https://base-revolt.vercel.app)
+[![Base Network](https://img.shields.io/badge/Network-Base-blue)](https://base.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+---
+
+## 🎯 개요
+
+Base Revolt는 온체인 소유권을 현실 세계의 움직임으로 변환합니다. 사용자는 Base 지갑을 연결하고, 암호화폐로 플레이 티켓을 구매하며, 실시간 비디오 스트리밍과 함께 실제 RC 카를 제어할 수 있습니다 - 모두 웹 브라우저에서 가능합니다.
+
+### 주요 기능
+
+- 🎮 **실시간 RC 카 제어** - WASD/방향키 또는 터치 컨트롤
+- 📹 **실시간 비디오 스트리밍** - ESP32-CAM 15 FPS 비디오 피드
+- 💰 **Base 블록체인 결제** - 메인넷 $4.99 / 테스트넷 $1.00 티켓
+- 🔗 **Farcaster 통합** - 소셜 + 온체인 로그인 경험
+- 📱 **크로스 플랫폼** - 데스크톱, 모바일, 세로/가로 모드 지원
+- ⛓️ **멀티 네트워크 지원** - Base 메인넷 & Base Sepolia 테스트넷
+- 🎨 **Farcaster Mini App** - Frame 미니 앱으로 통합
+- 👥 **세션 관리 & 대기열 시스템** - 공정한 사용자 관리
+
+---
+
+## 🏗️ 아키텍처
+
+```
+┌─────────────────┐
+│   웹 브라우저    │ ← 사용자 인터페이스 (React + Wagmi + OnchainKit)
+└────────┬────────┘
+         │ WebSocket
+┌────────▼────────┐
+│  Node.js 서버   │ ← WebSocket 릴레이 (Render.com)
+│  세션 관리       │ ← 대기열 시스템
+└────────┬────────┘
+         │ WebSocket
+┌────────▼────────┐
+│   ESP32-CAM     │ ← RC 카 하드웨어 (실제 장치)
+│   + L298N       │
+│   + DC 모터     │
+└─────────────────┘
+
+┌─────────────────┐
+│  Base 네트워크   │ ← 결제 & 소유권
+│  스마트 컨트랙트 │
+└─────────────────┘
+```
+
+---
+
+## 🛠️ 기술 스택
+
+### 하드웨어
+- **ESP32-CAM** - 비디오 스트리밍 & WiFi 통신
+- **L298N 모터 드라이버** - DC 모터 제어
+- **RC 카 섀시** - 2륜 구동 플랫폼
+- **DC 모터 (2개)** - 좌우 바퀴 모터
+
+### 백엔드
+- **Node.js** - WebSocket 릴레이 서버
+- **ws** - WebSocket 라이브러리
+- **세션 관리** - UUID 기반 세션 추적
+- **대기열 시스템** - 우선순위 큐 구현
+- **Render.com** - 무료 서버 호스팅
+
+### 프론트엔드
+- **React 19** - UI 프레임워크
+- **Vite** - 빌드 도구 & 개발 서버
+- **Wagmi** - Ethereum용 React 훅
+- **OnchainKit** - Coinbase 지갑 UI 라이브러리
+- **@farcaster/auth-kit** - Farcaster 소셜 로그인
+- **Viem** - Ethereum 상호작용
+- **React Router** - 클라이언트 사이드 라우팅
+- **Vercel** - 프론트엔드 호스팅
+
+### 블록체인
+- **Solidity** - 스마트 컨트랙트 언어
+- **Base Mainnet** - L2 블록체인 (프로덕션)
+- **Base Sepolia** - L2 테스트넷 (테스팅)
+- **Remix IDE** - 컨트랙트 배포
+
+---
+
+## 🌟 핵심 기능 상세
+
+### 세션 관리 & 대기열 시스템
+
+#### 세션 제어
+- **유료 세션**: 10분 독점 플레이 시간 ($4.99)
+- **데모 세션**: 5분 무료 플레이 (24시간당 1회)
+- **하트비트 모니터링**: 비활성 사용자 자동 연결 해제 (10초 타임아웃)
+- **세션 검증**: 모든 제어 명령은 유효한 세션 ID 필요
+- **자동 만료**: 시간 제한 후 세션 자동 종료
+
+#### 우선순위 시스템
+- **유료 사용자 선점**: 유료 사용자는 5초 경고와 함께 데모 세션 인수 가능
+- **공정한 대기열**: 동일 등급 사용자는 선입선출 순서로 대기
+- **데모 할당량**: 지갑당 하루 1회 무료 세션
+- **세션 연장**: 동일 지갑은 유료 세션 연장 가능
+
+#### 대기열 관리
+- **실시간 대기열 상태**: 대기 중인 사용자와 위치 실시간 업데이트
+- **자동 할당**: 세션 종료 시 다음 사용자에게 자동 제어권 부여
+- **예상 대기 시간**: 현재 세션 기반 동적 계산
+- **대기열 알림**: 사용자 차례가 되면 알림 받음
+- **대기열 나가기**: 사용자는 언제든지 대기열 이탈 가능
+
+#### WebSocket 이벤트
+```javascript
+// 세션 흐름
+requestSession → sessionGranted/sessionDenied
+heartbeat (3초마다)
+control (sessionId 검증 포함)
+endSession → 다음 대기자에게 자동 할당
+
+// 대기열 흐름
+joinQueue → queueJoined
+queueUpdate (실시간 브로드캐스트)
+getQueueStatus → queueStatus
+leaveQueue → queueLeft
+```
+
+#### 세션 구현 세부사항
+```javascript
+// 서버 측 세션 관리
+activeSessions = Map<carId, {
+  sessionId: UUID,
+  wallet: string,
+  tier: 'paid' | 'demo',
+  expiresAt: timestamp,
+  ws: WebSocket,
+  heartbeatTimeout: Timer
+}>
+
+// 대기열 구조
+waitingQueues = Map<carId, [{
+  wallet: string,
+  tier: 'paid' | 'demo',
+  ws: WebSocket,
+  joinedAt: timestamp
+}]>
+
+// 데모 할당량 추적
+demoQuota = Map<wallet, {
+  usedAt: timestamp,
+  expiresAt: timestamp (24시간 후)
+}>
+```
+
+### 하드웨어 제어
+
+#### 실시간 통신
+- 저지연 명령을 위한 WebSocket (<50ms)
+- 바이너리 비디오 스트리밍 (JPEG 프레임)
+- 15 FPS 라이브 카메라 피드
+- 양방향 제어 신호
+
+#### RC 카 제어
+- **전진/후진**: 듀얼 모터 동기화
+- **좌/우**: 차등 바퀴 회전
+- **정지**: 모든 모터 긴급 제동
+- **속도 제어**: PWM 모터 속도 조절 (80/255)
+
+### 사용자 경험
+
+#### 크로스 플랫폼 UI
+- **데스크톱**: 키보드 컨트롤 (WASD/화살표)
+- **모바일**: 반응형 버튼으로 터치 컨트롤
+- **세로 모드**: 세로 레이아웃 최적화
+- **가로 모드**: 전폭 비디오 디스플레이
+
+#### 실시간 상태
+- 연결 표시기 (WebSocket, RC 카)
+- MM:SS 표시가 있는 10분 플레이 타이머
+- 비디오 스트림 품질을 위한 FPS 카운터
+- 블록 탐색기 링크가 있는 거래 확인
+
+---
+
+## 🚀 빠른 시작
+
+### 전제 조건
+
+- Node.js 18+ & npm
+- Arduino IDE (ESP32용)
+- MetaMask 또는 Coinbase Wallet
+- Base ETH (메인넷 또는 테스트넷)
+
+### 1️⃣ 하드웨어 설정
+
+**필수 구성 요소:**
+- ESP32-CAM 모듈 ($10)
+- L298N 모터 드라이버 ($5)
+- 2개의 DC 모터가 있는 RC 카 섀시 ($15)
+- FTDI USB 어댑터 ($5)
+- 7-12V 배터리 팩 ($10)
+- 점퍼 와이어 ($3)
+
+**배선도:**
+```
+ESP32-CAM 핀    →    L298N 핀
+─────────────────────────────────
+GPIO 12          →    IN1 (왼쪽 모터)
+GPIO 13          →    IN2 (왼쪽 모터)
+GPIO 14          →    IN3 (오른쪽 모터)
+GPIO 15          →    IN4 (오른쪽 모터)
+GPIO 2           →    ENA (왼쪽 활성화)
+GPIO 4           →    ENB (오른쪽 활성화)
+5V               →    5V
+GND              →    GND
+```
+
+자세한 가이드: [hardware/README.md](hardware/README.md)
+
+### 2️⃣ WebSocket 서버 배포 (Render)
+
+1. https://render.com 에서 가입
+2. **New Web Service** 생성
+3. GitHub 리포지토리 연결
+4. 설정:
+   - **Environment**: Node
+   - **Root Directory**: `server`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+5. **Deploy** 클릭
+6. 배포된 URL 복사 (예: `https://base-revolt-server.onrender.com`)
+
+### 3️⃣ 스마트 컨트랙트 배포 (Base)
+
+1. [Remix IDE](https://remix.ethereum.org) 열기
+2. `contracts/TicketSale.sol` 복사
+3. Solidity 0.8.20으로 컴파일
+4. MetaMask를 **Base Network**로 전환
+5. 컨트랙트 배포
+6. 배포된 컨트랙트 주소 복사
+
+### 4️⃣ ESP32 펌웨어 업로드
+
+1. **Arduino IDE** 설치
+2. ESP32 보드 지원 설치
+3. 필수 라이브러리 설치:
+   - WebSockets by Markus Sattler
+   - ArduinoJson by Benoit Blanchon
+4. `hardware/esp32_rc_car.ino` 열기
+5. WiFi & WebSocket 설정 업데이트:
+   ```cpp
+   const char* ssid = "YOUR_WIFI_SSID";
+   const char* password = "YOUR_WIFI_PASSWORD";
+   const char* ws_host = "base-revolt-server.onrender.com";
+   ```
+6. FTDI로 ESP32 연결 및 업로드
+
+### 5️⃣ 프론트엔드 배포 (Vercel)
+
+1. `frontend/src/config/contracts.js` 업데이트:
+   ```javascript
+   export const TICKET_CONTRACT_ADDRESS = "0x..."; // 귀하의 컨트랙트
+   export const WS_SERVER_URL = "wss://base-revolt-server.onrender.com";
+   ```
+2. https://vercel.com 에서 가입
+3. GitHub 리포지토리 가져오기
+4. 설정:
+   - **Framework**: Vite
+   - **Root Directory**: `frontend`
+5. 환경 변수 추가:
+   - `VITE_WS_SERVER_URL`: `wss://base-revolt-server.onrender.com`
+6. **Deploy** 클릭
+
+---
+
+## 🎮 사용 방법
+
+### 1. 웹 앱 열기
+Vercel 배포 URL 방문 (예: `https://base-revolt.vercel.app`)
+
+### 2. Farcaster로 로그인 (선택사항)
+소셜 로그인 통합을 위해 **"Sign in with Farcaster"** 클릭
+
+### 3. 지갑 연결
+**"Connect Wallet"** 클릭 → OnchainKit로 연결
+
+### 4. 네트워크 선택
+- **Base Mainnet**: 실제 결제 ($4.99)
+- **Base Sepolia**: 테스트 결제 ($1.00 테스트넷 ETH)
+
+### 5. 티켓 구매
+**"Buy Ticket"** 클릭 → 결제 확인 → 10분 플레이 시간
+
+### 6. RC 카 제어
+- **키보드**: W/A/S/D 또는 화살표 키
+- **터치**: 화면 버튼 (모바일)
+- **라이브 비디오**: ESP32-CAM의 실시간 카메라 피드
+- **화면 회전**: 세로/가로 모드 전환
+
+### 7. 데모 모드
+결제 없이 UI 탐색을 위해 **"Try Demo"** 클릭 (실제 제어는 하드웨어 연결 필요)
+
+---
+
+## 🗺️ 로드맵
+
+### ✅ MVP (현재 - 2024 Q4)
+- [x] ESP32-CAM 비디오 스트리밍 (15 FPS)
+- [x] 원격 RC 카 제어 (키보드 + 터치)
+- [x] 세로/가로 모드 지원
+- [x] Base 블록체인 결제 시스템
+- [x] 10분 플레이 타이머
+- [x] 멀티 네트워크 지원 (메인넷 + 테스트넷)
+- [x] Farcaster 소셜 로그인
+- [x] Farcaster Mini App 통합
+- [x] 로컬 데모 모드
+
+### ✅ Phase 2 (완료 - 2025 Q1)
+- [x] 세션 관리 시스템
+- [x] 사용 중인 차량을 위한 대기열 시스템
+- [x] 유료 사용자 우선순위 (선점)
+- [x] 데모 할당량 시스템 (하루 1회)
+- [x] 하트비트 모니터링
+- [ ] 비디오 피드의 AR 오버레이 아이템
+- [ ] 다중 RC 카 플릿 관리
+- [ ] 상태 표시기가 있는 차량 선택 모달
+- [ ] 향상된 비디오 품질 (30 FPS, 720p)
+
+### 🔮 Phase 3 (2025 Q2)
+- [ ] 멀티플레이어 레이싱 모드
+- [ ] RC 카용 NFT 소유권
+- [ ] 리더보드 & 업적
+- [ ] 커스텀 트랙 & 장애물
+
+### 🌟 Phase 4 (2025 Q3+)
+- [ ] 빌더 모드 (커스텀 트랙 생성)
+- [ ] C2E (Create-to-Earn) 보상
+- [ ] 글로벌 아레나 대회
+- [ ] 모바일 AR 통합 (ARKit/ARCore)
+
+---
+
+## 🐛 문제 해결
+
+### 하드웨어 문제
+
+**Q: 카메라 초기화 실패**
+- 5V 전원 공급 확인 (3.3V 불충분)
+- 카메라 케이블 연결 확인
+- 전원 재시작 시도
+
+**Q: WiFi 연결 실패**
+- 2.4GHz WiFi만 사용 (5GHz 지원 안됨)
+- 펌웨어의 SSID/비밀번호 확인
+- 라우터 설정 확인
+
+**Q: WebSocket 연결 시간 초과**
+- Render URL이 `wss://`를 사용하는지 확인
+- 서버 배포 상태 확인
+- 방화벽 설정 확인
+
+### 프론트엔드 문제
+
+**Q: 지갑 연결 거부**
+- Base 네트워크가 지갑에 추가되었는지 확인
+- 네트워크 RPC 설정 확인
+- 다른 지갑 제공자 시도
+
+**Q: 결제 거래 실패**
+- Base ETH 잔액이 충분한지 확인
+- 설정의 컨트랙트 주소 확인
+- 올바른 네트워크가 선택되었는지 확인
+
+**Q: 비디오 스트림이 표시되지 않음**
+- RC 카의 전원이 켜져 있는지 확인
+- WebSocket 연결 상태 확인
+- ESP32가 성공적으로 업로드되었는지 확인
+
+### 서버 문제
+
+**Q: Render 서버 슬립 모드**
+- 무료 티어는 15분 비활성화 후 슬립
+- 첫 번째 연결이 서버를 깨움 (30초 지연)
+- 24/7 가동을 위해 업그레이드 고려
+
+---
+
+## 📄 라이선스
+
+MIT License - 자세한 내용은 [LICENSE](LICENSE) 파일 참조
+
+---
+
+## 👤 제작자
+
+**Base Revolt 팀**
+- 솔로 개발자 프로젝트
+- Base Onchain Builder Hackathon을 위해 제작
+- Farcaster FID: 1107308
+
+---
+
+**🚙 Let's Revolt! Web3 게이밍의 미래를 운전하세요. 🚗**

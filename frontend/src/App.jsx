@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 
 import '@coinbase/onchainkit/styles.css';
 import './styles/onchainkit-custom.css'; // 커스텀 OnchainKit 스타일
+import './styles/wallet-glow.css'; // 지갑 버튼 빛나는 효과
 
 import Header from './components/Header';
 import Home from './pages/Home';
@@ -51,28 +52,28 @@ function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-            <OnchainKitProvider
-              chain={base}
-              config={{
-                appearance: {
-                  name: 'Base Revolt', // 모달 헤더에 표시될 앱 이름
-                  logo: '/base-revolt logo.png', // 모달 헤더 로고
-                  mode: 'auto',
-                  theme: 'base',
-                },
-                wallet: {
-                  display: 'modal',
-                  preference: 'all',
-                  termsUrl: 'https://example.com/terms', // 약관 링크
-                  privacyUrl: 'https://example.com/privacy', // 개인정보처리방침 링크
-                  supportedWallets: {
-                    rabby: true, // Rabby 지갑 지원
-                    trust: true, // Trust Wallet 지원
-                    frame: true, // Frame 지갑 지원
-                  },
-                },
-              }}
-            >
+                <OnchainKitProvider
+                  chain={base}
+                  config={{
+                    appearance: {
+                      name: 'Base Revolt', // 모달 헤더에 표시될 앱 이름
+                      logo: '/base-revolt logo.png', // 모달 헤더 로고
+                      mode: 'auto',
+                      theme: 'base',
+                    },
+                    wallet: {
+                      display: 'modal', // OnchainKit 기본 모달 사용
+                      preference: 'all',
+                      termsUrl: 'https://example.com/terms',
+                      privacyUrl: 'https://example.com/privacy',
+                      supportedWallets: {
+                        rabby: true,
+                        trust: true,
+                        frame: true,
+                      },
+                    },
+                  }}
+                >
           <BrowserRouter
             future={{
               v7_startTransition: true,

@@ -71,5 +71,7 @@ export const TICKET_CONTRACT_ABI = [
 ];
 
 // WebSocket 서버 설정
+// 로컬 테스트용: ws://localhost:8080
+// 프로덕션용: wss://base-revolt-server.onrender.com
 export const WS_SERVER_URL = import.meta.env.VITE_WS_SERVER_URL || "wss://base-revolt-server.onrender.com";
 

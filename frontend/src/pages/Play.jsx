@@ -6,18 +6,30 @@ import PortraitPlay from '../components/PortraitPlay';
 import Header from '../components/Header';
 import './Play.css';
 
+// Wallet 주소를 전역으로 저장 (VideoStream에서 사용)
+let globalWalletAddress = null;
+
 function Play() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  
+  // Wallet 주소 저장
+  if (address) {
+    globalWalletAddress = address;
+  }
   
   const isDemo = searchParams.get('demo') === 'true';
   const [isLandscape, setIsLandscape] = useState(false);
   const [showPortrait, setShowPortrait] = useState(false);
   
-  // 타이머 (10분 = 600초)
-  const [timeRemaining, setTimeRemaining] = useState(600);
+  // 타이머 (10분 = 600초, 데모는 5분 = 300초)
+  const [timeRemaining, setTimeRemaining] = useState(isDemo ? 300 : 600);
   const [isActive, setIsActive] = useState(false);
+  
+  // 세션 관리
+  const [sessionId, setSessionId] = useState(null);
+  const [sessionTier, setSessionTier] = useState(isDemo ? 'demo' : 'paid');
   
   // RC카 연결 상태
   const [rcCarConnected, setRcCarConnected] = useState(false);
@@ -118,6 +130,9 @@ function Play() {
           onRotate={handleRotate} 
           isDemo={isDemo}
           timeRemaining={timeRemaining}
+          sessionId={sessionId}
+          setSessionId={setSessionId}
+          sessionTier={sessionTier}
         />
       </>
     );
@@ -155,6 +170,9 @@ function Play() {
             isDemo={isDemo}
             onSendCommand={(fn) => { sendCommandRef.current = fn; }}
             showControls={!showPortrait}
+            sessionId={sessionId}
+            setSessionId={setSessionId}
+            sessionTier={sessionTier}
           />
         </div>
       

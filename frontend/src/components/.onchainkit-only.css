@@ -1,0 +1,47 @@
+/* OnchainKit 전용 스타일 - 커스텀 모달 제거됨 */
+
+/* 연결된 지갑 컨테이너 */
+.wallet-connected-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* OnchainKit 모달 커스터마이징 */
+@layer base {
+  [data-ock-theme='base-light'],
+  [data-ock-theme='base-dark'] {
+    --ock-background: rgba(255, 255, 255, 0.98);
+    --ock-background-hover: rgba(0, 82, 255, 0.05);
+    --ock-background-active: rgba(0, 82, 255, 0.1);
+    --ock-background-alternate: rgba(255, 255, 255, 0.95);
+    --ock-background-alternate-hover: rgba(0, 82, 255, 0.05);
+    
+    --ock-line: rgba(0, 82, 255, 0.1);
+    
+    --ock-primary: #0052ff;
+    --ock-primary-hover: #0047e6;
+    --ock-primary-active: #003bb8;
+    
+    --ock-foreground: #1a1a1a;
+    --ock-foreground-muted: #6b7280;
+    
+    --ock-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --ock-radius-default: 16px;
+    --ock-radius-inner: 12px;
+  }
+}
+
+/* OnchainKit 모달 오버레이 */
+.ock-modal-overlay {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.ock-modal-content {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 60px rgba(0, 82, 255, 0.2) !important;
+  border: 1px solid rgba(0, 82, 255, 0.1) !important;
+}
+
