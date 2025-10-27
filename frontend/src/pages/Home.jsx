@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccount, useReadContract, useChainId } from 'wagmi';
-import { useProfile, SignInButton } from '@farcaster/auth-kit';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { base, baseSepolia } from 'wagmi/chains';
 import { TICKET_CONTRACT_ADDRESS, TICKET_CONTRACT_ABI } from '../config/contracts';
 import PaymentModal from '../components/PaymentModal';
@@ -15,7 +15,8 @@ function Home() {
   const navigate = useNavigate();
   const { isConnected } = useAccount();
   const chainId = useChainId();
-  const { isAuthenticated, profile } = useProfile();
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showVehicleSelection, setShowVehicleSelection] = useState(false);
   const [showWaitingQueue, setShowWaitingQueue] = useState(false);
@@ -45,8 +46,63 @@ function Home() {
 
   const priceInfo = getTicketPrice();
 
-  // 디버깅: Farcaster 로그인 상태 확인
-  console.log('Farcaster Auth:', { isAuthenticated, profile });
+  // Quick Auth를 사용한 Farcaster 인증
+  useEffect(() => {
+    const authenticateUser = async () => {
+      try {
+        setIsLoading(true);
+        console.log('🔄 Quick Auth 인증 시도 중...');
+        
+        // 저장된 토큰 확인
+        const savedToken = localStorage.getItem('farcaster-token');
+        const tokenExpiry = localStorage.getItem('farcaster-token-expiry');
+        
+        if (savedToken && tokenExpiry && new Date(tokenExpiry) > new Date()) {
+          console.log('✅ 저장된 토큰이 유효함');
+          setUser({ fid: 'authenticated', token: savedToken });
+          return;
+        }
+        
+        // Farcaster 환경인지 확인
+        if (typeof window !== 'undefined' && window.farcaster) {
+          // Quick Auth 토큰 가져오기
+          const { token } = await sdk.quickAuth.getToken();
+          console.log('✅ Quick Auth 토큰 획득:', token ? '성공' : '실패');
+          
+          if (token) {
+            // 토큰을 일주일간 저장
+            const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7일
+            localStorage.setItem('farcaster-token', token);
+            localStorage.setItem('farcaster-token-expiry', expiryDate.toISOString());
+            
+            setUser({ fid: 'authenticated', token });
+            console.log('✅ Farcaster 인증 성공 (7일간 유지)');
+          } else {
+            console.log('❌ Farcaster 인증 실패');
+          }
+        } else {
+          console.log('⚠️ Farcaster 환경이 아님 - 일반 웹 브라우저에서 실행 중');
+          // 일반 웹에서는 인증을 건너뛰고 바로 사용 가능하게 함
+          setUser({ fid: 'web-user', isWebUser: true });
+        }
+      } catch (error) {
+        console.log('❌ Quick Auth 에러:', error);
+        console.log('⚠️ 일반 웹 브라우저에서 실행 중 - 인증 건너뛰기');
+        // 에러가 발생하면 일반 웹 사용자로 처리
+        setUser({ fid: 'web-user', isWebUser: true });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    authenticateUser();
+  }, []);
+
+  // 디버깅: 인증 상태 확인
+  console.log('Farcaster Auth:', { user, isLoading });
+  
+  // 디버깅: 지갑 연결 상태 확인
+  console.log('Wallet Status:', { isConnected, chainId });
 
   const handleBuyTicket = () => {
     if (!isConnected) {
@@ -131,6 +187,17 @@ function Home() {
     navigate('/play?demo=true');
   };
 
+  const handleFarcasterLogout = () => {
+    // 저장된 토큰 삭제
+    localStorage.removeItem('farcaster-token');
+    localStorage.removeItem('farcaster-token-expiry');
+    
+    // 사용자 상태 초기화
+    setUser(null);
+    
+    console.log('✅ Farcaster 로그아웃 완료');
+  };
+
   return (
     <div className="home-container">
       <div className="home-content">
@@ -157,22 +224,52 @@ function Home() {
                 {!priceInfo.isTestnet && <span className="test-badge mainnet">MAINNET</span>}
               </div>
               
-              <div className="auth-button-container">
-                {!isAuthenticated ? (
-                  <SignInButton 
-                    onSuccess={(res) => {
-                      console.log('Farcaster login success:', res);
-                    }}
-                  />
-                ) : (
-                  <button 
-                    className="buy-button"
-                    onClick={handleBuyTicket}
-                  >
-                    💳 Buy Ticket
-                  </button>
-                )}
-              </div>
+               <div className="auth-button-container">
+                 {isLoading ? (
+                   <div className="loading-section">
+                     <p className="loading-text">🔄 Farcaster 인증 중...</p>
+                   </div>
+                 ) : !user ? (
+                   <div className="farcaster-login-section">
+                     <button 
+                       className="login-button"
+                       onClick={async () => {
+                         try {
+                           console.log('🔄 Quick Auth 재시도...');
+                           const { token } = await sdk.quickAuth.getToken();
+                           if (token) {
+                             // 토큰을 일주일간 저장
+                             const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7일
+                             localStorage.setItem('farcaster-token', token);
+                             localStorage.setItem('farcaster-token-expiry', expiryDate.toISOString());
+                             
+                             setUser({ fid: 'authenticated', token });
+                             console.log('✅ Farcaster 인증 성공 (7일간 유지)');
+                           }
+                         } catch (error) {
+                           console.log('❌ Farcaster 인증 실패:', error);
+                           console.log('⚠️ 일반 웹 브라우저에서는 Farcaster 인증이 불가능합니다');
+                           alert('Farcaster 인증은 Farcaster 앱 내에서만 가능합니다.\n일반 웹 브라우저에서는 지갑 연결만으로 서비스를 이용할 수 있습니다.');
+                           // 일반 웹 사용자로 처리
+                           setUser({ fid: 'web-user', isWebUser: true });
+                         }
+                       }}
+                     >
+                       <img src="/farcaster.png" alt="Farcaster" className="farcaster-logo" />
+                       Sign In with Farcaster
+                     </button>
+                   </div>
+                 ) : (
+                   <div className="authenticated-section">
+                     <button 
+                       className="buy-button"
+                       onClick={handleBuyTicket}
+                     >
+                       💳 Buy Ticket
+                     </button>
+                   </div>
+                 )}
+               </div>
             </div>
 
             <div className="info-section">
@@ -255,6 +352,18 @@ function Home() {
           ticketPrice={ticketPrice}
           selectedVehicle={selectedVehicle}
         />
+        
+        {/* Farcaster 로그아웃 버튼 */}
+        {user && !user.isWebUser && (
+          <div className="logout-section">
+            <button 
+              className="logout-button"
+              onClick={handleFarcasterLogout}
+            >
+              🚪 Farcaster 로그아웃
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

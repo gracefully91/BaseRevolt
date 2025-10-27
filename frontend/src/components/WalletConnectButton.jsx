@@ -1,93 +1,93 @@
 import { useState } from 'react';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect, useConnect } from 'wagmi';
 import { base } from 'wagmi/chains';
+import { WalletDropdown, WalletDropdownDisconnect } from '@coinbase/onchainkit/wallet';
 import './WalletConnectButton.css';
 
 export default function WalletConnectButton() {
-  const { address, isConnected, chain } = useAccount();
-  const { connect, connectors } = useConnect();
+  const { address, isConnected, chain, connector } = useAccount();
   const { disconnect } = useDisconnect();
-  const [showMenu, setShowMenu] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const { connect, connectors, isPending } = useConnect();
+  const [showModal, setShowModal] = useState(false);
 
-  // 지갑 연결
-  const handleConnect = async (connector) => {
-    try {
-      setIsConnecting(true);
-      await connect({ connector });
-      setShowMenu(false);
-    } catch (error) {
-      console.error('지갑 연결 실패:', error);
-      if (error.message?.includes('User rejected')) {
-        alert('지갑 연결이 취소되었습니다.');
-      } else {
-        alert('지갑 연결에 실패했습니다.');
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  // 네트워크 전환
-  const switchToBase = async () => {
-    try {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: `0x${base.id.toString(16)}` }],
-        });
-      }
-    } catch (switchError) {
-      // Base 체인이 없으면 추가
-      if (switchError.code === 4902) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: `0x${base.id.toString(16)}`,
-              chainName: base.name,
-              nativeCurrency: base.nativeCurrency,
-              rpcUrls: base.rpcUrls.default.http,
-              blockExplorerUrls: [base.blockExplorers.default.url]
-            }],
-          });
-        } catch (addError) {
-          console.error('Base 네트워크 추가 실패:', addError);
-        }
-      }
-    }
-  };
-
-  // 주소 단축 표시
-  const formatAddress = (addr) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
+  // 디버깅: 연결 상태 확인
+  console.log('🔍 지갑 연결 상태:', { 
+    address, 
+    isConnected, 
+    chain, 
+    connector: connector?.name,
+    connectorId: connector?.id 
+  });
 
   // 연결되지 않은 경우
   if (!isConnected) {
     return (
       <div className="wallet-connect-container">
-        <button
-          onClick={() => setShowMenu(!showMenu)}
-          disabled={isConnecting}
-          className="connect-button"
+        {/* 커스텀 Connect Wallet 버튼 */}
+        <button 
+          onClick={() => setShowModal(true)}
+          className="custom-connect-button"
         >
-          {isConnecting ? '연결 중...' : '🔗 Connect Wallet'}
+          <span>Connect Wallet</span>
         </button>
 
-        {showMenu && (
-          <div className="wallet-menu">
-            {connectors.map((connector) => (
-              <button
-                key={connector.id}
-                onClick={() => handleConnect(connector)}
-                disabled={!connector.ready || isConnecting}
-                className="wallet-option"
-              >
-                {connector.name}
-                {!connector.ready && ' (설치 필요)'}
-              </button>
-            ))}
+        {/* 커스텀 지갑 선택 모달 */}
+        {showModal && (
+          <div className="custom-wallet-modal-overlay" onClick={() => setShowModal(false)}>
+            <div className="custom-wallet-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Connect your wallet</h2>
+                <button 
+                  className="close-button"
+                  onClick={() => setShowModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="wallet-grid">
+                {connectors.map((connector) => (
+                  <button
+                    key={connector.id}
+                    onClick={() => {
+                      connect({ connector });
+                      setShowModal(false);
+                    }}
+                    className="wallet-option"
+                    disabled={isPending}
+                  >
+                    <div className="wallet-icon">
+                      {connector.name === 'MetaMask' && <span className="metamask-icon">🦊</span>}
+                      {connector.name === 'Coinbase Wallet' && <span className="coinbase-icon">🔵</span>}
+                      {connector.name === 'Rabby' && <span className="rabby-icon">🐰</span>}
+                      {connector.name === 'Trust Wallet' && <span className="trust-icon">🛡️</span>}
+                      {connector.name === 'Frame' && <span className="frame-icon">🟢</span>}
+                      {connector.name === 'WalletConnect' && <span className="walletconnect-icon">🔗</span>}
+                      {connector.name === 'Safe' && <span className="safe-icon">🛡️</span>}
+                      {connector.name === 'Phantom' && <span className="phantom-icon">👻</span>}
+                      {connector.name === 'Brave Wallet' && <span className="brave-icon">🦁</span>}
+                      {connector.name === 'Opera Wallet' && <span className="opera-icon">🎭</span>}
+                      {connector.name === 'Bitget Wallet' && <span className="bitget-icon">🟡</span>}
+                      {connector.name === 'BitKeep' && <span className="bitkeep-icon">🟣</span>}
+                      {connector.name === 'Crypto.com DeFi Wallet' && <span className="crypto-icon">🔷</span>}
+                      {connector.name === 'Blockchain.com' && <span className="blockchain-icon">💎</span>}
+                      {connector.name === 'Kresus' && <span className="kresus-icon">🔵</span>}
+                      {!['MetaMask', 'Coinbase Wallet', 'Rabby', 'Trust Wallet', 'Frame', 'WalletConnect', 'Safe', 'Phantom', 'Brave Wallet', 'Opera Wallet', 'Bitget Wallet', 'BitKeep', 'Crypto.com DeFi Wallet', 'Blockchain.com', 'Kresus'].includes(connector.name) && 
+                        <span className="default-icon">🔗</span>}
+                    </div>
+                    <span className="wallet-name">{connector.name}</span>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="modal-footer">
+                <p>
+                  By connecting a wallet, you agree to our{' '}
+                  <a href="#" className="link">Terms of Service</a> and{' '}
+                  <a href="#" className="link">Privacy Policy</a>.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -101,21 +101,37 @@ export default function WalletConnectButton() {
     <div className="wallet-connected-container">
       <div className="wallet-info">
         <div className="wallet-address">
-          {formatAddress(address)}
+          <span className="address-icon">👛</span>
+          {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''}
         </div>
         <div className="wallet-chain">
           {isBaseChain ? (
-            <span className="chain-badge base">Base</span>
+            <span className="chain-badge base">
+              <span className="chain-icon">🔵</span>
+              Base
+            </span>
           ) : (
-            <button onClick={switchToBase} className="chain-badge wrong">
-              Wrong Network - Click to Switch
-            </button>
+            <span className="chain-badge wrong">
+              <span className="chain-icon">⚠️</span>
+              Wrong Network
+            </span>
           )}
         </div>
       </div>
       
-      <button onClick={() => disconnect()} className="disconnect-button">
-        Disconnect
+      <WalletDropdown>
+        <WalletDropdownDisconnect />
+      </WalletDropdown>
+      
+      {/* 테스트용 강제 연결 해제 버튼 */}
+      <button 
+        onClick={() => {
+          console.log('🔴 강제 연결 해제 시도');
+          disconnect();
+        }}
+        className="force-disconnect-button"
+      >
+        강제 연결 해제 (테스트)
       </button>
     </div>
   );

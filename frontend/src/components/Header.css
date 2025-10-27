@@ -49,6 +49,345 @@
   gap: 16px;
 }
 
+/* Header Connect Wallet 버튼 스타일 */
+.header-connect-button {
+  background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%);
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 3px 12px rgba(0, 82, 255, 0.3);
+  min-width: 120px;
+  justify-content: center;
+  height: 36px;
+}
+
+.header-connect-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 82, 255, 0.4);
+  background: linear-gradient(135deg, #0047e6 0%, #00b8e6 100%);
+}
+
+.header-connect-button:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 12px rgba(0, 82, 255, 0.3);
+}
+
+.header-connect-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.header-wallet-icon {
+  font-size: 16px;
+}
+
+.header-loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 연결된 지갑 상태 */
+.connected-wallet {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wallet-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wallet-status::before {
+  content: "✓";
+  font-size: 12px;
+}
+
+/* 커스텀 지갑 모달 스타일 (Header용) */
+.custom-wallet-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 9999 !important;
+  animation: fadeIn 0.3s ease-out !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.custom-wallet-modal {
+  background: white !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2) !important;
+  max-width: 400px !important;
+  width: 90% !important;
+  max-height: 80vh !important;
+  overflow: hidden !important;
+  animation: slideUp 0.3s ease-out !important;
+  position: relative !important;
+  margin: auto !important;
+}
+
+.modal-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 24px 24px 16px 24px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.modal-header h2 {
+  margin: 0 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #1a1a1a !important;
+}
+
+.close-button {
+  background: none !important;
+  border: none !important;
+  font-size: 24px !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+.close-button:hover {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+.wallet-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 12px !important;
+  padding: 24px !important;
+}
+
+.wallet-option {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 20px 12px !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  background: white !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+.wallet-option:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+  border-color: #0052ff !important;
+}
+
+.wallet-icon {
+  font-size: 32px !important;
+  margin-bottom: 8px !important;
+  width: 48px !important;
+  height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+}
+
+.metamask-icon {
+  background: linear-gradient(135deg, #f6851b 0%, #ff6b35 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.coinbase-icon {
+  background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.rabby-icon {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.trust-icon {
+  background: linear-gradient(135deg, #3375bb 0%, #4a90e2 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.frame-icon {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.default-icon {
+  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+/* 추가 지갑 아이콘 스타일 */
+.walletconnect-icon {
+  background: linear-gradient(135deg, #3b99fc 0%, #5b9bd5 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.safe-icon {
+  background: linear-gradient(135deg, #12ff80 0%, #00d4aa 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.phantom-icon {
+  background: linear-gradient(135deg, #ab9ff2 0%, #8b5cf6 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.brave-icon {
+  background: linear-gradient(135deg, #fb542b 0%, #ff6b35 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.opera-icon {
+  background: linear-gradient(135deg, #ff1b2d 0%, #cc0000 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.bitget-icon {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.bitkeep-icon {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.crypto-icon {
+  background: linear-gradient(135deg, #103f8c 0%, #1e40af 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.blockchain-icon {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.kresus-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  color: white !important;
+}
+
+.wallet-name {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  text-align: center !important;
+}
+
+.modal-footer {
+  padding: 16px 24px 24px 24px !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+.modal-footer p {
+  margin: 0 !important;
+  font-size: 12px !important;
+  color: #6b7280 !important;
+  text-align: center !important;
+  line-height: 1.5 !important;
+}
+
+.modal-footer .link {
+  color: #0052ff !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+}
+
+.modal-footer .link:hover {
+  text-decoration: underline !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* 모바일 대응 */
 @media (max-width: 768px) {
   .header-container {

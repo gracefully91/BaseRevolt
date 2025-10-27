@@ -1,14 +1,14 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { AuthKitProvider } from '@farcaster/auth-kit';
+import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { config } from './config/wagmi';
+import { base } from 'wagmi/chains';
 import { useEffect } from 'react';
 
-import '@rainbow-me/rainbowkit/styles.css';
-import '@farcaster/auth-kit/styles.css';
+import '@coinbase/onchainkit/styles.css';
+import './styles/onchainkit-custom.css'; // 커스텀 OnchainKit 스타일
 
 import Header from './components/Header';
 import Home from './pages/Home';
@@ -48,30 +48,40 @@ function AppContent() {
 }
 
 function App() {
-  const authConfig = {
-    rpcUrl: 'https://mainnet.optimism.io',
-    domain: window.location.host,
-    siweUri: window.location.origin,
-    relay: 'https://relay.farcaster.xyz',
-    // 7일간 세션 유지
-    expirationTime: 7 * 24 * 60 * 60 * 1000, // 7일 (밀리초)
-  };
-
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <AuthKitProvider config={authConfig}>
-          <RainbowKitProvider locale="en-US">
-            <BrowserRouter
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
+            <OnchainKitProvider
+              chain={base}
+              config={{
+                appearance: {
+                  name: 'Base Revolt', // 모달 헤더에 표시될 앱 이름
+                  logo: '/base-revolt logo.png', // 모달 헤더 로고
+                  mode: 'auto',
+                  theme: 'base',
+                },
+                wallet: {
+                  display: 'modal',
+                  preference: 'all',
+                  termsUrl: 'https://example.com/terms', // 약관 링크
+                  privacyUrl: 'https://example.com/privacy', // 개인정보처리방침 링크
+                  supportedWallets: {
+                    rabby: true, // Rabby 지갑 지원
+                    trust: true, // Trust Wallet 지원
+                    frame: true, // Frame 지갑 지원
+                  },
+                },
               }}
             >
-              <AppContent />
-            </BrowserRouter>
-          </RainbowKitProvider>
-        </AuthKitProvider>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <AppContent />
+          </BrowserRouter>
+        </OnchainKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
