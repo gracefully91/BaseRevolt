@@ -116,6 +116,13 @@ void loop() {
     lastFrameTime = millis();
   }
   
+  // Keep-alive: 1초마다 작은 메시지 전송 (연결 유지)
+  static unsigned long lastKeepAlive = 0;
+  if (wsConnected && (millis() - lastKeepAlive > 1000)) {
+    webSocket.sendTXT("{\"type\":\"ping\"}");
+    lastKeepAlive = millis();
+  }
+  
   delay(1);
 }
 
