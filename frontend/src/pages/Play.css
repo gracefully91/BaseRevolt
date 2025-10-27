@@ -170,6 +170,22 @@
   color: #fbbf24;
 }
 
+.demo-badge.admin-badge {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #a855f7;
+  animation: adminGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes adminGlow {
+  0% {
+    box-shadow: 0 0 5px rgba(168, 85, 247, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+  }
+}
+
 .rotate-button {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);

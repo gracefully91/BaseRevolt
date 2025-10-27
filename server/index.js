@@ -30,6 +30,9 @@ const server = createServer(app);
 // UDP 서버 생성 (제어 명령용)
 const udpServer = createSocket('udp4');
 
+// ESP32 IP 주소 저장
+let esp32IP = null;
+
 // WebSocket 서버 생성
 const wss = new WebSocketServer({ 
   server,
@@ -66,6 +69,9 @@ const PREEMPT_WARNING_TIME = 5 * 1000;
 // 데모 쿼터 만료 시간 (24시간)
 const DEMO_QUOTA_EXPIRY = 24 * 60 * 60 * 1000;
 
+// 관리자 지갑 주소
+const ADMIN_WALLET = '0xd10d3381C1e824143D22350e9149413310F14F22';
+
 // 헬스체크 엔드포인트 (Render 무료티어용)
 app.get('/', (req, res) => {
   res.json({
@@ -92,25 +98,39 @@ app.post('/udp-command', (req, res) => {
   
   console.log(`📡 HTTP->UDP command: ${command}`);
   
-  // UDP로 ESP32에 명령 전달
-  const esp32IP = '192.168.1.100'; // 실제로는 동적으로 찾아야 함
-  const esp32UDPPort = 8082;
+  // ESP32 연결 확인
+  if (!clients.rcCar || clients.rcCar.readyState !== clients.rcCar.OPEN) {
+    console.log('⚠️  ESP32 not connected via WebSocket');
+    return res.status(503).json({ error: 'ESP32 not connected' });
+  }
   
-  const commandMsg = JSON.stringify({
+  // WebSocket으로 ESP32에 명령 전달 (우선순위)
+  console.log(`📤 Sending command via WebSocket: ${command}`);
+  clients.rcCar.send(JSON.stringify({
     type: 'control',
     command: command,
     sessionId: sessionId
-  });
+  }));
   
-  udpServer.send(commandMsg, esp32UDPPort, esp32IP, (err) => {
-    if (err) {
-      console.error('UDP send error:', err);
-      res.status(500).json({ error: 'Failed to send command' });
-    } else {
-      console.log(`✅ UDP command sent: ${command}`);
-      res.json({ success: true, command: command });
-    }
-  });
+  res.json({ success: true, command: command, method: 'websocket' });
+  
+  // UDP도 시도해보기 (백업용, 로컬 네트워크에서는 작동하지 않을 수 있음)
+  if (esp32IP) {
+    const esp32UDPPort = 8082;
+    const commandMsg = JSON.stringify({
+      type: 'control',
+      command: command,
+      sessionId: sessionId
+    });
+    
+    udpServer.send(commandMsg, esp32UDPPort, esp32IP, (err) => {
+      if (err) {
+        console.log(`⚠️  UDP backup failed: ${err.message}`);
+      } else {
+        console.log(`📡 UDP backup sent to ESP32 (${esp32IP}): ${command}`);
+      }
+    });
+  }
 });
 
 // WebSocket 연결 처리
@@ -189,6 +209,14 @@ wss.on('connection', (ws, req) => {
             // pong 응답 전송 (선택적)
             ws.send(JSON.stringify({ type: 'pong' }));
             console.log('💓 RC Car ping received');
+          } 
+          // device 등록 메시지 처리 (IP 주소 저장)
+          else if (data.type === 'device' && data.ip) {
+            esp32IP = data.ip;
+            console.log(`📱 RC Car registered with IP: ${esp32IP}`);
+            console.log(`⚠️  WARNING: Using local IP ${esp32IP} - UDP may not work from server`);
+            console.log(`   Server is on internet, ESP32 is on local network`);
+            console.log(`   Consider using WebSocket for control instead of UDP`);
           } else {
             console.log('RC Car message:', data);
           }
@@ -361,7 +389,17 @@ function endSession(carId, reason = 'manual') {
   }
 }
 
+function isAdmin(wallet) {
+  return wallet && wallet.toLowerCase() === ADMIN_WALLET.toLowerCase();
+}
+
 function checkDemoQuota(wallet) {
+  // 관리자는 데모 쿼터 무제한
+  if (isAdmin(wallet)) {
+    console.log(`👑 Admin wallet detected: ${wallet.substring(0, 10)}... - unlimited demo access`);
+    return true;
+  }
+  
   const quota = demoQuota.get(wallet);
   
   if (!quota) return true; // 사용 기록 없음
@@ -378,6 +416,12 @@ function checkDemoQuota(wallet) {
 }
 
 function useDemoQuota(wallet) {
+  // 관리자는 쿼터 사용하지 않음
+  if (isAdmin(wallet)) {
+    console.log(`👑 Admin wallet: ${wallet.substring(0, 10)}... - no quota consumed`);
+    return;
+  }
+  
   const now = Date.now();
   demoQuota.set(wallet, {
     usedAt: now,
@@ -780,9 +824,13 @@ udpServer.on('message', (msg, rinfo) => {
     if (data.type === 'control' && data.command) {
       console.log(`🚀 Forwarding UDP command: ${data.command}`);
       
-      // ESP32의 UDP 주소로 명령 전달 (ESP32가 UDP 클라이언트로 연결)
-      // 실제로는 ESP32의 IP를 알아야 함
-      const esp32IP = '192.168.1.100'; // ESP32 IP (실제로는 동적으로 찾아야 함)
+      // ESP32 IP 주소 확인
+      if (!esp32IP) {
+        console.log('⚠️  ESP32 IP not registered yet, cannot forward command');
+        return;
+      }
+      
+      // ESP32의 UDP 주소로 명령 전달
       const esp32UDPPort = 8082;
       
       const commandMsg = JSON.stringify({
@@ -795,7 +843,7 @@ udpServer.on('message', (msg, rinfo) => {
         if (err) {
           console.error('UDP send error:', err);
         } else {
-          console.log(`✅ UDP command sent to ESP32: ${data.command}`);
+          console.log(`✅ UDP command sent to ESP32 (${esp32IP}): ${data.command}`);
         }
       });
     }

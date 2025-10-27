@@ -1,17 +1,40 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAccount } from 'wagmi';
 import VideoStream from './VideoStream';
 import './PortraitPlay.css';
 
+// 관리자 지갑 주소
+const ADMIN_WALLET = '0xd10d3381C1e824143D22350e9149413310F14F22';
+
+// 관리자 체크 함수
+const isAdmin = (wallet) => {
+  return wallet && wallet.toLowerCase() === ADMIN_WALLET.toLowerCase();
+};
+
 export default function PortraitPlay({ onRotate, isDemo, timeRemaining, sessionId, setSessionId, sessionTier, walletId }) {
   const navigate = useNavigate();
+  const { address } = useAccount();
   const [isConnected, setIsConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showConnectionNotice, setShowConnectionNotice] = useState(true);
   
+  // 관리자 상태
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  
   // 제어 명령 전송 함수 (VideoStream에서 설정됨)
   const sendCommandRef = useRef(null);
+
+  // 관리자 체크
+  useEffect(() => {
+    const adminCheck = isAdmin(address);
+    setIsAdminUser(adminCheck);
+    
+    if (adminCheck) {
+      console.log('👑 Admin user detected in PortraitPlay - unlimited access granted');
+    }
+  }, [address]);
 
   // VideoStream에서 실제 연결 상태를 받는 핸들러
   const handleConnectionChange = (connected) => {
@@ -91,8 +114,8 @@ export default function PortraitPlay({ onRotate, isDemo, timeRemaining, sessionI
             ⏱️ {formatTime(timeRemaining)}
           </div>
           {isDemo && (
-            <div className="demo-badge">
-              🎮 Demo
+            <div className={`demo-badge ${isAdminUser ? 'admin-badge' : ''}`}>
+              {isAdminUser ? '👑 Admin Demo' : '🎮 Demo'}
             </div>
           )}
           <button className="rotate-button" onClick={handleRotate}>

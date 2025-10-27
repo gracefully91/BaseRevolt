@@ -9,6 +9,14 @@ import './Play.css';
 // Wallet 주소를 전역으로 저장 (VideoStream에서 사용)
 let globalWalletAddress = null;
 
+// 관리자 지갑 주소
+const ADMIN_WALLET = '0xd10d3381C1e824143D22350e9149413310F14F22';
+
+// 관리자 체크 함수
+const isAdmin = (wallet) => {
+  return wallet && wallet.toLowerCase() === ADMIN_WALLET.toLowerCase();
+};
+
 function Play() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -23,8 +31,13 @@ function Play() {
   const [isLandscape, setIsLandscape] = useState(false);
   const [showPortrait, setShowPortrait] = useState(false);
   
-  // 타이머 (10분 = 600초, 데모는 5분 = 300초)
-  const [timeRemaining, setTimeRemaining] = useState(isDemo ? 300 : 600);
+  // 관리자 상태
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  
+  // 타이머 (10분 = 600초, 데모는 5분 = 300초, 관리자 데모는 무제한)
+  const [timeRemaining, setTimeRemaining] = useState(
+    isDemo ? (isAdminUser ? 999999 : 300) : 600
+  );
   const [isActive, setIsActive] = useState(false);
   
   // 세션 관리
@@ -34,9 +47,17 @@ function Play() {
   // 고정된 wallet ID 생성 (화면 회전 시에도 유지)
   const walletIdRef = useRef(null);
   if (!walletIdRef.current) {
-    walletIdRef.current = isDemo 
-      ? 'demo-user-' + Math.random().toString(36).substr(2, 9) 
-      : (address || 'anonymous-' + Math.random().toString(36).substr(2, 9));
+    // 데모 모드에서는 브라우저별 고정 ID 사용 (localStorage 활용)
+    if (isDemo) {
+      let demoId = localStorage.getItem('base-revolt-demo-id');
+      if (!demoId) {
+        demoId = 'demo-user-' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('base-revolt-demo-id', demoId);
+      }
+      walletIdRef.current = demoId;
+    } else {
+      walletIdRef.current = address || 'anonymous-' + Math.random().toString(36).substr(2, 9);
+    }
   }
   
   // RC카 연결 상태
@@ -49,6 +70,14 @@ function Play() {
   const sendCommandRef = useRef(null);
   
   useEffect(() => {
+    // 관리자 체크
+    const adminCheck = isAdmin(address);
+    setIsAdminUser(adminCheck);
+    
+    if (adminCheck) {
+      console.log('👑 Admin user detected - unlimited access granted');
+    }
+    
     // If not demo and wallet not connected, redirect to home
     if (!isDemo && !isConnected) {
       navigate('/');
@@ -60,7 +89,19 @@ function Play() {
     
     // Demo 모드에서도 실제 연결 상태를 확인 (시뮬레이션 제거)
     // VideoStream 컴포넌트에서 실제 연결 상태를 받아서 표시
-  }, [isDemo, isConnected, navigate]);
+  }, [isDemo, isConnected, navigate, address]);
+
+  // 관리자 상태 변경 시 타이머 업데이트
+  useEffect(() => {
+    if (isDemo && isAdminUser) {
+      setTimeRemaining(999999); // 무제한
+      console.log('👑 Admin timer set to unlimited');
+    } else if (isDemo && !isAdminUser) {
+      setTimeRemaining(300); // 5분
+    } else {
+      setTimeRemaining(600); // 10분
+    }
+  }, [isAdminUser, isDemo]);
 
   // VideoStream에서 실제 연결 상태를 받는 핸들러
   const handleConnectionChange = (connected) => {
@@ -206,8 +247,8 @@ function Play() {
             </div>
             
             {isDemo && (
-              <div className="demo-badge">
-                🎮 Demo Mode
+              <div className={`demo-badge ${isAdminUser ? 'admin-badge' : ''}`}>
+                {isAdminUser ? '👑 Admin Demo' : '🎮 Demo Mode'}
               </div>
             )}
             

@@ -20,8 +20,8 @@
 
 // ==================== 설정 ====================
 // WiFi 설정
-const char* ssid = "KT_WiFi_90EA";
-const char* password = "b67m03k763";
+const char* ssid = "JIN";
+const char* password = "J13245678!";
 
 // WebSocket 서버 설정 (Render)
 const char* ws_host = "base-revolt-server.onrender.com";
@@ -95,34 +95,34 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n\n╔════════════════════════════════════╗");
-  Serial.println("║   🚗 Base Revolt RC Car v1.0 🎮   ║");
+  Serial.println("║   Base Revolt RC Car v1.0          ║");
   Serial.println("╚════════════════════════════════════╝\n");
   
   // 모터 핀 초기화
-  Serial.println("📌 Step 1/4: Initializing motors...");
+  Serial.println("Step 1/4: Initializing motors...");
   setupMotors();
   
   // WiFi 연결
-  Serial.println("\n📌 Step 2/4: Connecting to WiFi...");
+  Serial.println("\nStep 2/4: Connecting to WiFi...");
   setupWiFi();
   
   // 카메라 초기화
-  Serial.println("\n📌 Step 3/4: Initializing camera...");
+  Serial.println("\nStep 3/4: Initializing camera...");
   setupCamera();
   
   // WebSocket 연결
-  Serial.println("\n📌 Step 4/4: Connecting to server...");
+  Serial.println("\nStep 4/4: Connecting to server...");
   setupWebSocket();
   
   // UDP 서버 설정
-  Serial.println("\n📌 Step 5/5: Setting up UDP...");
+  Serial.println("\nStep 5/5: Setting up UDP...");
   setupUDP();
   
   // 자가진단 테스트 (배선 확인용)
-  Serial.println("\n🔍 Running Self Test...");
+  Serial.println("\nRunning Self Test...");
   quickSelfTest();
   
-  Serial.println("\n✅ Setup Complete! Ready to drive! 🚗💨\n");
+  Serial.println("\nSetup Complete! Ready to drive!\n");
   Serial.println("=========================================\n");
 }
 
@@ -142,7 +142,7 @@ void loop() {
   // Keep-alive: 5초마다 작은 메시지 전송 (연결 유지)
   static unsigned long lastKeepAlive = 0;
   if (wsConnected && (millis() - lastKeepAlive > 5000)) {
-    Serial.println("💓 Sending keep-alive ping");
+    Serial.println("Sending keep-alive ping");
     webSocket.sendTXT("{\"type\":\"ping\"}");
     lastKeepAlive = millis();
   }
@@ -166,11 +166,11 @@ void setupWiFi() {
   Serial.println();
   
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("   ✅ WiFi Connected!");
-    Serial.printf("   📡 IP Address: %s\n", WiFi.localIP().toString().c_str());
-    Serial.printf("   📶 Signal Strength: %d dBm\n", WiFi.RSSI());
+    Serial.println("   WiFi Connected!");
+    Serial.printf("   IP Address: %s\n", WiFi.localIP().toString().c_str());
+    Serial.printf("   Signal Strength: %d dBm\n", WiFi.RSSI());
   } else {
-    Serial.println("   ❌ WiFi Connection Failed!");
+    Serial.println("   WiFi Connection Failed!");
     Serial.println("   Please check SSID and password");
   }
 }
@@ -192,7 +192,7 @@ void setupWebSocket() {
   // 장치 식별을 위한 헤더
   webSocket.setExtraHeaders("X-Device-Type: rc-car");
   
-  Serial.println("   ✅ WebSocket configured");
+  Serial.println("   WebSocket configured");
   Serial.println("   Waiting for connection...");
 }
 
@@ -201,9 +201,9 @@ void setupUDP() {
   Serial.printf("   UDP Port: %d\n", udp_port);
   
   if (udp.begin(udp_port)) {
-    Serial.println("   ✅ UDP server started");
+    Serial.println("   UDP server started");
   } else {
-    Serial.println("   ❌ UDP server failed to start");
+    Serial.println("   UDP server failed to start");
   }
 }
 
@@ -211,6 +211,8 @@ void setupUDP() {
 void handleUDPCommand() {
   int packetSize = udp.parsePacket();
   if (packetSize) {
+    Serial.printf("📡 UDP packet received! Size: %d bytes\n", packetSize);
+    
     char packetBuffer[255];
     int len = udp.read(packetBuffer, 255);
     if (len > 0) {
@@ -229,10 +231,15 @@ void handleUDPCommand() {
           const char* sessionId = doc["sessionId"];
           Serial.printf("🎮 UDP Control: %s (session: %.10s...)\n", command, sessionId ? sessionId : "none");
           handleMotorCommand(command);
+        } else {
+          Serial.printf("⚠️ Unknown UDP message type: %s\n", type);
         }
       } else {
-        Serial.println("⚠️  UDP JSON parsing error");
+        Serial.println("❌ UDP JSON parsing error");
+        Serial.printf("Raw data: %s\n", packetBuffer);
       }
+    } else {
+      Serial.println("❌ Failed to read UDP packet");
     }
   }
 }
@@ -241,25 +248,29 @@ void handleUDPCommand() {
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
   switch(type) {
     case WStype_DISCONNECTED:
-      Serial.println("❌ [WS] Disconnected from server");
+      Serial.println("[WS] Disconnected from server");
       Serial.println("   Attempting to reconnect...");
       wsConnected = false;
       motorStop(); // 연결 끊기면 정지
       break;
       
     case WStype_CONNECTED:
-      Serial.println("✅ [WS] Connected to server");
-      Serial.printf("   Server: %s:%d\n", ws_host, ws_port);
-      wsConnected = true;
-      
-      // 연결 확인 메시지
-      webSocket.sendTXT("{\"type\":\"device\",\"device\":\"rc-car\",\"status\":\"connected\"}");
-      Serial.println("📤 Sent device registration message");
+      {
+        Serial.println("[WS] Connected to server");
+        Serial.printf("   Server: %s:%d\n", ws_host, ws_port);
+        Serial.printf("   My IP: %s\n", WiFi.localIP().toString().c_str());
+        wsConnected = true;
+        
+        // 연결 확인 메시지 (IP 주소 포함)
+        String deviceMsg = "{\"type\":\"device\",\"device\":\"rc-car\",\"status\":\"connected\",\"ip\":\"" + WiFi.localIP().toString() + "\"}";
+        webSocket.sendTXT(deviceMsg);
+        Serial.println("Sent device registration message with IP");
+      }
       break;
       
     case WStype_TEXT:
       {
-        Serial.printf("📥 [WS] Received: %s\n", payload);
+        Serial.printf("[WS] Received text message: %s\n", payload);
         
         // JSON 파싱
         StaticJsonDocument<200> doc;
@@ -267,16 +278,22 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         
         if (!error) {
           const char* type = doc["type"];
-          Serial.printf("   Message type: %s\n", type);
+          Serial.printf("   📨 Message type: %s\n", type);
           
           if (strcmp(type, "control") == 0) {
             const char* command = doc["command"];
             const char* sessionId = doc["sessionId"];
-            Serial.printf("🎮 Control command: %s (session: %.10s...)\n", command, sessionId ? sessionId : "none");
+            Serial.printf("🎮 WebSocket Control command received: %s (session: %.10s...)\n", command, sessionId ? sessionId : "none");
+            Serial.printf("🎮 Executing motor command: %s\n", command);
             handleMotorCommand(command);
+          } else if (strcmp(type, "pong") == 0) {
+            Serial.println("🏓 Pong received from server");
+          } else {
+            Serial.printf("   📨 Other message type: %s\n", type);
           }
         } else {
-          Serial.println("⚠️  JSON parsing error");
+          Serial.println("❌ JSON parsing error");
+          Serial.printf("   Raw payload: %s\n", payload);
         }
       }
       break;
@@ -286,15 +303,15 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       break;
       
     case WStype_ERROR:
-      Serial.println("⚠️  [WS] Error occurred");
+      Serial.println("[WS] Error occurred");
       break;
       
     case WStype_PING:
-      Serial.println("🏓 [WS] Ping received");
+      Serial.println("[WS] Ping received");
       break;
       
     case WStype_PONG:
-      Serial.println("🏓 [WS] Pong received");
+      Serial.println("[WS] Pong received");
       break;
   }
 }
@@ -350,7 +367,7 @@ void setupCamera() {
 void sendCameraFrame() {
   camera_fb_t * fb = esp_camera_fb_get();
   if (!fb) {
-    Serial.println("❌ Camera capture failed");
+    Serial.println("Camera capture failed");
     return;
   }
   
@@ -360,7 +377,7 @@ void sendCameraFrame() {
   // 10초마다 한 번씩 프레임 전송 로그 (너무 많은 로그 방지)
   static unsigned long lastFrameLog = 0;
   if (millis() - lastFrameLog > 10000) {
-    Serial.printf("📹 Streaming video frames (size: %d bytes, FPS: ~15)\n", fb->len);
+    Serial.printf("Streaming video frames (size: %d bytes, FPS: ~15)\n", fb->len);
     lastFrameLog = millis();
   }
   
@@ -385,25 +402,31 @@ void setupMotors() {
 
 // ==================== 모터 제어 함수 ====================
 void handleMotorCommand(const char* command) {
-  Serial.printf("🚗 Executing motor command: %s\n", command);
+  Serial.printf("Executing motor command: %s\n", command);
   
   if (strcmp(command, "forward") == 0) {
-    Serial.println("   ⬆️  Moving FORWARD");
+    Serial.println("   Moving FORWARD");
+    Serial.println("   Direction Command: FORWARD received and executed");
     motorForward();
   } else if (strcmp(command, "backward") == 0) {
-    Serial.println("   ⬇️  Moving BACKWARD");
+    Serial.println("   Moving BACKWARD");
+    Serial.println("   Direction Command: BACKWARD received and executed");
     motorBackward();
   } else if (strcmp(command, "left") == 0) {
-    Serial.println("   ⬅️  Turning LEFT");
+    Serial.println("   Turning LEFT");
+    Serial.println("   Direction Command: LEFT received and executed");
     motorLeft();
   } else if (strcmp(command, "right") == 0) {
-    Serial.println("   ➡️  Turning RIGHT");
+    Serial.println("   Turning RIGHT");
+    Serial.println("   Direction Command: RIGHT received and executed");
     motorRight();
   } else if (strcmp(command, "stop") == 0) {
-    Serial.println("   🛑 STOP");
+    Serial.println("   STOP");
+    Serial.println("   Direction Command: STOP received and executed");
     motorStop();
   } else {
-    Serial.printf("   ❌ Unknown command: %s\n", command);
+    Serial.printf("   Unknown command: %s\n", command);
+    Serial.printf("   Unknown Direction Command: %s - Command ignored\n", command);
   }
 }
 
