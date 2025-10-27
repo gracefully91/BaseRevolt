@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 
 import '@coinbase/onchainkit/styles.css';
 import './styles/onchainkit-custom.css'; // 커스텀 OnchainKit 스타일
+import './styles/global.css'; // 전역 스타일
 
 import Header from './components/Header';
 import Home from './pages/Home';
