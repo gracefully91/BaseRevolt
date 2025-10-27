@@ -147,6 +147,11 @@ function Home() {
       };
 
       ws.onmessage = (event) => {
+        // 바이너리 데이터(비디오 프레임)는 무시
+        if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
+          return;
+        }
+        
         try {
           const data = JSON.parse(event.data);
           
