@@ -5,6 +5,22 @@ import { createSocket } from 'dgram';
 import { randomUUID } from 'crypto';
 
 const app = express();
+
+// CORS 설정
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
+// JSON 파싱 미들웨어
+app.use(express.json());
 const PORT = process.env.PORT || 8080;
 const UDP_PORT = 8081; // UDP 포트
 
@@ -67,7 +83,7 @@ app.get('/health', (req, res) => {
 });
 
 // UDP 명령 전달 엔드포인트 (프론트엔드에서 호출)
-app.post('/udp-command', express.json(), (req, res) => {
+app.post('/udp-command', (req, res) => {
   const { command, sessionId } = req.body;
   
   if (!command) {
