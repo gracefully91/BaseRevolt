@@ -1,7 +1,20 @@
 import { useState } from 'react';
 import { useAccount, useDisconnect, useConnect } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { WalletDropdown, WalletDropdownDisconnect } from '@coinbase/onchainkit/wallet';
+import { 
+  Wallet,
+  ConnectWallet,
+  WalletDropdown,
+  WalletDropdownBasename,
+  WalletDropdownDisconnect
+} from '@coinbase/onchainkit/wallet';
+import {
+  Address,
+  Avatar,
+  Name,
+  Identity,
+  EthBalance,
+} from '@coinbase/onchainkit/identity';
 import './WalletConnectButton.css';
 
 export default function WalletConnectButton() {
@@ -19,7 +32,7 @@ export default function WalletConnectButton() {
     connectorId: connector?.id 
   });
 
-  // 연결되지 않은 경우
+  // 연결되지 않은 경우 - 커스텀 모달 사용
   if (!isConnected) {
     return (
       <div className="wallet-connect-container">
@@ -94,34 +107,42 @@ export default function WalletConnectButton() {
     );
   }
 
-  // 연결된 경우
+  // 연결된 경우 - OnchainKit Wallet 컴포넌트 사용
   const isBaseChain = chain?.id === base.id;
   
   return (
     <div className="wallet-connected-container">
-      <div className="wallet-info">
-        <div className="wallet-address">
-          <span className="address-icon">👛</span>
-          {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''}
-        </div>
-        <div className="wallet-chain">
-          {isBaseChain ? (
-            <span className="chain-badge base">
-              <span className="chain-icon">🔵</span>
-              Base
-            </span>
-          ) : (
-            <span className="chain-badge wrong">
-              <span className="chain-icon">⚠️</span>
-              Wrong Network
-            </span>
-          )}
-        </div>
-      </div>
+      <Wallet>
+        <ConnectWallet>
+          <Avatar className="h-6 w-6" />
+          <Name />
+        </ConnectWallet>
+        <WalletDropdown>
+          <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+            <Avatar />
+            <Name />
+            <Address className="text-gray-500" />
+            <EthBalance />
+          </Identity>
+          <WalletDropdownBasename />
+          <WalletDropdownDisconnect />
+        </WalletDropdown>
+      </Wallet>
       
-      <WalletDropdown>
-        <WalletDropdownDisconnect />
-      </WalletDropdown>
+      {/* 네트워크 상태 표시 */}
+      <div className="wallet-chain">
+        {isBaseChain ? (
+          <span className="chain-badge base">
+            <span className="chain-icon">🔵</span>
+            Base
+          </span>
+        ) : (
+          <span className="chain-badge wrong">
+            <span className="chain-icon">⚠️</span>
+            Wrong Network
+          </span>
+        )}
+      </div>
       
       {/* 테스트용 강제 연결 해제 버튼 */}
       <button 

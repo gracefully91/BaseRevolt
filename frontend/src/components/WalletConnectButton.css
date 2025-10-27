@@ -66,6 +66,35 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* OnchainKit Wallet 컴포넌트 스타일링 */
+.wallet-connected-container [data-ock-wallet] {
+  background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%);
+  border-radius: 12px;
+  padding: 8px 16px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+  justify-content: center;
+}
+
+.wallet-connected-container [data-ock-wallet]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 82, 255, 0.4);
+  background: linear-gradient(135deg, #0047e6 0%, #00b8e6 100%);
+}
+
+.wallet-connected-container [data-ock-wallet]:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
+}
+
 .wallet-info {
   display: flex;
   flex-direction: column;
