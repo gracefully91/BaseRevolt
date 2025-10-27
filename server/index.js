@@ -126,10 +126,20 @@ wss.on('connection', (ws, req) => {
         // 바이너리 데이터 (JPEG 프레임)
         broadcastToWebUsers(message, true);
       } else {
-        // 텍스트 데이터 (상태 정보 등)
+        // 텍스트 데이터 (상태 정보, ping 등)
         try {
           const data = JSON.parse(message.toString());
-          console.log('RC Car message:', data);
+          
+          // ping 메시지 처리 (ESP32 keep-alive)
+          if (data.type === 'ping') {
+            // 연결 유지 확인 - isAlive 갱신
+            ws.isAlive = true;
+            // pong 응답 전송 (선택적)
+            ws.send(JSON.stringify({ type: 'pong' }));
+            console.log('💓 RC Car ping received');
+          } else {
+            console.log('RC Car message:', data);
+          }
         } catch (e) {
           // JSON 아닌 경우 무시
         }
