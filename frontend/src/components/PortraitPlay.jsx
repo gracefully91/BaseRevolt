@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import VideoStream from './VideoStream';
 import './PortraitPlay.css';
 
-export default function PortraitPlay({ onRotate, isDemo, timeRemaining, sessionId, setSessionId, sessionTier }) {
+export default function PortraitPlay({ onRotate, isDemo, timeRemaining, sessionId, setSessionId, sessionTier, walletId }) {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
@@ -114,6 +114,7 @@ export default function PortraitPlay({ onRotate, isDemo, timeRemaining, sessionI
               sessionId={sessionId}
               setSessionId={setSessionId}
               sessionTier={sessionTier}
+              walletId={walletId}
             />
           </div>
           {/* 연결 상태와 라이브 스트림 정보 */}

@@ -31,6 +31,14 @@ function Play() {
   const [sessionId, setSessionId] = useState(null);
   const [sessionTier, setSessionTier] = useState(isDemo ? 'demo' : 'paid');
   
+  // 고정된 wallet ID 생성 (화면 회전 시에도 유지)
+  const walletIdRef = useRef(null);
+  if (!walletIdRef.current) {
+    walletIdRef.current = isDemo 
+      ? 'demo-user-' + Math.random().toString(36).substr(2, 9) 
+      : (address || 'anonymous-' + Math.random().toString(36).substr(2, 9));
+  }
+  
   // RC카 연결 상태
   const [rcCarConnected, setRcCarConnected] = useState(false);
   const [isStableConnected, setIsStableConnected] = useState(false);
@@ -133,6 +141,7 @@ function Play() {
           sessionId={sessionId}
           setSessionId={setSessionId}
           sessionTier={sessionTier}
+          walletId={walletIdRef.current}
         />
       </>
     );
@@ -173,6 +182,7 @@ function Play() {
             sessionId={sessionId}
             setSessionId={setSessionId}
             sessionTier={sessionTier}
+            walletId={walletIdRef.current}
           />
         </div>
       

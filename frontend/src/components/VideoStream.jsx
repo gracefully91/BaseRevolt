@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { WS_SERVER_URL } from '../config/contracts';
 import './VideoStream.css';
 
-function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls = true, sessionId, setSessionId, sessionTier }) {
+function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls = true, sessionId, setSessionId, sessionTier, walletId }) {
   const { address } = useAccount();
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
@@ -12,7 +12,6 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
   const lastFrameTimeRef = useRef(Date.now());
   const frameCountRef = useRef(0);
   const heartbeatIntervalRef = useRef(null);
-  const walletIdRef = useRef(null); // 고정된 wallet ID 저장
   
   // WebSocket 연결 상태 관리 (서버 연결)
   const [wsConnected, setWsConnected] = useState(false);
@@ -165,14 +164,11 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
           // Identify as web user
           ws.send(JSON.stringify({ type: 'client', device: 'web-user' }));
           
-          // 세션 요청 - wallet ID 재사용 또는 새로 생성
-          if (!walletIdRef.current) {
-            walletIdRef.current = isDemo 
-              ? 'demo-user-' + Math.random().toString(36).substr(2, 9) 
-              : (address || 'anonymous-' + Math.random().toString(36).substr(2, 9));
-          }
+          // 세션 요청 - 상위 컴포넌트에서 전달받은 고정 wallet ID 사용
+          const wallet = walletId || (isDemo 
+            ? 'demo-user-' + Math.random().toString(36).substr(2, 9) 
+            : (address || 'anonymous-' + Math.random().toString(36).substr(2, 9)));
           
-          const wallet = walletIdRef.current;
           console.log(`📝 Requesting session: ${sessionTier}, wallet: ${wallet.substring(0, 20)}...`);
           
           ws.send(JSON.stringify({
