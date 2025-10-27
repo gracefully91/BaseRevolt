@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useAccount, useDisconnect, useConnect } from 'wagmi';
-import { base } from 'wagmi/chains';
+import { useAccount, useDisconnect, useConnect, useSwitchChain } from 'wagmi';
+import { base, baseSepolia } from 'wagmi/chains';
 import { 
   Wallet,
   ConnectWallet,
@@ -21,6 +21,7 @@ export default function WalletConnectButton() {
   const { address, isConnected, chain, connector } = useAccount();
   const { disconnect } = useDisconnect();
   const { connect, connectors, isPending } = useConnect();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const [showModal, setShowModal] = useState(false);
 
   // 디버깅: 연결 상태 확인
@@ -31,6 +32,25 @@ export default function WalletConnectButton() {
     connector: connector?.name,
     connectorId: connector?.id 
   });
+
+  // 체인 변경 함수들
+  const switchToBase = async () => {
+    try {
+      await switchChain({ chainId: base.id });
+      console.log('✅ Base 메인넷으로 변경 완료');
+    } catch (error) {
+      console.error('❌ Base 메인넷 변경 실패:', error);
+    }
+  };
+
+  const switchToBaseSepolia = async () => {
+    try {
+      await switchChain({ chainId: baseSepolia.id });
+      console.log('✅ Base Sepolia 테스트넷으로 변경 완료');
+    } catch (error) {
+      console.error('❌ Base Sepolia 변경 실패:', error);
+    }
+  };
 
   // 연결되지 않은 경우 - 커스텀 모달 사용
   if (!isConnected) {
@@ -124,6 +144,34 @@ export default function WalletConnectButton() {
             <Address className="text-gray-500" />
             <EthBalance />
           </Identity>
+          
+          {/* 체인 변경 섹션 */}
+          <div className="chain-switch-section">
+            <div className="chain-switch-header">
+              <span className="chain-switch-title">🌐 Switch Network</span>
+            </div>
+            <div className="chain-switch-buttons">
+              <button
+                onClick={switchToBase}
+                disabled={isSwitchingChain || chain?.id === base.id}
+                className={`chain-switch-button ${chain?.id === base.id ? 'active' : ''}`}
+              >
+                <span className="chain-icon">🔵</span>
+                <span className="chain-name">Base Mainnet</span>
+                {chain?.id === base.id && <span className="current-badge">Current</span>}
+              </button>
+              <button
+                onClick={switchToBaseSepolia}
+                disabled={isSwitchingChain || chain?.id === baseSepolia.id}
+                className={`chain-switch-button ${chain?.id === baseSepolia.id ? 'active' : ''}`}
+              >
+                <span className="chain-icon">🧪</span>
+                <span className="chain-name">Base Sepolia</span>
+                {chain?.id === baseSepolia.id && <span className="current-badge">Current</span>}
+              </button>
+            </div>
+          </div>
+          
           <WalletDropdownBasename />
           <WalletDropdownDisconnect />
         </WalletDropdown>
