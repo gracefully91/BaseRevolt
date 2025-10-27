@@ -433,10 +433,11 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
       return false;
     }
     
-    console.log(`🎮 Sending command: ${command}`);
+    console.log(`🎮 Sending command: ${command}, sessionId: ${sessionId}`);
     const message = JSON.stringify({
       type: 'control',
-      command: command
+      command: command,
+      sessionId: sessionId
     });
     
     wsRef.current.send(message);
