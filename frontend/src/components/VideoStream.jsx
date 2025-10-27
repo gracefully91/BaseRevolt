@@ -426,21 +426,37 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
     }
   };
 
-  // 제어 명령 전송 함수
-  const sendCommand = (command) => {
+  // 제어 명령 전송 함수 (UDP 사용)
+  const sendCommand = async (command) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       console.warn('❌ Cannot send command: WebSocket not connected');
       return false;
     }
     
-    console.log(`🎮 Sending command: ${command}, sessionId: ${sessionId}`);
-    const message = JSON.stringify({
-      type: 'control',
-      command: command,
-      sessionId: sessionId
-    });
+    console.log(`🎮 Sending UDP command: ${command}, sessionId: ${sessionId}`);
     
-    wsRef.current.send(message);
+    try {
+      // HTTP POST로 UDP 명령 전달
+      const response = await fetch(`${WS_SERVER_URL.replace('ws://', 'http://').replace('wss://', 'https://')}/udp-command`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          command: command,
+          sessionId: sessionId
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`✅ UDP command sent successfully: ${result.command}`);
+      } else {
+        console.error('❌ UDP command failed:', response.statusText);
+      }
+    } catch (error) {
+      console.error('❌ UDP command error:', error);
+    }
     
     // 명령 전송 시 연결 상태 즉시 확인 (하드웨어가 움직이면 연결됨)
     lastCommandTimeRef.current = Date.now();

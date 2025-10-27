@@ -14,6 +14,7 @@
 
 #include <WiFi.h>
 #include <WebSocketsClient.h>
+#include <WiFiUdp.h>
 #include "esp_camera.h"
 #include <ArduinoJson.h>
 
@@ -27,6 +28,11 @@ const char* ws_host = "base-revolt-server.onrender.com";
 const int ws_port = 443;
 const char* ws_path = "/";
 const bool ws_ssl = true;
+
+// UDP 서버 설정 (제어 명령용)
+const int udp_port = 8082;
+const char* server_ip = "base-revolt-server.onrender.com"; // 실제로는 IP 주소 필요
+const int server_udp_port = 8081;
 
 // 모터 제어 핀 (안정적인 핀만 사용)
 #define MOTOR_LEFT_IN1  12   // 왼쪽 모터 IN1
@@ -62,6 +68,7 @@ void checkPinStates() {
 
 // ==================== 전역 변수 ====================
 WebSocketsClient webSocket;
+WiFiUDP udp;
 unsigned long lastFrameTime = 0;
 const int frameInterval = 66; // ~15 FPS (1000ms / 15 = 66ms)
 bool wsConnected = false;
@@ -71,6 +78,7 @@ void setupCamera();
 void setupMotors();
 void setupWiFi();
 void setupWebSocket();
+void setupUDP();
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 void handleMotorCommand(const char* command);
 void sendCameraFrame();
@@ -106,6 +114,10 @@ void setup() {
   Serial.println("\n📌 Step 4/4: Connecting to server...");
   setupWebSocket();
   
+  // UDP 서버 설정
+  Serial.println("\n📌 Step 5/5: Setting up UDP...");
+  setupUDP();
+  
   // 자가진단 테스트 (배선 확인용)
   Serial.println("\n🔍 Running Self Test...");
   quickSelfTest();
@@ -117,6 +129,9 @@ void setup() {
 // ==================== Main Loop ====================
 void loop() {
   webSocket.loop();
+  
+  // UDP 명령 처리 (우선순위 높음)
+  handleUDPCommand();
   
   // 카메라 프레임 전송 (15 FPS)
   if (wsConnected && (millis() - lastFrameTime > frameInterval)) {
@@ -179,6 +194,47 @@ void setupWebSocket() {
   
   Serial.println("   ✅ WebSocket configured");
   Serial.println("   Waiting for connection...");
+}
+
+// ==================== UDP Setup ====================
+void setupUDP() {
+  Serial.printf("   UDP Port: %d\n", udp_port);
+  
+  if (udp.begin(udp_port)) {
+    Serial.println("   ✅ UDP server started");
+  } else {
+    Serial.println("   ❌ UDP server failed to start");
+  }
+}
+
+// ==================== UDP Message Handler ====================
+void handleUDPCommand() {
+  int packetSize = udp.parsePacket();
+  if (packetSize) {
+    char packetBuffer[255];
+    int len = udp.read(packetBuffer, 255);
+    if (len > 0) {
+      packetBuffer[len] = 0;
+      
+      Serial.printf("📡 UDP received: %s\n", packetBuffer);
+      
+      // JSON 파싱
+      StaticJsonDocument<200> doc;
+      DeserializationError error = deserializeJson(doc, packetBuffer);
+      
+      if (!error) {
+        const char* type = doc["type"];
+        if (strcmp(type, "control") == 0) {
+          const char* command = doc["command"];
+          const char* sessionId = doc["sessionId"];
+          Serial.printf("🎮 UDP Control: %s (session: %.10s...)\n", command, sessionId ? sessionId : "none");
+          handleMotorCommand(command);
+        }
+      } else {
+        Serial.println("⚠️  UDP JSON parsing error");
+      }
+    }
+  }
 }
 
 // ==================== WebSocket Event Handler ====================

@@ -1,13 +1,18 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
+import { createSocket } from 'dgram';
 import { randomUUID } from 'crypto';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+const UDP_PORT = 8081; // UDP 포트
 
 // HTTP 서버 생성
 const server = createServer(app);
+
+// UDP 서버 생성 (제어 명령용)
+const udpServer = createSocket('udp4');
 
 // WebSocket 서버 생성
 const wss = new WebSocketServer({ 
@@ -59,6 +64,37 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// UDP 명령 전달 엔드포인트 (프론트엔드에서 호출)
+app.post('/udp-command', express.json(), (req, res) => {
+  const { command, sessionId } = req.body;
+  
+  if (!command) {
+    return res.status(400).json({ error: 'Command required' });
+  }
+  
+  console.log(`📡 HTTP->UDP command: ${command}`);
+  
+  // UDP로 ESP32에 명령 전달
+  const esp32IP = '192.168.1.100'; // 실제로는 동적으로 찾아야 함
+  const esp32UDPPort = 8082;
+  
+  const commandMsg = JSON.stringify({
+    type: 'control',
+    command: command,
+    sessionId: sessionId
+  });
+  
+  udpServer.send(commandMsg, esp32UDPPort, esp32IP, (err) => {
+    if (err) {
+      console.error('UDP send error:', err);
+      res.status(500).json({ error: 'Failed to send command' });
+    } else {
+      console.log(`✅ UDP command sent: ${command}`);
+      res.json({ success: true, command: command });
+    }
+  });
 });
 
 // WebSocket 연결 처리
@@ -718,6 +754,44 @@ wss.on('close', () => {
   clearInterval(keepAliveInterval);
 });
 
+// UDP 서버 설정
+udpServer.on('message', (msg, rinfo) => {
+  try {
+    const data = JSON.parse(msg.toString());
+    console.log(`📡 UDP command from ${rinfo.address}:${rinfo.port}:`, data);
+    
+    // 제어 명령을 UDP로 ESP32에 전달
+    if (data.type === 'control' && data.command) {
+      console.log(`🚀 Forwarding UDP command: ${data.command}`);
+      
+      // ESP32의 UDP 주소로 명령 전달 (ESP32가 UDP 클라이언트로 연결)
+      // 실제로는 ESP32의 IP를 알아야 함
+      const esp32IP = '192.168.1.100'; // ESP32 IP (실제로는 동적으로 찾아야 함)
+      const esp32UDPPort = 8082;
+      
+      const commandMsg = JSON.stringify({
+        type: 'control',
+        command: data.command,
+        sessionId: data.sessionId
+      });
+      
+      udpServer.send(commandMsg, esp32UDPPort, esp32IP, (err) => {
+        if (err) {
+          console.error('UDP send error:', err);
+        } else {
+          console.log(`✅ UDP command sent to ESP32: ${data.command}`);
+        }
+      });
+    }
+  } catch (e) {
+    console.error('UDP message parse error:', e);
+  }
+});
+
+udpServer.on('error', (err) => {
+  console.error('UDP server error:', err);
+});
+
 // 서버 시작
 server.listen(PORT, () => {
   console.log('='.repeat(50));
@@ -727,6 +801,11 @@ server.listen(PORT, () => {
   console.log(`WebSocket endpoint: ws://localhost:${PORT}`);
   console.log(`📡 Keep-alive: 30s interval`);
   console.log('='.repeat(50));
+});
+
+// UDP 서버 시작
+udpServer.bind(UDP_PORT, () => {
+  console.log(`📡 UDP server listening on port ${UDP_PORT}`);
 });
 
 // 우아한 종료 처리
