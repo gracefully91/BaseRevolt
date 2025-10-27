@@ -172,6 +172,56 @@
   }
 }
 
+/* OnchainKit 모달 내부 요소들의 레이아웃 수정 */
+[data-radix-portal] *[class*="ock:flex"] {
+  display: flex !important;
+  align-items: center !important;
+  flex-direction: row !important;
+}
+
+/* 모든 버튼의 flex 레이아웃 수정 */
+[data-radix-portal] button {
+  display: flex !important;
+  align-items: center !important;
+  flex-direction: row !important;
+}
+
+/* 아이콘이 텍스트보다 앞에 오도록 보장 */
+[data-radix-portal] button *[class*="ock:absolute"] {
+  order: -1 !important;
+  position: absolute !important;
+  left: 1rem !important;
+}
+
+[data-radix-portal] button span {
+  order: 1 !important;
+  padding-left: 1.5rem !important;
+}
+
+/* Basename 섹션의 레이아웃 수정 */
+[data-radix-portal] *[class*="ock:pl-6"] {
+  padding-left: 1.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-direction: row !important;
+}
+
+/* NEW 배지가 텍스트 뒤에 오도록 */
+[data-radix-portal] *[class*="ock:ml-2"] {
+  margin-left: 0.5rem !important;
+  order: 2 !important;
+}
+
+/* SVG 아이콘들이 텍스트 앞에 오도록 */
+[data-radix-portal] svg {
+  order: -1 !important;
+}
+
+/* 텍스트 요소들이 아이콘 뒤에 오도록 */
+[data-radix-portal] span:not([class*="ock:ml-2"]) {
+  order: 1 !important;
+}
+
 /* 모바일 대응 */
 @media (max-width: 480px) {
   [data-radix-portal] > div:last-child {
@@ -183,5 +233,14 @@
   [data-radix-portal] button {
     padding: 14px 18px !important;
     font-size: 15px !important;
+  }
+  
+  /* 모바일에서 아이콘과 텍스트 순서 유지 */
+  [data-radix-portal] button *[class*="ock:absolute"] {
+    left: 0.75rem !important;
+  }
+  
+  [data-radix-portal] button span {
+    padding-left: 1.25rem !important;
   }
 }
