@@ -56,7 +56,13 @@ app.get('/health', (req, res) => {
 
 // WebSocket 연결 처리
 wss.on('connection', (ws, req) => {
-  console.log('New connection from:', req.socket.remoteAddress);
+  const remoteIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  console.log('New connection from:', remoteIP);
+  console.log('   Headers:', {
+    'x-device-type': req.headers['x-device-type'],
+    'user-agent': req.headers['user-agent'],
+    'x-forwarded-for': req.headers['x-forwarded-for']
+  });
   
   let clientType = null;
   
@@ -68,11 +74,12 @@ wss.on('connection', (ws, req) => {
     
     // 기존 RC카 연결이 있다면 끊기
     if (clients.rcCar) {
+      console.log('⚠️  Closing existing RC Car connection');
       clients.rcCar.close();
     }
     
     clients.rcCar = ws;
-    console.log('✅ RC Car connected');
+    console.log('✅ RC Car connected from:', remoteIP);
     
     // 모든 웹 사용자에게 RC카 연결 알림
     broadcastToWebUsers({
