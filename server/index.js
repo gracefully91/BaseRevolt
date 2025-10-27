@@ -564,7 +564,10 @@ function handleEndSession(data) {
 function handleControlCommand(ws, data) {
   const { sessionId, command } = data;
   
+  console.log(`📥 Control command received: ${command}, sessionId: ${sessionId}`);
+  
   if (!sessionId) {
+    console.log(`❌ No session ID provided`);
     ws.send(JSON.stringify({
       type: 'error',
       message: 'No session ID provided'
@@ -582,6 +585,8 @@ function handleControlCommand(ws, data) {
   }
   
   if (!validSession) {
+    console.log(`❌ Invalid or expired session: ${sessionId}`);
+    console.log(`   Active sessions: ${Array.from(activeSessions.entries()).map(([id, s]) => `${id}: ${s.sessionId}`).join(', ')}`);
     ws.send(JSON.stringify({
       type: 'error',
       message: 'Invalid or expired session'
@@ -593,11 +598,13 @@ function handleControlCommand(ws, data) {
   console.log(`🎮 Control command: ${command} from session: ${sessionId}`);
   
   if (clients.rcCar && clients.rcCar.readyState === clients.rcCar.OPEN) {
+    console.log(`📤 Sending to RC car: ${command}`);
     clients.rcCar.send(JSON.stringify({
       type: 'control',
       command: command
     }));
   } else {
+    console.log(`❌ RC car not connected (rcCar: ${clients.rcCar ? 'exists but closed' : 'null'})`);
     ws.send(JSON.stringify({
       type: 'error',
       message: 'RC car not connected'
