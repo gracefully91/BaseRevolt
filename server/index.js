@@ -10,7 +10,14 @@ const PORT = process.env.PORT || 8080;
 const server = createServer(app);
 
 // WebSocket 서버 생성
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ 
+  server,
+  clientTracking: true,
+  perMessageDeflate: false,
+  // 타임아웃 설정 (무한으로 설정)
+  handshakeTimeout: 5000,
+  maxPayload: 100 * 1024 * 1024 // 100MB
+});
 
 // 연결된 클라이언트 관리
 const clients = {
@@ -68,6 +75,12 @@ wss.on('connection', (ws, req) => {
   
   // 헤더로 장치 타입 확인
   const deviceType = req.headers['x-device-type'];
+  
+  // WebSocket keep-alive 설정 (모든 클라이언트에 대해)
+  ws.isAlive = true;
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
   
   if (deviceType === 'rc-car') {
     clientType = 'rc-car';
@@ -678,6 +691,23 @@ function handleGetQueueStatus(ws, data) {
   }));
 }
 
+// WebSocket keep-alive: 30초마다 모든 클라이언트에게 ping
+const keepAliveInterval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      console.log('⏱️  Client did not respond to ping, terminating');
+      return ws.terminate();
+    }
+    
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000); // 30초
+
+wss.on('close', () => {
+  clearInterval(keepAliveInterval);
+});
+
 // 서버 시작
 server.listen(PORT, () => {
   console.log('='.repeat(50));
@@ -685,6 +715,7 @@ server.listen(PORT, () => {
   console.log('='.repeat(50));
   console.log(`Server running on port ${PORT}`);
   console.log(`WebSocket endpoint: ws://localhost:${PORT}`);
+  console.log(`📡 Keep-alive: 30s interval`);
   console.log('='.repeat(50));
 });
 
