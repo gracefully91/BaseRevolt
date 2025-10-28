@@ -81,11 +81,24 @@ function Home() {
             text,
             embeds
           });
-          console.log('✅ SDK composeCast 성공:', result);
+          console.log('✅ SDK composeCast 결과:', result);
           
-          // 공유 완료 상태 저장
-          localStorage.setItem('base-revolt-shared', Date.now().toString());
-          setHasShared(true);
+          // 실제 포스팅 여부 확인
+          if (result?.cast) {
+            console.log('🎉 실제로 포스팅됨!');
+            console.log('📝 Cast Hash:', result.cast.hash);
+            console.log('📺 Channel:', result.cast.channelKey);
+            
+            // 공유 완료 상태 저장
+            localStorage.setItem('base-revolt-shared', Date.now().toString());
+            setHasShared(true);
+            
+            // 포스팅 성공 알림
+            alert('🎉 Farcaster에 성공적으로 공유되었습니다!');
+          } else {
+            console.log('❌ 사용자가 포스팅을 취소함');
+            alert('포스팅이 취소되었습니다.');
+          }
         } catch (error) {
           console.log('⚠️ SDK composeCast 실패, 웹 방식으로 폴백:', error);
           // 폴백: 웹 방식
