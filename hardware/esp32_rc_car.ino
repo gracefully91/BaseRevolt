@@ -202,6 +202,10 @@ void setupWebSocket() {
     delay(1000);
   }
   
+  // 장치 식별을 위한 헤더 (연결 전에 설정)
+  webSocket.setExtraHeaders("X-Device-Type: rc-car");
+  Serial.println("🔬 헤더 설정: X-Device-Type: rc-car");
+  
   if (ws_ssl) {
     webSocket.beginSSL(ws_host, ws_port, ws_path);
   } else {
@@ -210,9 +214,6 @@ void setupWebSocket() {
   
   webSocket.onEvent(webSocketEvent);
   webSocket.setReconnectInterval(5000);
-  
-  // 장치 식별을 위한 헤더
-  webSocket.setExtraHeaders("X-Device-Type: rc-car");
   
   Serial.println("   WebSocket configured");
   Serial.println("   Waiting for connection...");
