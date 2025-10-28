@@ -179,7 +179,7 @@ export default function PaymentModal({
 
   // Calculate ETH amount dynamically based on actual exchange rate
   const isTestnet = chain?.id === baseSepolia.id;
-  const usdTargetAmount = isTestnet ? 5.00 : 0.01; // $5 for testnet, $0.01 for mainnet
+  const usdTargetAmount = isTestnet ? 5.00 : 4.99; // $5 for testnet, $4.99 for mainnet
   const calculatedEthAmount = ethPrice ? (usdTargetAmount / ethPrice).toFixed(8) : (isTestnet ? '0.001' : '0.00000351');
   const calculatedUsd = ethPrice ? usdTargetAmount.toFixed(2) : (isTestnet ? '5.00' : '0.01');
   
