@@ -122,6 +122,13 @@ function Home() {
 
   // 공유 상태 체크 (Farcaster API 사용)
   const checkShareStatus = async () => {
+    // 관리자 지갑주소면 데모 권한 부여 (하루 한번 제한 없음)
+    if (address === '0xd10d3381C1e824143D22350e9149413310F14F22') {
+      console.log('🎯 관리자 지갑 - 데모 권한 부여');
+      setHasShared(true);
+      return;
+    }
+
     // 먼저 localStorage 확인 (빠른 체크)
     const sharedTime = localStorage.getItem('base-revolt-shared');
     if (sharedTime) {

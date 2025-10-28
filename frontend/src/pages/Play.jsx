@@ -34,9 +34,9 @@ function Play() {
   // 관리자 상태
   const [isAdminUser, setIsAdminUser] = useState(false);
   
-  // 타이머 (10분 = 600초, 데모는 5분 = 300초, 관리자 데모는 무제한)
+  // 타이머 (10분 = 600초, 데모는 5분 = 300초, 관리자 데모는 실제 시계 연동)
   const [timeRemaining, setTimeRemaining] = useState(
-    isDemo ? (isAdminUser ? 999999 : 300) : 600
+    isDemo ? 300 : 600
   );
   const [isActive, setIsActive] = useState(false);
   
