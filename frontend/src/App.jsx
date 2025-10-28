@@ -73,6 +73,9 @@ function App() {
                         frame: true,
                       },
                     },
+                    walletConnect: {
+                      projectId: import.meta.env.VITE_REOWN_PROJECT_ID,
+                    },
                   }}
                 >
           <BrowserRouter
