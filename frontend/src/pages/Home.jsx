@@ -66,7 +66,7 @@ function Home() {
       console.log('🔄 Farcaster 공유 시작 (PhrasePool 방식)...');
       
       // 미리 작성된 텍스트와 URL (PhrasePool 스타일)
-      const text = "🚗 Check out Base Revolt - Drive RC Car remotely!";
+      const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!";
       const url = window.location.origin;
       const formattedText = `${text}\n\n${url}\n\n- Base Revolt 🚗`;
       
