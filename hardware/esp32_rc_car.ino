@@ -75,7 +75,7 @@ unsigned long lastFrameTime = 0;
 const bool FRAME_STREAMING_ENABLED = true; // 실험 A 완료 - 프레임이 원인 아님
 
 // 실험 B: FPS 낮추기 테스트  
-const int EXPERIMENT_FPS = 8; // 3 → 8로 점진적 증가
+const int EXPERIMENT_FPS = 6; // 8 → 6으로 낮춰서 화질 개선 여유 확보
 const int frameInterval = 1000 / EXPERIMENT_FPS; // 실험용 FPS
 bool wsConnected = false;
 
@@ -367,12 +367,12 @@ void setupCamera() {
   
   // 프레임 버퍼 설정
   if(psramFound()){
-    config.frame_size = FRAMESIZE_QQVGA; // 160x120 (메모리 절약)
-    config.jpeg_quality = 12; // 0-63, 낮을수록 고품질
+    config.frame_size = FRAMESIZE_QVGA; // 320x240 (화질 개선)
+    config.jpeg_quality = 10; // 0-63, 낮을수록 고품질 (품질 향상)
     config.fb_count = 2;
   } else {
-    config.frame_size = FRAMESIZE_QQVGA; // 160x120 (메모리 절약)
-    config.jpeg_quality = 15;
+    config.frame_size = FRAMESIZE_QVGA; // 320x240 (화질 개선)
+    config.jpeg_quality = 12; // 품질 향상
     config.fb_count = 1;
   }
   
