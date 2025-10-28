@@ -657,6 +657,11 @@ function Home() {
         )}
 
         <div className="demo-section">
+          {/* 지갑 연결 안내 */}
+          <p className="wallet-info">
+            💳 Connect wallet to control real RC cars
+          </p>
+          
           {hasShared ? (
             <button className="demo-button" onClick={handleDemoPlay}>
               🎮 Play Demo (Available!)
@@ -666,11 +671,8 @@ function Home() {
               📤 Share to Farcaster
             </button>
           )}
-          <p className="demo-note">
-            {hasShared ? "* Demo mode provides limited features" : "* Share to unlock demo play"}
-          </p>
           <p className="demo-description">
-            Share daily for 5min demo
+            {hasShared ? "* Demo mode provides limited features" : "* Share daily for 5min demo"}
           </p>
         </div>
 
