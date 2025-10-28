@@ -670,7 +670,7 @@ function Home() {
             {hasShared ? "* Demo mode provides limited features" : "* Share to unlock demo play"}
           </p>
           <p className="demo-description">
-            Share once daily to get 5 minutes of demo play time
+            Share daily for 5min demo
           </p>
         </div>
 
