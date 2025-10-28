@@ -13,7 +13,7 @@ import './Home.css';
 
 function Home() {
   const navigate = useNavigate();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
