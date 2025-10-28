@@ -68,7 +68,12 @@ function Home() {
         window.farcaster || 
         window.location.href.includes('farcaster.xyz') ||
         window.location.href.includes('warpcast.com') ||
-        navigator.userAgent.includes('Farcaster')
+        window.location.href.includes('miniapp') ||
+        navigator.userAgent.includes('Farcaster') ||
+        // Farcaster SDK가 로드되어 있으면 Farcaster 환경으로 간주
+        (sdk && sdk.quickAuth) ||
+        // SDK가 존재하고 quickAuth가 있으면 Farcaster 환경
+        (sdk && typeof sdk.quickAuth === 'object')
       );
       
       console.log('🔍 공유 함수 Farcaster 환경 체크:', {
@@ -77,8 +82,10 @@ function Home() {
         userAgent: navigator.userAgent,
         isFarcasterEnv,
         sdkExists: !!sdk,
+        sdkQuickAuth: !!sdk?.quickAuth,
         sdkActions: !!sdk?.actions,
-        sdkShare: !!sdk?.actions?.share
+        sdkShare: !!sdk?.actions?.share,
+        sdkKeys: sdk ? Object.keys(sdk) : 'no sdk'
       });
       
       if (isFarcasterEnv && sdk && sdk.actions && sdk.actions.share) {
@@ -94,11 +101,11 @@ function Home() {
       } else {
         // Farcaster 환경이 아니거나 share 함수가 없는 경우
         console.log('⚠️ Farcaster 공유 불가 - 일반 웹 환경');
-        alert('Farcaster 공유는 Farcaster 앱 내에서만 가능합니다.');
+        console.log('💡 Farcaster 공유는 Farcaster 앱 내에서만 가능합니다.');
       }
     } catch (error) {
       console.error('Share failed:', error);
-      alert('공유에 실패했습니다. Farcaster 앱 내에서 다시 시도해주세요.');
+      console.log('💡 공유에 실패했습니다. Farcaster 앱 내에서 다시 시도해주세요.');
     }
   };
 
@@ -124,7 +131,12 @@ function Home() {
           window.farcaster || 
           window.location.href.includes('farcaster.xyz') ||
           window.location.href.includes('warpcast.com') ||
-          navigator.userAgent.includes('Farcaster')
+          window.location.href.includes('miniapp') ||
+          navigator.userAgent.includes('Farcaster') ||
+          // Farcaster SDK가 로드되어 있으면 Farcaster 환경으로 간주
+          (sdk && sdk.quickAuth) ||
+          // SDK가 존재하고 quickAuth가 있으면 Farcaster 환경
+          (sdk && typeof sdk.quickAuth === 'object')
         );
         
         console.log('🔍 Farcaster 환경 체크:', {
@@ -133,8 +145,10 @@ function Home() {
           userAgent: navigator.userAgent,
           isFarcasterEnv,
           sdkExists: !!sdk,
+          sdkQuickAuth: !!sdk?.quickAuth,
           sdkActions: !!sdk?.actions,
-          sdkShare: !!sdk?.actions?.share
+          sdkShare: !!sdk?.actions?.share,
+          sdkKeys: sdk ? Object.keys(sdk) : 'no sdk'
         });
         
         if (isFarcasterEnv) {
