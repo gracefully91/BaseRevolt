@@ -175,6 +175,7 @@ function Home() {
       // SDK가 있으면 composeCast 사용 (올바른 방법)
       if (sdk && sdk.actions && sdk.actions.composeCast) {
         try {
+          // composeCast는 compose 창을 열어주고 embeds도 지원됨
           const embeds = ["https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt"];
           const result = await sdk.actions.composeCast({ 
             text,
