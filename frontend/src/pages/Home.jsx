@@ -584,6 +584,9 @@ function Home() {
           <p className="demo-note">
             {hasShared ? "* Demo mode provides limited features" : "* Share to unlock demo play"}
           </p>
+          <p className="demo-description">
+            Share once daily to get 5 minutes of demo play time
+          </p>
         </div>
 
         <div className="features-section">
@@ -661,23 +664,23 @@ function Home() {
           selectedVehicle={selectedVehicle}
         />
         
-        {/* Farcaster 로그아웃 버튼 */}
-        {user && !user.isWebUser && (
-          <div className="logout-section">
+        {/* 하단 버튼 섹션 - Share 버튼과 Farcaster 로그아웃 버튼 */}
+        <div className="bottom-buttons-section">
+          {/* 작은 공유 버튼 - 항상 공유 버튼으로 유지 */}
+          <button className="small-share-button" onClick={shareToFarcaster}>
+            📤 Share
+          </button>
+          
+          {/* Farcaster 로그아웃 버튼 */}
+          {user && !user.isWebUser && (
             <button 
               className="logout-button"
               onClick={handleFarcasterLogout}
             >
-              🚪 Farcaster 로그아웃
+              <img src="/farcaster.png" alt="Farcaster" className="farcaster-logo-small" />
+              Sign Out
             </button>
-          </div>
-        )}
-
-        {/* 작은 공유 버튼 - 항상 공유 버튼으로 유지 */}
-        <div className="small-share-section">
-          <button className="small-share-button" onClick={shareToFarcaster}>
-            📤 Share
-          </button>
+          )}
         </div>
       </div>
     </div>
