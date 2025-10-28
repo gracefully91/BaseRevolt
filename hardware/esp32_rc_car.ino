@@ -31,7 +31,7 @@ const bool ws_ssl = true;
 
 // UDP 서버 설정 (제어 명령용)
 const int udp_port = 8082;
-const char* server_ip = "base-revolt-server.onrender.com"; // 실제로는 IP 주소 필요
+const char* server_ip = "base-revolt-server.onrender.com";
 const int server_udp_port = 8081;
 
 // 모터 제어 핀 (안정적인 핀만 사용)
@@ -120,9 +120,9 @@ void setup() {
   Serial.println("\nStep 4/4: Connecting to server...");
   setupWebSocket();
   
-  // UDP 서버 설정
-  Serial.println("\nStep 5/5: Setting up UDP...");
-  setupUDP();
+  // UDP 서버 설정 (제거 - WebSocket만 사용)
+  // Serial.println("\nStep 5/5: Setting up UDP...");
+  // setupUDP();
   
   // 자가진단 테스트 (배선 확인용)
   Serial.println("\nRunning Self Test...");
