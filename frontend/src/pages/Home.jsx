@@ -376,25 +376,33 @@ function Home() {
     setIsSharing(true);
     
     try {
-      // OG 이미지 생성
-      const ogImage = generateOGImage();
+      // preview.png를 기본 이미지로 사용
+      let shareImage = '/preview.png';
       
-      // 공유 데이터
-      const shareData = {
-        title: 'Base Revolt - Remote Control RC Car',
-        text: '🎮 Control a real RC car remotely on Base blockchain! Real-time video streaming and blockchain ownership proof.',
-        url: window.location.origin,
-        image: ogImage
-      };
-      
-      // Farcaster 환경에서 공유
+      // Farcaster 환경에서는 동적 OG 이미지도 함께 사용
       if (typeof window !== 'undefined' && window.farcaster) {
+        const ogImage = generateOGImage();
+        
+        // 첫 번째 공유: 동적 OG 이미지
         await sdk.actions.share({
           text: `🎮 Check out Base Revolt! Control a real RC car remotely on Base blockchain!\n\n✨ Features:\n• Real-time video streaming\n• Remote RC car control\n• Blockchain ownership proof\n\nTry it now: ${window.location.origin}`,
           image: ogImage
         });
+        
+        // 두 번째 공유: preview.png
+        await sdk.actions.share({
+          text: `🎮 Base Revolt - Remote Control RC Car on Base Blockchain!\n\nTry it now: ${window.location.origin}`,
+          image: shareImage
+        });
       } else {
         // 일반 웹에서 Web Share API 사용
+        const shareData = {
+          title: 'Base Revolt - Remote Control RC Car',
+          text: '🎮 Control a real RC car remotely on Base blockchain! Real-time video streaming and blockchain ownership proof.',
+          url: window.location.origin,
+          image: shareImage
+        };
+        
         if (navigator.share) {
           await navigator.share(shareData);
         } else {
