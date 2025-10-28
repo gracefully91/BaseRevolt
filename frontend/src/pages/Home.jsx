@@ -67,7 +67,7 @@ function Home() {
       
       // 미리 작성된 텍스트 (Open Graph 이미지 자동 표시)
       const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!";
-      const url = "https://warpcast.com/~/miniapp/base-revolt"; // Farcaster 미니앱 URL
+      const url = "https://base-revolt.vercel.app/"; // 웹사이트 URL로 변경
       const formattedText = `${text}\n\n- Base Revolt 🚗`;
       
       // Farcaster compose URL (URL을 별도로 전달하여 Open Graph 이미지 표시)
