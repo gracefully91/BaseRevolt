@@ -344,11 +344,11 @@ void setupCamera() {
   
   // 프레임 버퍼 설정
   if(psramFound()){
-    config.frame_size = FRAMESIZE_QVGA; // 320x240
+    config.frame_size = FRAMESIZE_QQVGA; // 160x120 (메모리 절약)
     config.jpeg_quality = 12; // 0-63, 낮을수록 고품질
     config.fb_count = 2;
   } else {
-    config.frame_size = FRAMESIZE_QVGA;
+    config.frame_size = FRAMESIZE_QQVGA; // 160x120 (메모리 절약)
     config.jpeg_quality = 15;
     config.fb_count = 1;
   }
@@ -378,6 +378,7 @@ void sendCameraFrame() {
   static unsigned long lastFrameLog = 0;
   if (millis() - lastFrameLog > 10000) {
     Serial.printf("Streaming video frames (size: %d bytes, FPS: ~15)\n", fb->len);
+    Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
     lastFrameLog = millis();
   }
   

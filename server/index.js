@@ -61,7 +61,7 @@ const SESSION_DURATION = {
 };
 
 // 하트비트 타임아웃 (10초)
-const HEARTBEAT_TIMEOUT = 10 * 1000;
+const HEARTBEAT_TIMEOUT = 30 * 1000; // 30초로 증가
 
 // 선점 경고 시간 (5초)
 const PREEMPT_WARNING_TIME = 5 * 1000;
@@ -269,9 +269,12 @@ wss.on('connection', (ws, req) => {
   });
   
   // 연결 종료 처리
-  ws.on('close', () => {
+  ws.on('close', (code, reason) => {
     if (clientType === 'rc-car') {
       console.log('❌ RC Car disconnected');
+      console.log('   Close code:', code);
+      console.log('   Close reason:', reason.toString());
+      console.log('   Remote IP:', remoteIP);
       clients.rcCar = null;
       
       // 모든 웹 사용자에게 RC카 연결 해제 알림
