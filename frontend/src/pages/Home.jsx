@@ -73,22 +73,27 @@ function Home() {
       
       console.log('🔗 Farcaster URL:', farcasterUrl);
       
-      // SDK가 있으면 SDK 사용, 없으면 새 창으로 열기
-      if (sdk && sdk.actions && sdk.actions.openUrl) {
+      // SDK가 있으면 composeCast 사용 (올바른 방법)
+      if (sdk && sdk.actions && sdk.actions.composeCast) {
         try {
-          await sdk.actions.openUrl(farcasterUrl);
-          console.log('✅ SDK로 Farcaster compose 창 열기 성공');
+          const embeds = ["https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt"];
+          const result = await sdk.actions.composeCast({ 
+            text,
+            embeds
+          });
+          console.log('✅ SDK composeCast 성공:', result);
           
           // 공유 완료 상태 저장
           localStorage.setItem('base-revolt-shared', Date.now().toString());
           setHasShared(true);
         } catch (error) {
-          console.log('⚠️ SDK openUrl 실패, 현재 창에서 열기:', error);
+          console.log('⚠️ SDK composeCast 실패, 웹 방식으로 폴백:', error);
+          // 폴백: 웹 방식
           window.location.href = farcasterUrl;
         }
       } else {
-        // SDK가 없으면 현재 창에서 열기
-        console.log('⚠️ SDK 없음, 현재 창에서 열기');
+        // SDK가 없으면 웹 방식으로 폴백
+        console.log('⚠️ SDK composeCast 없음, 웹 방식으로 폴백');
         window.location.href = farcasterUrl;
       }
       
