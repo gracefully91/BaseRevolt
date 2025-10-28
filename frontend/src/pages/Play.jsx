@@ -49,12 +49,17 @@ function Play() {
   if (!walletIdRef.current) {
     // 데모 모드에서는 브라우저별 고정 ID 사용 (localStorage 활용)
     if (isDemo) {
-      let demoId = localStorage.getItem('base-revolt-demo-id');
-      if (!demoId) {
-        demoId = 'demo-user-' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('base-revolt-demo-id', demoId);
+      // 관리자는 실제 지갑주소 사용
+      if (isAdminUser) {
+        walletIdRef.current = address;
+      } else {
+        let demoId = localStorage.getItem('base-revolt-demo-id');
+        if (!demoId) {
+          demoId = 'demo-user-' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('base-revolt-demo-id', demoId);
+        }
+        walletIdRef.current = demoId;
       }
-      walletIdRef.current = demoId;
     } else {
       walletIdRef.current = address || 'anonymous-' + Math.random().toString(36).substr(2, 9);
     }

@@ -180,6 +180,13 @@ void setupWebSocket() {
   Serial.printf("   Target: %s:%d%s\n", ws_host, ws_port, ws_path);
   Serial.printf("   SSL: %s\n", ws_ssl ? "Enabled" : "Disabled");
   
+  // 기존 연결 정리
+  if (webSocket.getReadyState() != WS_DISCONNECTED) {
+    Serial.println("   Closing existing connection...");
+    webSocket.disconnect();
+    delay(1000);
+  }
+  
   if (ws_ssl) {
     webSocket.beginSSL(ws_host, ws_port, ws_path);
   } else {
