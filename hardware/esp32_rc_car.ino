@@ -70,7 +70,13 @@ void checkPinStates() {
 WebSocketsClient webSocket;
 WiFiUDP udp;
 unsigned long lastFrameTime = 0;
-const int frameInterval = 66; // ~15 FPS (1000ms / 15 = 66ms)
+// ==================== 실험 설정 ====================
+// 실험 A: 프레임 전송 OFF 테스트
+const bool FRAME_STREAMING_ENABLED = true; // false로 바꿔서 테스트
+
+// 실험 B: FPS 낮추기 테스트  
+const int EXPERIMENT_FPS = 5; // 3, 5, 8, 15 중 선택
+const int frameInterval = 1000 / EXPERIMENT_FPS; // 실험용 FPS
 bool wsConnected = false;
 
 // ==================== 함수 선언 ====================
@@ -153,6 +159,10 @@ void loop() {
 // ==================== WiFi Setup ====================
 void setupWiFi() {
   Serial.printf("   Connecting to: %s\n", ssid);
+  
+  // 실험 C: Wi-Fi 절전 OFF 설정
+  WiFi.setSleep(false); // Wi-Fi 절전 모드 비활성화
+  Serial.println("🔬 실험 C: Wi-Fi 절전 모드 OFF");
   
   WiFi.begin(ssid, password);
   
@@ -372,6 +382,12 @@ void setupCamera() {
 
 // ==================== 카메라 프레임 전송 ====================
 void sendCameraFrame() {
+  // 실험 A: 프레임 전송 OFF 테스트
+  if (!FRAME_STREAMING_ENABLED) {
+    Serial.println("🔬 실험 A: 프레임 전송 OFF - 연결 안정성 테스트");
+    return;
+  }
+  
   camera_fb_t * fb = esp_camera_fb_get();
   if (!fb) {
     Serial.println("Camera capture failed");
@@ -384,7 +400,7 @@ void sendCameraFrame() {
   // 10초마다 한 번씩 프레임 전송 로그 (너무 많은 로그 방지)
   static unsigned long lastFrameLog = 0;
   if (millis() - lastFrameLog > 10000) {
-    Serial.printf("Streaming video frames (size: %d bytes, FPS: ~15)\n", fb->len);
+    Serial.printf("🔬 실험 B: FPS %d - Streaming video frames (size: %d bytes)\n", EXPERIMENT_FPS, fb->len);
     Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
     lastFrameLog = millis();
   }

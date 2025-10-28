@@ -110,8 +110,8 @@ export default function PortraitPlay({ onRotate, isDemo, timeRemaining, sessionI
           ←Home
         </button>
         <div className="portrait-status-info">
-          <div className={`timer ${isAdminUser ? 'timer-admin' : timeRemaining > 300 ? 'timer-blue' : timeRemaining > 120 ? 'timer-yellow' : 'timer-red'}`}>
-            {isAdminUser ? '♾️ ∞' : `⏱️ ${formatTime(timeRemaining)}`}
+          <div className={`timer ${timeRemaining > 300 ? 'timer-blue' : timeRemaining > 120 ? 'timer-yellow' : 'timer-red'}`}>
+            ⏱️ {formatTime(timeRemaining)}
           </div>
           {isDemo && (
             <div className={`demo-badge ${isAdminUser ? 'admin-badge' : ''}`}>

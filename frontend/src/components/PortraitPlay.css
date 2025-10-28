@@ -188,12 +188,6 @@
   color: #ef4444;
 }
 
-.timer-admin {
-  color: #a855f7;
-  font-weight: bold;
-  animation: adminGlow 2s ease-in-out infinite alternate;
-}
-
 .demo-badge {
   background: rgba(251, 191, 36, 0.2);
   color: #fbbf24;

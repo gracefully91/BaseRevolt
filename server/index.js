@@ -270,6 +270,8 @@ wss.on('connection', (ws, req) => {
   
   // 연결 종료 처리
   ws.on('close', (code, reason) => {
+    console.log(`🔬 실험 D: WebSocket Close 이벤트 - Code: ${code}, Reason: ${reason.toString()}, Client: ${clientType}`);
+    
     if (clientType === 'rc-car') {
       console.log('❌ RC Car disconnected');
       console.log('   Close code:', code);
@@ -448,8 +450,11 @@ function resetHeartbeatTimeout(session) {
     clearTimeout(session.heartbeatTimeout);
   }
   
+  console.log(`🔬 실험 D: 하트비트 리셋 - Session: ${session.sessionId}, Wallet: ${session.wallet}`);
+  
   session.heartbeatTimeout = setTimeout(() => {
     console.log(`💔 Heartbeat timeout for session: ${session.sessionId}`);
+    console.log(`🔬 실험 D: 타임아웃 상세 - Wallet: ${session.wallet}, Car: ${session.carId}, Tier: ${session.tier}`);
     endSession(session.carId, 'heartbeat_timeout');
   }, HEARTBEAT_TIMEOUT);
 }
