@@ -63,8 +63,8 @@ function Home() {
   // 웹에서 Farcaster OAuth 인증 및 포스팅
   const shareToFarcasterWeb = async () => {
     try {
-      // Farcaster OAuth 인증
-      const farcasterAuthUrl = `https://warpcast.com/~/oauth/authorize?client_id=${encodeURIComponent(window.location.origin)}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=cast:write`;
+      // Farcaster OAuth 인증 (올바른 엔드포인트)
+      const farcasterAuthUrl = `https://warpcast.com/~/oauth/authorize?client_id=base-revolt&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=cast:write`;
       
       // 새 창에서 OAuth 인증
       const authWindow = window.open(farcasterAuthUrl, 'farcaster-auth', 'width=500,height=600');
@@ -163,7 +163,8 @@ function Home() {
         setHasShared(true);
         console.log('✅ SDK 공유 성공');
       } else {
-        // SDK가 없으면 OAuth 인증 후 API 포스팅 (웹)
+        // SDK share 함수가 없으면 OAuth 인증 후 API 포스팅 (웹)
+        console.log('⚠️ SDK share 함수 없음 - OAuth 사용');
         await shareToFarcasterWeb();
       }
     } catch (error) {
@@ -658,17 +659,11 @@ function Home() {
           </div>
         )}
 
-        {/* 작은 공유 버튼 */}
+        {/* 작은 공유 버튼 - 항상 공유 버튼으로 유지 */}
         <div className="small-share-section">
-          {hasShared ? (
-            <button className="small-share-button" onClick={handleDemoPlay}>
-              🎮 Play Demo
-            </button>
-          ) : (
-            <button className="small-share-button" onClick={shareToFarcaster}>
-              📤 Share
-            </button>
-          )}
+          <button className="small-share-button" onClick={shareToFarcaster}>
+            📤 Share
+          </button>
         </div>
       </div>
     </div>
