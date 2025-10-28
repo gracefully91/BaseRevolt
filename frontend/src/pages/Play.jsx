@@ -31,19 +31,16 @@ function Play() {
   const [isLandscape, setIsLandscape] = useState(false);
   const [showPortrait, setShowPortrait] = useState(false);
   
-  // 관리자 상태
-  const [isAdminUser, setIsAdminUser] = useState(false);
+  // 관리자 상태 (즉시 체크)
+  const ADMIN_WALLET = '0xd10d3381C1e824143D22350e9149413310F14F22';
+  const isAdminUser = address && address.toLowerCase() === ADMIN_WALLET.toLowerCase();
   
-  // 관리자 체크
+  // 관리자 체크 로그
   useEffect(() => {
-    const ADMIN_WALLET = '0xd10d3381C1e824143D22350e9149413310F14F22';
-    if (address && address.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
-      setIsAdminUser(true);
+    if (isAdminUser) {
       console.log('👑 관리자 지갑 감지:', address);
-    } else {
-      setIsAdminUser(false);
     }
-  }, [address]);
+  }, [isAdminUser, address]);
   
   // 타이머 (10분 = 600초, 데모는 5분 = 300초, 관리자 데모는 실제 시계 연동)
   const [timeRemaining, setTimeRemaining] = useState(
@@ -62,7 +59,7 @@ function Play() {
     if (isDemo) {
       // 관리자는 실제 지갑주소 사용
       console.log('🔍 관리자 체크:', { isAdminUser, address, isDemo });
-      if (isAdminUser) {
+      if (isAdminUser && address) {
         walletIdRef.current = address;
         console.log('👑 관리자 지갑주소 사용:', address);
       } else {
