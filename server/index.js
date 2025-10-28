@@ -399,6 +399,11 @@ function isAdmin(wallet) {
 }
 
 function checkDemoQuota(wallet) {
+  console.log('🔍 checkDemoQuota 호출됨:');
+  console.log('   wallet:', wallet);
+  console.log('   ADMIN_WALLET:', ADMIN_WALLET);
+  console.log('   isAdmin 결과:', isAdmin(wallet));
+  
   // 관리자는 데모 쿼터 무제한
   if (isAdmin(wallet)) {
     console.log(`👑 Admin wallet detected: ${wallet.substring(0, 10)}... - unlimited demo access`);
