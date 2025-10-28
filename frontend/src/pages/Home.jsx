@@ -53,6 +53,12 @@ function Home() {
   // Farcaster API로 사용자 캐스트 확인
   const checkUserCasts = async () => {
     try {
+      // 테스트용: 관리자 지갑주소면 바로 통과
+      if (address === '0xd10d3381C1e824143D22350e9149413310F14F22') {
+        console.log('🎯 관리자 지갑 - 테스트 모드로 통과');
+        return true;
+      }
+
       // Farcaster 사용자 정보 가져오기
       if (!sdk || !sdk.user) {
         console.log('⚠️ SDK 또는 사용자 정보 없음');
