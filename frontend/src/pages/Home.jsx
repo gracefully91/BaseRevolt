@@ -26,12 +26,9 @@ function Home() {
   const [currentUserName] = useState('User' + Math.floor(Math.random() * 1000));
   const [queueNotification, setQueueNotification] = useState(null);
   const [queueStatus, setQueueStatus] = useState(null);
+  const [hasShared, setHasShared] = useState(false);
   const wsRef = useRef(null);
   const isConnectingRef = useRef(false);
-  
-  // 공유 관련 상태
-  const [hasSharedToday, setHasSharedToday] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
   
   // 티켓 가격 조회
   const { data: ticketPrice } = useReadContract({
@@ -52,6 +49,32 @@ function Home() {
   };
 
   const priceInfo = getTicketPrice();
+
+  // 공유 상태 체크
+  const checkShareStatus = () => {
+    const sharedTime = localStorage.getItem('base-revolt-shared');
+    if (sharedTime) {
+      const dayInMs = 24 * 60 * 60 * 1000;
+      const isWithin24Hours = Date.now() - parseInt(sharedTime) < dayInMs;
+      setHasShared(isWithin24Hours);
+    }
+  };
+
+  // Farcaster 공유 기능
+  const shareToFarcaster = async () => {
+    try {
+      await sdk.actions.share({
+        text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
+        url: window.location.origin,
+      });
+      
+      // 공유 완료 상태 저장
+      localStorage.setItem('base-revolt-shared', Date.now().toString());
+      setHasShared(true);
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
+  };
 
   // Quick Auth를 사용한 Farcaster 인증
   useEffect(() => {
@@ -103,17 +126,6 @@ function Home() {
     };
 
     authenticateUser();
-  }, []);
-
-  // 공유 상태 체크
-  useEffect(() => {
-    const checkShareStatus = () => {
-      const today = new Date().toDateString();
-      const lastShareDate = localStorage.getItem('base-revolt-last-share');
-      const sharedToday = lastShareDate === today;
-      setHasSharedToday(sharedToday);
-    };
-    
     checkShareStatus();
   }, []);
 
@@ -323,114 +335,6 @@ function Home() {
     navigate('/play');
   };
 
-  // OG 이미지 생성 함수
-  const generateOGImage = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1200;
-    canvas.height = 630;
-    const ctx = canvas.getContext('2d');
-    
-    // 배경 그라데이션
-    const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
-    gradient.addColorStop(0, '#667eea');
-    gradient.addColorStop(1, '#764ba2');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1200, 630);
-    
-    // 제목
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 72px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Base Revolt', 600, 200);
-    
-    // 부제목
-    ctx.font = '36px Arial';
-    ctx.fillText('Remote Control RC Car on Base Blockchain', 600, 280);
-    
-    // 특징들
-    ctx.font = '28px Arial';
-    ctx.fillText('🎮 Real-time Control  📹 Live Video  ⛓️ Blockchain', 600, 350);
-    
-    // 가격 정보
-    ctx.font = 'bold 48px Arial';
-    ctx.fillText(priceInfo.amount, 600, 450);
-    
-    // 네트워크 배지
-    ctx.fillStyle = priceInfo.isTestnet ? '#ff9800' : '#0052ff';
-    ctx.fillRect(500, 480, 200, 40);
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 24px Arial';
-    ctx.fillText(priceInfo.isTestnet ? 'TESTNET' : 'MAINNET', 600, 505);
-    
-    return canvas.toDataURL('image/png');
-  };
-
-  // 공유 함수
-  const handleShare = async () => {
-    if (hasSharedToday) {
-      // 이미 공유했으면 데모 플레이
-      navigate('/play?demo=true');
-      return;
-    }
-    
-    setIsSharing(true);
-    
-    try {
-      // preview.png를 기본 이미지로 사용
-      let shareImage = '/preview.png';
-      
-      // Farcaster 환경에서는 동적 OG 이미지도 함께 사용
-      if (typeof window !== 'undefined' && window.farcaster) {
-        const ogImage = generateOGImage();
-        
-        // 첫 번째 공유: 동적 OG 이미지
-        await sdk.actions.share({
-          text: `🎮 Check out Base Revolt! Control a real RC car remotely on Base blockchain!\n\n✨ Features:\n• Real-time video streaming\n• Remote RC car control\n• Blockchain ownership proof\n\nTry it now: ${window.location.origin}`,
-          image: ogImage
-        });
-        
-        // 두 번째 공유: preview.png
-        await sdk.actions.share({
-          text: `🎮 Base Revolt - Remote Control RC Car on Base Blockchain!\n\nTry it now: ${window.location.origin}`,
-          image: shareImage
-        });
-      } else {
-        // 일반 웹에서 Web Share API 사용
-        const shareData = {
-          title: 'Base Revolt - Remote Control RC Car',
-          text: '🎮 Control a real RC car remotely on Base blockchain! Real-time video streaming and blockchain ownership proof.',
-          url: window.location.origin,
-          image: shareImage
-        };
-        
-        if (navigator.share) {
-          await navigator.share(shareData);
-        } else {
-          // 폴백: URL 복사
-          await navigator.clipboard.writeText(window.location.origin);
-          alert('🔗 URL copied to clipboard! Share it with your friends!');
-        }
-      }
-      
-      // 공유 완료 처리
-      const today = new Date().toDateString();
-      localStorage.setItem('base-revolt-last-share', today);
-      setHasSharedToday(true);
-      
-      // 잠시 후 데모 플레이로 이동
-      setTimeout(() => {
-        navigate('/play?demo=true');
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Share error:', error);
-      // 에러가 발생해도 데모 플레이 허용
-      navigate('/play?demo=true');
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
   const handleDemoPlay = () => {
     // Demo mode - play without payment
     navigate('/play?demo=true');
@@ -533,19 +437,17 @@ function Home() {
         )}
 
         <div className="demo-section">
-          <button 
-            className={`demo-button ${hasSharedToday ? 'demo-play-button' : 'share-button'}`} 
-            onClick={hasSharedToday ? handleDemoPlay : handleShare}
-            disabled={isSharing}
-          >
-            {isSharing ? '🔄 Sharing...' : 
-             hasSharedToday ? '🎮 Try Demo (Free)' : 
-             '📤 Share to Play Demo'}
-          </button>
+          {hasShared ? (
+            <button className="demo-button" onClick={handleDemoPlay}>
+              🎮 Play Demo (Available!)
+            </button>
+          ) : (
+            <button className="demo-button" onClick={shareToFarcaster}>
+              📤 Share to Farcaster
+            </button>
+          )}
           <p className="demo-note">
-            {hasSharedToday ? 
-              '* Demo mode provides limited features' : 
-              '* Share once to unlock free demo play'}
+            {hasShared ? "* Demo mode provides limited features" : "* Share to unlock demo play"}
           </p>
         </div>
 
@@ -635,6 +537,19 @@ function Home() {
             </button>
           </div>
         )}
+
+        {/* 작은 공유 버튼 */}
+        <div className="small-share-section">
+          {hasShared ? (
+            <button className="small-share-button" onClick={handleDemoPlay}>
+              🎮 Play Demo
+            </button>
+          ) : (
+            <button className="small-share-button" onClick={shareToFarcaster}>
+              📤 Share
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

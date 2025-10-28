@@ -383,56 +383,28 @@
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-/* 공유 버튼 스타일 */
-.share-button {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+/* 작은 공유 버튼 스타일 */
+.small-share-section {
+  text-align: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.small-share-button {
+  background: rgba(255, 255, 255, 0.2);
   color: white;
-  border: none;
-  padding: 18px 50px;
-  font-size: 1.2rem;
-  font-weight: 700;
-  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 20px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-  animation: sharePulse 2s ease-in-out infinite alternate;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
 }
 
-.share-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
-}
-
-.share-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  animation: none;
-}
-
-/* 데모 플레이 버튼 스타일 */
-.demo-play-button {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  border: none;
-  padding: 18px 50px;
-  font-size: 1.2rem;
-  font-weight: 700;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-}
-
-.demo-play-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
-}
-
-@keyframes sharePulse {
-  0% {
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-  }
-  100% {
-    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.8);
-  }
+.small-share-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
 }
