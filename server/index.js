@@ -98,7 +98,12 @@ app.post('/udp-command', (req, res) => {
   
   console.log(`📡 HTTP->UDP command: ${command}`);
   
-  // ESP32 연결 확인
+  // ESP32 연결 확인 (디버깅 추가)
+  console.log('🔍 ESP32 연결 상태 체크:');
+  console.log('   clients.rcCar:', clients.rcCar ? 'exists' : 'null');
+  console.log('   readyState:', clients.rcCar ? clients.rcCar.readyState : 'N/A');
+  console.log('   OPEN constant:', clients.rcCar ? clients.rcCar.OPEN : 'N/A');
+  
   if (!clients.rcCar || clients.rcCar.readyState !== clients.rcCar.OPEN) {
     console.log('⚠️  ESP32 not connected via WebSocket');
     return res.status(503).json({ error: 'ESP32 not connected' });
