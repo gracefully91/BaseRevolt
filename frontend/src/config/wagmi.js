@@ -15,7 +15,12 @@ export const config = createConfig({
       preference: 'smartWalletOnly',
       version: '4',
     }),
-    metaMask(),
+    metaMask({
+      // MetaMask 확장 프로그램 우선 사용
+      preference: 'extension',
+      // 모바일에서는 WalletConnect 사용
+      fallback: 'walletConnect',
+    }),
     injected(), // 브라우저에 설치된 모든 지갑 (Rabby, Trust Wallet, Frame 등)
     safe(), // Safe 지갑
   ],
