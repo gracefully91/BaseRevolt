@@ -164,6 +164,11 @@ void setupWiFi() {
   WiFi.setSleep(false); // Wi-Fi 절전 모드 비활성화
   Serial.println("🔬 실험 C: Wi-Fi 절전 모드 OFF");
   
+  // 추가 안정성 설정
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
+  Serial.println("🔬 추가 안정성: 자동 재연결 활성화");
+  
   WiFi.begin(ssid, password);
   
   int attempts = 0;
