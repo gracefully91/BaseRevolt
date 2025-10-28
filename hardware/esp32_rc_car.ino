@@ -75,7 +75,7 @@ unsigned long lastFrameTime = 0;
 const bool FRAME_STREAMING_ENABLED = true; // 실험 A 완료 - 프레임이 원인 아님
 
 // 실험 B: FPS 낮추기 테스트  
-const int EXPERIMENT_FPS = 3; // 3으로 낮춰서 테스트
+const int EXPERIMENT_FPS = 8; // 3 → 8로 점진적 증가
 const int frameInterval = 1000 / EXPERIMENT_FPS; // 실험용 FPS
 bool wsConnected = false;
 
