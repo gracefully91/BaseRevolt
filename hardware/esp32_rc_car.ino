@@ -406,7 +406,8 @@ void sendCameraFrame() {
   // 10초마다 한 번씩 프레임 전송 로그 (너무 많은 로그 방지)
   static unsigned long lastFrameLog = 0;
   if (millis() - lastFrameLog > 10000) {
-    Serial.printf("🔬 실험 B: FPS %d - Streaming video frames (size: %d bytes)\n", EXPERIMENT_FPS, fb->len);
+    // Serial.printf("🔬 실험 B: FPS %d - Streaming video frames (size: %d bytes)\n", EXPERIMENT_FPS, fb->len);
+    Serial.printf("📹 Streaming video frames (size: %d bytes, FPS: %d)\n", fb->len, EXPERIMENT_FPS);
     Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
     lastFrameLog = millis();
   }

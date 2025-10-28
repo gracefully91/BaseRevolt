@@ -58,10 +58,10 @@ function Play() {
     // 데모 모드에서는 브라우저별 고정 ID 사용 (localStorage 활용)
     if (isDemo) {
       // 관리자는 실제 지갑주소 사용
-      console.log('🔍 관리자 체크:', { isAdminUser, address, isDemo });
+      // console.log('🔍 관리자 체크:', { isAdminUser, address, isDemo });
       if (isAdminUser && address) {
         walletIdRef.current = address;
-        console.log('👑 관리자 지갑주소 사용:', address);
+        // console.log('👑 관리자 지갑주소 사용:', address);
       } else {
         let demoId = localStorage.getItem('base-revolt-demo-id');
         if (!demoId) {
@@ -69,7 +69,7 @@ function Play() {
           localStorage.setItem('base-revolt-demo-id', demoId);
         }
         walletIdRef.current = demoId;
-        console.log('👤 일반 사용자 데모 ID 사용:', demoId);
+        // console.log('👤 일반 사용자 데모 ID 사용:', demoId);
       }
     } else {
       walletIdRef.current = address || 'anonymous-' + Math.random().toString(36).substr(2, 9);
