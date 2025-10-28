@@ -15,6 +15,16 @@ function Home() {
   const navigate = useNavigate();
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
+  
+  // Farcaster 환경 감지
+  const isFarcasterMiniApp = typeof window !== 'undefined' && (
+    window.location.href.includes('farcaster.xyz/miniapps') ||
+    window.location.href.includes('warpcast.com') ||
+    (window.farcaster && window.farcaster.miniapp)
+  );
+
+  // Farcaster Mini App에서는 지갑 연결 비활성화
+  const shouldShowWalletButton = !isFarcasterMiniApp;
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -670,10 +680,12 @@ function Home() {
         )}
 
         <div className="demo-section">
-          {/* 지갑 연결 안내 */}
-          <p className="wallet-info">
-            💳 Connect wallet to control real RC cars
-          </p>
+          {/* 지갑 연결 안내 (Farcaster Mini App이 아닐 때만) */}
+          {shouldShowWalletButton && (
+            <p className="wallet-info">
+              💳 Connect wallet to control real RC cars
+            </p>
+          )}
           
           {hasShared ? (
             <button className="demo-button" onClick={handleDemoPlay}>

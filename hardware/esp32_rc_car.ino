@@ -75,7 +75,7 @@ unsigned long lastFrameTime = 0;
 const bool FRAME_STREAMING_ENABLED = true; // 실험 A 완료 - 프레임이 원인 아님
 
 // 실험 B: FPS 낮추기 테스트  
-const int EXPERIMENT_FPS = 6; // 8 → 6으로 낮춰서 화질 개선 여유 확보
+const int EXPERIMENT_FPS = 4; // 6 → 4로 더 낮춤 (안정성 우선)
 const int frameInterval = 1000 / EXPERIMENT_FPS; // 실험용 FPS
 bool wsConnected = false;
 
@@ -213,7 +213,7 @@ void setupWebSocket() {
   }
   
   webSocket.onEvent(webSocketEvent);
-  webSocket.setReconnectInterval(5000);
+  webSocket.setReconnectInterval(10000); // 5초 → 10초로 증가 (안정성 우선)
   
   Serial.println("   WebSocket configured");
   Serial.println("   Waiting for connection...");
@@ -365,14 +365,14 @@ void setupCamera() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
   
-  // 프레임 버퍼 설정
+  // 프레임 버퍼 설정 (메모리 최적화)
   if(psramFound()){
-    config.frame_size = FRAMESIZE_QVGA; // 320x240 (화질 개선)
-    config.jpeg_quality = 10; // 0-63, 낮을수록 고품질 (품질 향상)
-    config.fb_count = 2;
+    config.frame_size = FRAMESIZE_QVGA; // 320x240
+    config.jpeg_quality = 15; // 품질 낮춤 (메모리 절약)
+    config.fb_count = 1; // 버퍼 개수 줄임
   } else {
-    config.frame_size = FRAMESIZE_QVGA; // 320x240 (화질 개선)
-    config.jpeg_quality = 12; // 품질 향상
+    config.frame_size = FRAMESIZE_QQVGA; // 160x120 (메모리 부족 시)
+    config.jpeg_quality = 20;
     config.fb_count = 1;
   }
   
