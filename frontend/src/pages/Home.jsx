@@ -152,8 +152,8 @@ function Home() {
         sdkShare: !!sdk?.actions?.share
       });
       
-      if (isFarcasterEnv && sdk && sdk.actions && sdk.actions.share) {
-        // 방법 3: Farcaster 앱에서 SDK 사용
+      if (sdk && sdk.actions && sdk.actions.share) {
+        // SDK가 있으면 SDK 사용 (앱/웹 모두)
         await sdk.actions.share({
           text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
           url: window.location.origin,
@@ -161,9 +161,9 @@ function Home() {
         
         localStorage.setItem('base-revolt-shared', Date.now().toString());
         setHasShared(true);
-        console.log('✅ Farcaster 앱 공유 성공');
+        console.log('✅ SDK 공유 성공');
       } else {
-        // 방법 2: 웹에서 OAuth 인증 후 API 포스팅
+        // SDK가 없으면 OAuth 인증 후 API 포스팅 (웹)
         await shareToFarcasterWeb();
       }
     } catch (error) {
