@@ -66,11 +66,12 @@ function Home() {
       console.log('🔄 Farcaster 공유 시작 (PhrasePool 방식)...');
       
       // 미리 작성된 텍스트 (Universal Link 포함)
-      const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\n- Base Revolt 🚗\n\nHere's the link :\nhttps://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt";
+      const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\nHere's the link :\nhttps://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt\n\n- Base Revolt 🚗";
+      const url = "https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt";
       const formattedText = text;
       
-      // Farcaster compose URL (텍스트에 URL 포함)
-      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(formattedText)}`;
+      // Farcaster compose URL (텍스트와 URL 파라미터 모두 포함)
+      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(formattedText)}&url=${encodeURIComponent(url)}`;
       
       console.log('🔗 Farcaster URL:', farcasterUrl);
       
