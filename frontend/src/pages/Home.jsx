@@ -262,22 +262,27 @@ function Home() {
         isFarcasterEnv,
         sdkExists: !!sdk,
         sdkActions: !!sdk?.actions,
-        sdkShare: !!sdk?.actions?.share
+        sdkComposeCast: !!sdk?.actions?.composeCast
       });
       
-      if (sdk && sdk.actions && sdk.actions.share) {
-        // SDK가 있으면 SDK 사용 (앱/웹 모두)
-        await sdk.actions.share({
+      if (sdk && sdk.actions && sdk.actions.composeCast) {
+        // SDK가 있으면 composeCast 사용 (앱/웹 모두)
+        const embeds = ["https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt"];
+        const result = await sdk.actions.composeCast({ 
           text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
-          url: window.location.origin,
+          embeds
         });
         
-        localStorage.setItem('base-revolt-shared', Date.now().toString());
-        setHasShared(true);
-        console.log('✅ SDK 공유 성공');
+        if (result?.cast) {
+          localStorage.setItem('base-revolt-shared', Date.now().toString());
+          setHasShared(true);
+          console.log('✅ SDK composeCast 성공');
+        } else {
+          console.log('❌ 사용자가 포스팅을 취소함');
+        }
       } else {
-        // SDK share 함수가 없으면 OAuth 인증 후 API 포스팅 (웹)
-        console.log('⚠️ SDK share 함수 없음 - OAuth 사용');
+        // SDK composeCast 함수가 없으면 웹 방식으로 폴백
+        console.log('⚠️ SDK composeCast 함수 없음 - 웹 방식 사용');
         await shareToFarcasterWeb();
       }
     } catch (error) {
@@ -324,7 +329,7 @@ function Home() {
           sdkExists: !!sdk,
           sdkQuickAuth: !!sdk?.quickAuth,
           sdkActions: !!sdk?.actions,
-          sdkShare: !!sdk?.actions?.share,
+          sdkComposeCast: !!sdk?.actions?.composeCast,
           sdkKeys: sdk ? Object.keys(sdk) : 'no sdk'
         });
         
