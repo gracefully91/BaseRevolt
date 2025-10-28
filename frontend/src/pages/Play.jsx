@@ -86,11 +86,8 @@ function Play() {
   const sendCommandRef = useRef(null);
   
   useEffect(() => {
-    // 관리자 체크
-    const adminCheck = isAdmin(address);
-    setIsAdminUser(adminCheck);
-    
-    if (adminCheck) {
+    // 관리자 체크 (이미 isAdminUser로 즉시 계산됨)
+    if (isAdminUser) {
       console.log('👑 Admin user detected - unlimited access granted');
     }
     
