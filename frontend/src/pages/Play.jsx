@@ -34,6 +34,17 @@ function Play() {
   // 관리자 상태
   const [isAdminUser, setIsAdminUser] = useState(false);
   
+  // 관리자 체크
+  useEffect(() => {
+    const ADMIN_WALLET = '0xd10d3381C1e824143D22350e9149413310F14F22';
+    if (address && address.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
+      setIsAdminUser(true);
+      console.log('👑 관리자 지갑 감지:', address);
+    } else {
+      setIsAdminUser(false);
+    }
+  }, [address]);
+  
   // 타이머 (10분 = 600초, 데모는 5분 = 300초, 관리자 데모는 실제 시계 연동)
   const [timeRemaining, setTimeRemaining] = useState(
     isDemo ? 300 : 600
@@ -50,8 +61,10 @@ function Play() {
     // 데모 모드에서는 브라우저별 고정 ID 사용 (localStorage 활용)
     if (isDemo) {
       // 관리자는 실제 지갑주소 사용
+      console.log('🔍 관리자 체크:', { isAdminUser, address, isDemo });
       if (isAdminUser) {
         walletIdRef.current = address;
+        console.log('👑 관리자 지갑주소 사용:', address);
       } else {
         let demoId = localStorage.getItem('base-revolt-demo-id');
         if (!demoId) {
@@ -59,6 +72,7 @@ function Play() {
           localStorage.setItem('base-revolt-demo-id', demoId);
         }
         walletIdRef.current = demoId;
+        console.log('👤 일반 사용자 데모 ID 사용:', demoId);
       }
     } else {
       walletIdRef.current = address || 'anonymous-' + Math.random().toString(36).substr(2, 9);

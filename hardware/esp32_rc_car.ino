@@ -72,10 +72,10 @@ WiFiUDP udp;
 unsigned long lastFrameTime = 0;
 // ==================== 실험 설정 ====================
 // 실험 A: 프레임 전송 OFF 테스트
-const bool FRAME_STREAMING_ENABLED = true; // false로 바꿔서 테스트
+const bool FRAME_STREAMING_ENABLED = true; // 실험 A 완료 - 프레임이 원인 아님
 
 // 실험 B: FPS 낮추기 테스트  
-const int EXPERIMENT_FPS = 5; // 3, 5, 8, 15 중 선택
+const int EXPERIMENT_FPS = 3; // 3으로 낮춰서 테스트
 const int frameInterval = 1000 / EXPERIMENT_FPS; // 실험용 FPS
 bool wsConnected = false;
 
@@ -190,8 +190,8 @@ void setupWebSocket() {
   Serial.printf("   Target: %s:%d%s\n", ws_host, ws_port, ws_path);
   Serial.printf("   SSL: %s\n", ws_ssl ? "Enabled" : "Disabled");
   
-  // 기존 연결 정리
-  if (webSocket.getReadyState() != WS_DISCONNECTED) {
+  // 기존 연결 정리 (ESP32 WebSocket 라이브러리 방식)
+  if (wsConnected) {
     Serial.println("   Closing existing connection...");
     webSocket.disconnect();
     delay(1000);
