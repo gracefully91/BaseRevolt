@@ -67,11 +67,9 @@ function Home() {
       
       // 미리 작성된 텍스트 (Universal Link 포함)
       const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\nHere's the link :\nhttps://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt\n\n- Base Revolt 🚗";
-      const url = "https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt";
-      const formattedText = text;
       
-      // Farcaster compose URL (텍스트와 URL 파라미터 모두 포함)
-      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(formattedText)}&url=${encodeURIComponent(url)}`;
+      // Farcaster compose URL (fc:miniapp 메타 태그로 자동 임베드 생성)
+      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
       
       console.log('🔗 Farcaster URL:', farcasterUrl);
       
@@ -85,31 +83,13 @@ function Home() {
           localStorage.setItem('base-revolt-shared', Date.now().toString());
           setHasShared(true);
         } catch (error) {
-          console.log('⚠️ SDK openUrl 실패, 새 탭으로 열기:', error);
-          window.open(farcasterUrl, '_blank');
+          console.log('⚠️ SDK openUrl 실패, 현재 창에서 열기:', error);
+          window.location.href = farcasterUrl;
         }
       } else {
-        // SDK가 없으면 새 창으로 열기
-        const farcasterWindow = window.open(farcasterUrl, 'farcaster-compose', 'width=600,height=700');
-        
-        if (farcasterWindow) {
-          console.log('✅ Farcaster 창 열림');
-          
-          // 창이 닫히면 공유 완료로 간주
-          const checkClosed = setInterval(() => {
-            if (farcasterWindow.closed) {
-              clearInterval(checkClosed);
-              console.log('✅ Farcaster 창 닫힘 - 공유 완료로 간주');
-              
-              // 공유 완료 상태 저장
-              localStorage.setItem('base-revolt-shared', Date.now().toString());
-              setHasShared(true);
-            }
-          }, 1000);
-        } else {
-          console.log('❌ Farcaster 창 열기 실패');
-          console.log('💡 팝업 차단이 활성화되어 있을 수 있습니다.');
-        }
+        // SDK가 없으면 현재 창에서 열기
+        console.log('⚠️ SDK 없음, 현재 창에서 열기');
+        window.location.href = farcasterUrl;
       }
       
     } catch (error) {
