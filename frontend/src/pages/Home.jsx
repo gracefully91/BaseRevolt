@@ -60,46 +60,91 @@ function Home() {
     }
   };
 
-  // 웹에서 Farcaster OAuth 인증 및 포스팅
+  // 웹에서 Farcaster 공유 (PhrasePool 방식)
   const shareToFarcasterWeb = async () => {
     try {
-      console.log('🔄 Farcaster OAuth 인증 시작...');
+      console.log('🔄 Farcaster 공유 시작 (PhrasePool 방식)...');
       
-      // 간단한 방법: Farcaster 웹사이트로 리다이렉트
+      // 미리 작성된 텍스트와 URL (PhrasePool 스타일)
       const text = "🚗 Check out Base Revolt - Drive RC Car remotely!";
       const url = window.location.origin;
-      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text + ' ' + url)}`;
+      const formattedText = `${text}\n\n${url}\n\n- Base Revolt 🚗`;
+      
+      // Farcaster compose URL (PhrasePool 방식)
+      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(formattedText)}`;
       
       console.log('🔗 Farcaster URL:', farcasterUrl);
       
-      // 새 창에서 Farcaster 열기
-      const farcasterWindow = window.open(farcasterUrl, 'farcaster-compose', 'width=600,height=700');
-      
-      if (farcasterWindow) {
-        console.log('✅ Farcaster 창 열림');
-        
-        // 창이 닫히면 공유 완료로 간주
-        const checkClosed = setInterval(() => {
-          if (farcasterWindow.closed) {
-            clearInterval(checkClosed);
-            console.log('✅ Farcaster 창 닫힘 - 공유 완료로 간주');
-            
-            // 공유 완료 상태 저장
-            localStorage.setItem('base-revolt-shared', Date.now().toString());
-            setHasShared(true);
-          }
-        }, 1000);
+      // SDK가 있으면 SDK 사용, 없으면 새 창으로 열기
+      if (sdk && sdk.actions && sdk.actions.openUrl) {
+        try {
+          await sdk.actions.openUrl(farcasterUrl);
+          console.log('✅ SDK로 Farcaster compose 창 열기 성공');
+          
+          // 공유 완료 상태 저장
+          localStorage.setItem('base-revolt-shared', Date.now().toString());
+          setHasShared(true);
+        } catch (error) {
+          console.log('⚠️ SDK openUrl 실패, 새 탭으로 열기:', error);
+          window.open(farcasterUrl, '_blank');
+        }
       } else {
-        console.log('❌ Farcaster 창 열기 실패');
-        console.log('💡 팝업 차단이 활성화되어 있을 수 있습니다.');
+        // SDK가 없으면 새 창으로 열기
+        const farcasterWindow = window.open(farcasterUrl, 'farcaster-compose', 'width=600,height=700');
+        
+        if (farcasterWindow) {
+          console.log('✅ Farcaster 창 열림');
+          
+          // 창이 닫히면 공유 완료로 간주
+          const checkClosed = setInterval(() => {
+            if (farcasterWindow.closed) {
+              clearInterval(checkClosed);
+              console.log('✅ Farcaster 창 닫힘 - 공유 완료로 간주');
+              
+              // 공유 완료 상태 저장
+              localStorage.setItem('base-revolt-shared', Date.now().toString());
+              setHasShared(true);
+            }
+          }, 1000);
+        } else {
+          console.log('❌ Farcaster 창 열기 실패');
+          console.log('💡 팝업 차단이 활성화되어 있을 수 있습니다.');
+        }
       }
       
     } catch (error) {
-      console.error('Farcaster OAuth failed:', error);
-      console.log('💡 Farcaster 인증에 실패했습니다.');
+      console.error('Farcaster 공유 실패:', error);
+      console.log('💡 Farcaster 공유에 실패했습니다.');
     }
   };
 
+  // Farcaster API로 포스팅
+  const postToFarcaster = async (accessToken) => {
+    try {
+      const response = await fetch('https://api.warpcast.com/v2/casts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
+          embeds: [{
+            url: window.location.origin,
+            castId: null
+          }]
+        })
+      });
+      
+      if (response.ok) {
+        console.log('✅ Farcaster 포스트 성공');
+      } else {
+        console.error('❌ Farcaster 포스트 실패:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Farcaster API error:', error);
+    }
+  };
 
   // Farcaster 공유 기능 (환경별 분기)
   const shareToFarcaster = async () => {
