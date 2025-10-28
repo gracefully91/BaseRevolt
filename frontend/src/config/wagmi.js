@@ -19,7 +19,11 @@ export const config = createConfig({
       // MetaMask 확장 프로그램 우선 사용
       preference: 'extension',
       // 모바일에서는 WalletConnect 사용
-      fallback: 'walletConnect',
+      fallback: {
+        walletConnect: {
+          projectId: import.meta.env.VITE_REOWN_PROJECT_ID,
+        },
+      },
     }),
     injected(), // 브라우저에 설치된 모든 지갑 (Rabby, Trust Wallet, Frame 등)
     safe(), // Safe 지갑
