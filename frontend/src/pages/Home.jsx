@@ -89,6 +89,7 @@ function Home() {
       });
       
       if (isFarcasterEnv && sdk && sdk.actions && sdk.actions.share) {
+        // Farcaster 앱 내에서 공유
         await sdk.actions.share({
           text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
           url: window.location.origin,
@@ -99,9 +100,37 @@ function Home() {
         setHasShared(true);
         console.log('✅ Farcaster 공유 성공');
       } else {
-        // Farcaster 환경이 아니거나 share 함수가 없는 경우
-        console.log('⚠️ Farcaster 공유 불가 - 일반 웹 환경');
-        console.log('💡 Farcaster 공유는 Farcaster 앱 내에서만 가능합니다.');
+        // 웹 브라우저에서 공유 (Web Share API 사용)
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Base Revolt - AR Gaming Platform',
+              text: '🚗 Check out Base Revolt - Drive RC Car remotely!',
+              url: window.location.origin,
+            });
+            
+            // 공유 완료 상태 저장
+            localStorage.setItem('base-revolt-shared', Date.now().toString());
+            setHasShared(true);
+            console.log('✅ 웹 공유 성공');
+          } catch (error) {
+            console.log('⚠️ 웹 공유 취소됨:', error);
+          }
+        } else {
+          // Web Share API가 없는 경우 URL 복사
+          try {
+            await navigator.clipboard.writeText(window.location.origin);
+            console.log('✅ URL 복사 완료');
+            console.log('💡 URL이 클립보드에 복사되었습니다. Farcaster에 붙여넣기하세요!');
+            
+            // 공유 완료 상태 저장
+            localStorage.setItem('base-revolt-shared', Date.now().toString());
+            setHasShared(true);
+          } catch (error) {
+            console.log('❌ URL 복사 실패:', error);
+            console.log('💡 수동으로 URL을 복사해서 공유해주세요:', window.location.origin);
+          }
+        }
       }
     } catch (error) {
       console.error('Share failed:', error);
