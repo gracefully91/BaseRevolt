@@ -50,14 +50,100 @@ function Home() {
 
   const priceInfo = getTicketPrice();
 
-  // 공유 상태 체크
-  const checkShareStatus = () => {
+  // Farcaster API로 사용자 캐스트 확인
+  const checkUserCasts = async () => {
+    try {
+      // Farcaster 사용자 정보 가져오기
+      if (!sdk || !sdk.user) {
+        console.log('⚠️ SDK 또는 사용자 정보 없음');
+        return false;
+      }
+
+      const user = sdk.user;
+      console.log('👤 사용자 정보:', user);
+
+      // Warpcast API로 사용자 캐스트 조회
+      const response = await fetch(`https://api.warpcast.com/v2/casts?fid=${user.fid}&limit=10`);
+      
+      if (!response.ok) {
+        console.log('❌ API 호출 실패:', response.status);
+        return false;
+      }
+
+      const data = await response.json();
+      console.log('📝 사용자 캐스트:', data);
+
+      if (!data.result || !data.result.casts) {
+        console.log('❌ 캐스트 데이터 없음');
+        return false;
+      }
+
+      // 우리 앱 관련 캐스트 찾기
+      const ourAppCasts = data.result.casts.filter(cast => {
+        const text = cast.text.toLowerCase();
+        const hasOurApp = text.includes('base revolt') || 
+                         text.includes('base-revolt') ||
+                         text.includes('farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt');
+        
+        if (hasOurApp) {
+          console.log('🎯 우리 앱 관련 캐스트 발견:', cast);
+          return true;
+        }
+        return false;
+      });
+
+      if (ourAppCasts.length === 0) {
+        console.log('❌ 우리 앱 관련 캐스트 없음');
+        return false;
+      }
+
+      // 가장 최근 캐스트의 시간 확인
+      const latestCast = ourAppCasts[0];
+      const castTime = new Date(latestCast.timestamp);
+      const now = new Date();
+      const hoursDiff = (now - castTime) / (1000 * 60 * 60);
+
+      console.log('⏰ 캐스트 시간:', castTime);
+      console.log('⏰ 현재 시간:', now);
+      console.log('⏰ 시간 차이:', hoursDiff, '시간');
+
+      return hoursDiff <= 24;
+    } catch (error) {
+      console.error('❌ 사용자 캐스트 확인 실패:', error);
+      return false;
+    }
+  };
+
+  // 공유 상태 체크 (Farcaster API 사용)
+  const checkShareStatus = async () => {
+    // 먼저 localStorage 확인 (빠른 체크)
     const sharedTime = localStorage.getItem('base-revolt-shared');
     if (sharedTime) {
       const dayInMs = 24 * 60 * 60 * 1000;
       const isWithin24Hours = Date.now() - parseInt(sharedTime) < dayInMs;
-      setHasShared(isWithin24Hours);
+      
+      if (isWithin24Hours) {
+        // localStorage가 유효하면 API로 재확인
+        const apiResult = await checkUserCasts();
+        if (!apiResult) {
+          // API에서 확인되지 않으면 localStorage 삭제
+          localStorage.removeItem('base-revolt-shared');
+          setHasShared(false);
+          return;
+        }
+        setHasShared(true);
+        return;
+      } else {
+        // 24시간 초과
+        localStorage.removeItem('base-revolt-shared');
+        setHasShared(false);
+        return;
+      }
     }
+    
+    // localStorage가 없으면 API로 확인
+    const apiResult = await checkUserCasts();
+    setHasShared(apiResult);
   };
 
   // 웹에서 Farcaster 공유 (PhrasePool 방식)
@@ -260,7 +346,7 @@ function Home() {
     };
 
     authenticateUser();
-    checkShareStatus();
+    checkShareStatus(); // 이제 async 함수이므로 await 없이 호출
   }, []);
 
   // 디버깅: 인증 상태 확인 (필요시만)
