@@ -63,16 +63,42 @@ function Home() {
   // Farcaster 공유 기능
   const shareToFarcaster = async () => {
     try {
-      await sdk.actions.share({
-        text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
-        url: window.location.origin,
+      // Farcaster 환경인지 다시 체크
+      const isFarcasterEnv = typeof window !== 'undefined' && (
+        window.farcaster || 
+        window.location.href.includes('farcaster.xyz') ||
+        window.location.href.includes('warpcast.com') ||
+        navigator.userAgent.includes('Farcaster')
+      );
+      
+      console.log('🔍 공유 함수 Farcaster 환경 체크:', {
+        windowFarcaster: !!window.farcaster,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        isFarcasterEnv,
+        sdkExists: !!sdk,
+        sdkActions: !!sdk?.actions,
+        sdkShare: !!sdk?.actions?.share
       });
       
-      // 공유 완료 상태 저장
-      localStorage.setItem('base-revolt-shared', Date.now().toString());
-      setHasShared(true);
+      if (isFarcasterEnv && sdk && sdk.actions && sdk.actions.share) {
+        await sdk.actions.share({
+          text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
+          url: window.location.origin,
+        });
+        
+        // 공유 완료 상태 저장
+        localStorage.setItem('base-revolt-shared', Date.now().toString());
+        setHasShared(true);
+        console.log('✅ Farcaster 공유 성공');
+      } else {
+        // Farcaster 환경이 아니거나 share 함수가 없는 경우
+        console.log('⚠️ Farcaster 공유 불가 - 일반 웹 환경');
+        alert('Farcaster 공유는 Farcaster 앱 내에서만 가능합니다.');
+      }
     } catch (error) {
       console.error('Share failed:', error);
+      alert('공유에 실패했습니다. Farcaster 앱 내에서 다시 시도해주세요.');
     }
   };
 
@@ -93,8 +119,25 @@ function Home() {
           return;
         }
         
-        // Farcaster 환경인지 확인
-        if (typeof window !== 'undefined' && window.farcaster) {
+        // Farcaster 환경인지 확인 (여러 방법으로 체크)
+        const isFarcasterEnv = typeof window !== 'undefined' && (
+          window.farcaster || 
+          window.location.href.includes('farcaster.xyz') ||
+          window.location.href.includes('warpcast.com') ||
+          navigator.userAgent.includes('Farcaster')
+        );
+        
+        console.log('🔍 Farcaster 환경 체크:', {
+          windowFarcaster: !!window.farcaster,
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          isFarcasterEnv,
+          sdkExists: !!sdk,
+          sdkActions: !!sdk?.actions,
+          sdkShare: !!sdk?.actions?.share
+        });
+        
+        if (isFarcasterEnv) {
           // Quick Auth 토큰 가져오기
           const { token } = await sdk.quickAuth.getToken();
           console.log('✅ Quick Auth 토큰 획득:', token ? '성공' : '실패');
