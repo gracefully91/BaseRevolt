@@ -76,6 +76,70 @@
         margin: 0 auto !important;
       }
       
+      /* OnchainKit 모달 색상 커스터마이징 */
+      [data-rk] [role="dialog"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* 모달 헤더 스타일 */
+      [data-rk] [role="dialog"] h1 {
+        color: white !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* 닫기 버튼 스타일 */
+      [data-rk] [role="dialog"] button[aria-label="Close"] {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+      }
+
+      [data-rk] [role="dialog"] button[aria-label="Close"]:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+      }
+
+      /* 지갑 버튼 스타일 */
+      [data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"] {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        color: #333 !important;
+        backdrop-filter: blur(10px) !important;
+        transition: all 0.3s ease !important;
+      }
+
+      [data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"]:hover {
+        background: white !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+      }
+
+      /* 지갑 아이콘 스타일 */
+      [data-rk] [role="dialog"] img {
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      }
+
+      /* 구분선 제거 */
+      [data-rk] [role="dialog"] hr,
+      [data-rk] [role="dialog"] .ju367vau {
+        display: none !important;
+      }
+
+      /* "Learn More" 버튼 스타일 */
+      [data-rk] [role="dialog"] button:has-text("Learn More"),
+      [data-rk] [role="dialog"] button:has-text("더 알아보기") {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+      }
+
+      [data-rk] [role="dialog"] button:has-text("Learn More"):hover,
+      [data-rk] [role="dialog"] button:has-text("더 알아보기"):hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+      }
+      
       /* 지갑 버튼 빛나는 효과 - 강제 적용 */
       @keyframes wallet-glow {
         0%, 100% {
