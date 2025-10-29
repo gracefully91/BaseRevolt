@@ -113,7 +113,7 @@
   min-width: 130px !important;
   justify-content: center !important;
   height: 34px !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   letter-spacing: 0.3px !important;
   position: relative !important;
   overflow: hidden !important;

@@ -110,9 +110,9 @@ export function ConnectorProvider({ children }) {
             learnMoreUrl: 'https://base-revolt.vercel.app',
           }}
           initialChain={base}
-          showRecentTransactions={true}
+          showRecentTransactions={false}
           modalSize="compact"
-          coolMode={true}
+          coolMode={false}
         >
           {children}
         </RainbowKitProvider>

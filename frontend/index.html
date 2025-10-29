@@ -44,9 +44,7 @@
         width: 100%;
         max-width: 100vw;
         overflow-x: hidden;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-          sans-serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -306,6 +304,16 @@
       div[data-ock-wallet] button:hover,
       .wallet-connect-container button:hover {
         animation: none !important;
+      }
+
+      /* Farcaster 앱에서 폰트 강제 적용 */
+      * {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      }
+      
+      /* 특정 요소들에 추가 폰트 적용 */
+      h1, h2, h3, h4, h5, h6, p, span, div, button, a {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
       }
     </style>
   </head>
