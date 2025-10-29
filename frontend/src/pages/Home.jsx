@@ -246,6 +246,11 @@ function Home() {
             embeds: [appUrl]
           });
           console.log('✅ SDK composeCast 성공');
+          
+          // 공유 성공 후 상태 업데이트
+          setHasShared(true);
+          localStorage.setItem('farcasterSharedToday', 'true');
+          console.log('🎉 공유 완료! Demo Play 버튼으로 변경됨');
           return;
         } catch (sdkError) {
           console.log('❌ SDK composeCast 실패, 웹 방식으로 폴백:', sdkError);
@@ -256,6 +261,11 @@ function Home() {
       // 웹 방식 사용 (SDK 없거나 실패한 경우)
       console.log('🌐 웹 방식으로 공유');
       await shareToFarcasterWeb();
+      
+      // 웹 방식 공유 후에도 상태 업데이트 (사용자가 앱으로 돌아올 때)
+      setHasShared(true);
+      localStorage.setItem('farcasterSharedToday', 'true');
+      console.log('🎉 웹 공유 완료! Demo Play 버튼으로 변경됨');
     } catch (error) {
       console.error('Share failed:', error);
       console.log('💡 공유에 실패했습니다.');
@@ -337,6 +347,22 @@ function Home() {
 
     authenticateUser();
     checkShareStatus(); // 이제 async 함수이므로 await 없이 호출
+  }, []);
+
+  // 공유 상태 확인 (페이지 로드 시)
+  useEffect(() => {
+    const checkSharedStatus = () => {
+      const sharedToday = localStorage.getItem('farcasterSharedToday');
+      if (sharedToday === 'true') {
+        setHasShared(true);
+        console.log('✅ 오늘 이미 공유함 - Demo Play 버튼 표시');
+      } else {
+        setHasShared(false);
+        console.log('📤 아직 공유 안함 - Share 버튼 표시');
+      }
+    };
+
+    checkSharedStatus();
   }, []);
 
   // 디버깅: 인증 상태 확인 (필요시만)
