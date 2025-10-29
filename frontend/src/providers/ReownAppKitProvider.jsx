@@ -25,7 +25,7 @@ const appKit = createAppKit({
   themeVariables: {
     '--apkt-color-mix': '#0052FF', // Base 블루
     '--apkt-color-mix-strength': 40,
-    '--apkt-z-index': 999999,
+    '--apkt-z-index': 99,
   },
   featuredWalletIds: [
     'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Base (formerly Coinbase Wallet) - 맨 위로

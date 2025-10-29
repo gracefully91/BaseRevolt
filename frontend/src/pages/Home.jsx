@@ -164,20 +164,51 @@ function Home() {
     try {
       console.log('🔄 Farcaster 공유 시작 (PhrasePool 방식)...');
       
-      // 미리 작성된 텍스트 (실제 도메인 URL 사용)
-      const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\n- Base Revolt 🚗";
+      // 미리 작성된 텍스트 (Universal Link 포함)
+      const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\nHere's the link :\nhttps://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt\n\n- Base Revolt 🚗";
       
-      // 실제 앱 도메인 URL (임베드용)
-      const appUrl = window.location.origin;
-      
-      // Farcaster compose URL (embeds 파라미터 포함)
-      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(appUrl)}`;
+      // Farcaster compose URL (fc:miniapp 메타 태그로 자동 임베드 생성)
+      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
       
       console.log('🔗 Farcaster URL:', farcasterUrl);
       
-      // 웹 폴백 방식: 항상 window.location.href로 리다이렉트
-      console.log('🌐 웹 폴백 방식: warpcast.com으로 리다이렉트');
-      window.location.href = farcasterUrl;
+      // SDK가 있으면 composeCast 사용 (올바른 방법)
+      if (sdk && sdk.actions && sdk.actions.composeCast) {
+        try {
+          // composeCast는 compose 창을 열어주고 embeds도 지원됨
+          const embeds = ["https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt"];
+          const result = await sdk.actions.composeCast({ 
+            text,
+            embeds
+          });
+          console.log('✅ SDK composeCast 결과:', result);
+          
+          // 실제 포스팅 여부 확인
+          if (result?.cast) {
+            console.log('🎉 실제로 포스팅됨!');
+            console.log('📝 Cast Hash:', result.cast.hash);
+            console.log('📺 Channel:', result.cast.channelKey);
+            
+            // 공유 완료 상태 저장
+            localStorage.setItem('base-revolt-shared', Date.now().toString());
+            setHasShared(true);
+            
+            // 포스팅 성공 알림
+            alert('🎉 Farcaster에 성공적으로 공유되었습니다!');
+          } else {
+            console.log('❌ 사용자가 포스팅을 취소함');
+            alert('포스팅이 취소되었습니다.');
+          }
+        } catch (error) {
+          console.log('⚠️ SDK composeCast 실패, 웹 방식으로 폴백:', error);
+          // 폴백: 웹 방식
+          window.location.href = farcasterUrl;
+        }
+      } else {
+        // SDK가 없으면 웹 방식으로 폴백
+        console.log('⚠️ SDK composeCast 없음, 웹 방식으로 폴백');
+        window.location.href = farcasterUrl;
+      }
       
     } catch (error) {
       console.error('Farcaster 공유 실패:', error);
@@ -234,38 +265,26 @@ function Home() {
         sdkComposeCast: !!sdk?.actions?.composeCast
       });
       
-      // Reown allowlist 수정 후 SDK 사용 시도
-      if (isFarcasterEnv && sdk?.actions?.composeCast) {
-        console.log('🎯 Farcaster 환경 감지 - SDK composeCast 사용');
-        try {
-          const appUrl = window.location.origin;
-          const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\n- Base Revolt 🚗";
-          
-          await sdk.actions.composeCast({
-            text: text,
-            embeds: [appUrl]
-          });
-          console.log('✅ SDK composeCast 성공');
-          
-          // 공유 성공 후 상태 업데이트
+      if (sdk && sdk.actions && sdk.actions.composeCast) {
+        // SDK가 있으면 composeCast 사용 (앱/웹 모두)
+        const embeds = ["https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt"];
+        const result = await sdk.actions.composeCast({ 
+          text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
+          embeds
+        });
+        
+        if (result?.cast) {
+          localStorage.setItem('base-revolt-shared', Date.now().toString());
           setHasShared(true);
-          localStorage.setItem('farcasterSharedToday', 'true');
-          console.log('🎉 공유 완료! Demo Play 버튼으로 변경됨');
-          return;
-        } catch (sdkError) {
-          console.log('❌ SDK composeCast 실패, 웹 방식으로 폴백:', sdkError);
-          // SDK 실패 시 웹 방식으로 폴백
+          console.log('✅ SDK composeCast 성공');
+        } else {
+          console.log('❌ 사용자가 포스팅을 취소함');
         }
+      } else {
+        // SDK composeCast 함수가 없으면 웹 방식으로 폴백
+        console.log('⚠️ SDK composeCast 함수 없음 - 웹 방식 사용');
+        await shareToFarcasterWeb();
       }
-      
-      // 웹 방식 사용 (SDK 없거나 실패한 경우)
-      console.log('🌐 웹 방식으로 공유');
-      await shareToFarcasterWeb();
-      
-      // 웹 방식 공유 후에도 상태 업데이트 (사용자가 앱으로 돌아올 때)
-      setHasShared(true);
-      localStorage.setItem('farcasterSharedToday', 'true');
-      console.log('🎉 웹 공유 완료! Demo Play 버튼으로 변경됨');
     } catch (error) {
       console.error('Share failed:', error);
       console.log('💡 공유에 실패했습니다.');
@@ -347,27 +366,6 @@ function Home() {
 
     authenticateUser();
     checkShareStatus(); // 이제 async 함수이므로 await 없이 호출
-  }, []);
-
-  // 공유 상태 확인 (페이지 로드 시)
-  useEffect(() => {
-    const checkSharedStatus = () => {
-      const sharedToday = localStorage.getItem('farcasterSharedToday');
-      console.log('🔍 공유 상태 확인:', { sharedToday, timestamp: new Date().toISOString() });
-      
-      if (sharedToday === 'true') {
-        setHasShared(true);
-        console.log('✅ 오늘 이미 공유함 - Demo Play 버튼 표시');
-      } else {
-        setHasShared(false);
-        console.log('📤 아직 공유 안함 - Share 버튼 표시');
-      }
-    };
-
-    checkSharedStatus();
-    
-    // 버전 정보 출력
-    console.log('🚀 Base Revolt 앱 로드됨 - 버전:', new Date().toISOString());
   }, []);
 
   // 디버깅: 인증 상태 확인 (필요시만)
@@ -508,15 +506,30 @@ function Home() {
   };
 
   const handleVehicleSelect = (vehicle) => {
+    console.log('🚗 Vehicle selected:', vehicle);
+    console.log('🔍 Vehicle status:', { 
+      status: vehicle.status, 
+      hasQueue: vehicle.waitingQueue?.length > 0,
+      queueLength: vehicle.waitingQueue?.length 
+    });
+    
     setSelectedVehicle(vehicle);
     vehicleManager.selectVehicle(vehicle);
     
+    // 차량 선택 모달 먼저 닫기
+    setShowVehicleSelection(false);
+    
     // 차량이 사용 중이거나 대기열이 있는 경우 대기열 모달 표시
     if (vehicle.status === 'busy' || (vehicle.waitingQueue && vehicle.waitingQueue.length > 0)) {
+      console.log('⚠️ Vehicle is busy or has queue, showing waiting queue modal');
       setShowWaitingQueue(true);
     } else {
       // 바로 사용 가능한 경우 결제 모달 열기
-      setShowPaymentModal(true);
+      console.log('✅ Vehicle is available, opening payment modal');
+      setTimeout(() => {
+        setShowPaymentModal(true);
+        console.log('💰 PaymentModal opened');
+      }, 100); // 차량 선택 모달이 닫히는 시간을 기다림
     }
   };
 

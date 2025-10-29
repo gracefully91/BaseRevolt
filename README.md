@@ -7,18 +7,29 @@ Base Revolt is a full-stack Web3 application that enables real-time remote contr
 [![Live Demo](https://img.shields.io/badge/Live-Demo-blue)](https://base-revolt.vercel.app)
 [![Base Network](https://img.shields.io/badge/Network-Base-blue)](https://base.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-green)](https://github.com/gracefully91/BaseRevolt)
+
+---
+
+## 📹 Demo Video
+
+**🎬 Watch the complete demo:** [YouTube Video](https://youtube.com/watch?v=YOUR_VIDEO_ID) *(Add your video link here)*
+
+Video includes:
+- Project introduction and problem statement
+- Architecture overview
+- Live demonstration of full user flow
+- Technical highlights and innovation showcase
 
 ---
 
 ## ✅ Proof of Deployment (Base Testnet)
 
+**Quick Reference:**
 - **Network:** Base Sepolia (testnet)
 - **Tx Hash:** [`0x8cdf57d3...b62aa8`](https://sepolia.basescan.org/tx/0x8cdf57d3296911edbc9631871f961cc5b2d23213d1db2033af502fcd98b62aa8)
-- **Block:** 32801960 · **Status:** ✅ Success
-- **Timestamp:** 2025-10-25 06:03:28 UTC
-- **From:** `0xd10d3381C1e824143D22350e9149413310F14F22`
-- **To:** `0xF45222d623B0081C658b284e2fCb85d5E7B1d3b3`
-- **Amount:** 5.0 ETH (testnet)
+- **Status:** ✅ Success · **Block:** 32801960
+- **Full Details:** See [Hackathon Submission](#-hackathon-submission) section below
 
 ---
 
@@ -262,16 +273,38 @@ Click **"Try Demo"** to explore UI without payment (hardware connection required
 - Dynamic ETH/USD conversion with real-time pricing
 
 #### Wallet Integration
-- RainbowKit for seamless wallet connections
-- Support for MetaMask, Coinbase Wallet, WalletConnect
+- **Reown AppKit (WalletConnect)** - Primary wallet connection infrastructure
+  - Uses `@reown/appkit` and `@reown/appkit-adapter-wagmi` for wallet connection
+  - Configured with WagmiProvider and QueryClient for React Query integration
+  - Supports Base Mainnet and Base Sepolia testnet
+  - Custom ConnectWalletModal component for Farcaster mobile deep linking
+  - Features WalletConnect deep link interception for mobile wallets (Base, MetaMask, Rainbow, Trust, Phantom)
+- **OnchainKit Integration** - Wallet UI with avatar and username display
+  - Uses `@coinbase/onchainkit` for wallet UI components
+  - **Basenames Support**: Name component automatically displays Base Account names (via ENS)
+  - **Base Account Integration**: Avatar component shows ENS/PFP avatars for Base Accounts
+  - Avatar component displays ENS/PFP avatars automatically
+  - Name component shows ENS names or wallet addresses
+  - Identity component combines Avatar, Name, Address, and ETH balance
+  - WalletDropdown provides account management UI
+  - **Easy Onboarding**: Makes it easy for anyone to get onchain with Base Account display
+- Support for MetaMask, Coinbase Wallet, WalletConnect, and all EIP-6963 compatible wallets
 - Smart wallet compatibility
 - Network switching prompts
 
-#### Farcaster Social Login
-- Sign in with Farcaster account
-- Social + Onchain identity integration
-- QR code authentication via Warpcast
-- 7-day session persistence
+#### Farcaster Social Login & Sharing
+- **Farcaster Authentication**
+  - Uses `@farcaster/miniapp-sdk` for Quick Auth integration
+  - `sdk.quickAuth.getToken()` provides 7-day persistent authentication tokens
+  - Token stored in localStorage with expiry tracking
+  - Falls back gracefully for non-Farcaster environments
+- **Farcaster Sharing (Embed Messages)**
+  - Uses `sdk.actions.composeCast()` to create embed messages
+  - Embeds Mini App Universal Link: `https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt`
+  - Automatically generates rich embed cards with image and action button
+  - Tracks share status via localStorage and Warpcast API verification
+  - 24-hour demo access after sharing
+  - Falls back to web URL method if SDK unavailable
 
 ### Session Management & Queue System
 
@@ -348,7 +381,7 @@ leaveQueue → queueLeft
 
 ## 🗺️ Roadmap
 
-### ✅ MVP (Current - Q4 2024)
+### ✅ MVP (Current - Q4 2025)
 - [x] ESP32-CAM video streaming (15 FPS)
 - [x] Remote RC car control (keyboard + touch)
 - [x] Portrait/landscape mode support
@@ -359,7 +392,7 @@ leaveQueue → queueLeft
 - [x] Farcaster Mini App integration
 - [x] Local demo mode
 
-### ✅ Phase 2 (Completed - Q1 2025)
+### ✅ Phase 2 (Completed - Q1 2026)
 - [x] Session management system
 - [x] Queue system for busy vehicles
 - [x] Paid user priority (preemption)
@@ -370,17 +403,51 @@ leaveQueue → queueLeft
 - [ ] Vehicle selection modal with status indicators
 - [ ] Enhanced video quality (30 FPS, 720p)
 
-### 🔮 Phase 3 (Q2 2025)
+### 🔮 Phase 3 (Q2 2026)
 - [ ] Multiplayer racing mode
 - [ ] NFT ownership for RC cars
 - [ ] Leaderboard & achievements
 - [ ] Custom tracks & obstacles
 
-### 🌟 Phase 4 (Q3 2025+)
+### 🌟 Phase 4 (Q3 2026+)
 - [ ] Builder mode (create custom tracks)
 - [ ] C2E (Create-to-Earn) rewards
 - [ ] Global arena competitions
 - [ ] Mobile AR integration (ARKit/ARCore)
+- [ ] **Onchain Spectator System** - Live viewing with verifiable onchain engagement
+
+#### 📺 Onchain Spectator System (Planned)
+
+Base Revolt is evolving beyond player interaction to create a fully onchain spectator economy. In the next phase, viewers will not only watch races in real time but also participate, support, and earn through verifiable onchain actions — all without introducing gambling elements.
+
+**Key Features:**
+
+🎫 **Spectator NFT Tickets**
+- Each live match generates ERC-721 "Spectator Ticket" NFTs
+- Grants access to exclusive camera views, replays, and in-race chat
+- Each mint is an onchain transaction, ensuring measurable engagement
+
+💙 **Support Staking**
+- Spectators can stake ETH or tokens to show support for players/teams
+- Post-match rewards include "Supporter Badge" NFTs and sponsor pool distributions
+- Creates additional onchain activity (stake → reward claim) without gambling risk
+
+🎁 **Sponsored Raffle Rewards**
+- Ticket holders automatically enter raffles sponsored by community partners
+- Winners receive collectible NFTs, physical merch, or in-game credits
+- All draws and claims are recorded on-chain for transparency
+
+**Transaction Flow:**
+Each live race generates multiple verifiable onchain events:
+- `mintTicket()` → spectator NFT minting
+- `stakeSupport()` → player support action
+- `claimReward()` → post-match distribution
+- `transferNFT()` → collectible trading
+
+This design allows **2-5 verifiable transactions per participant**, scaling network activity while maintaining complete transparency and avoiding regulatory risk.
+
+**Vision:**
+By combining real hardware, AR-enhanced competition, and onchain spectator interactions, Base Revolt becomes not just a racing game but a living Base-powered arena where every cheer, stake, and reward is transparently recorded on-chain.
 
 ---
 
@@ -521,6 +588,8 @@ Contributions are welcome! Please follow these steps:
 - Solo developer project
 - Built for Base Onchain Builder Hackathon
 - Farcaster FID: 1107308
+- GitHub: https://github.com/gracefully91/BaseRevolt
+- Live Demo: https://base-revolt.vercel.app
 
 ---
 
@@ -529,13 +598,75 @@ Contributions are welcome! Please follow these steps:
 ### Category
 **Base Track** - Onchain Builder Hackathon
 
-### Judging Criteria
-- ✅ **Proof of Deployment**: Verified testnet transaction
-- ✅ **Innovation**: Real-world hardware + Web3 integration
-- ✅ **Technical Execution**: Full-stack implementation
-- ✅ **Social + Onchain**: Farcaster login integration
-- ✅ **Multi-network**: Mainnet & Testnet support
-- ✅ **User Experience**: Cross-platform responsive design
+### 📹 Demo Video
+**Video Link:** [YouTube/Demo Video](https://youtube.com/watch?v=YOUR_VIDEO_ID) *(Coming soon)*
+
+**Video Contents:**
+- 🎬 **Intro** (0:00-0:15) - Project overview and team introduction
+- 🎯 **Problem Statement** (0:15-0:30) - Bridging Web3 and physical world
+- 💡 **Solution** (0:30-1:00) - Real-time RC car control via Base blockchain
+- 🏗️ **Architecture Overview** (1:00-1:30) - Full-stack system design
+- 🎮 **Live Demo** (1:30-2:30) - Complete user flow demonstration
+
+### 📹 Demo Video
+**Video Link:** [YouTube/Demo Video](https://youtube.com/watch?v=YOUR_VIDEO_ID) *(Coming soon)*
+
+**Video Contents:**
+- 🎬 **Intro** (0:00-0:15) - Project overview and team introduction
+- 🎯 **Problem Statement** (0:15-0:30) - Bridging Web3 and physical world
+- 💡 **Solution** (0:30-1:00) - Real-time RC car control via Base blockchain
+- 🏗️ **Architecture Overview** (1:00-1:30) - Full-stack system design
+- 🎮 **Live Demo** (1:30-2:30) - Complete user flow demonstration
+
+### ✅ Submission Requirements
+- ✅ **One project per team**: Solo developer project
+- ✅ **Publicly accessible URL**: https://base-revolt.vercel.app
+- ✅ **Open-source GitHub repository**: https://github.com/gracefully91/BaseRevolt
+- ✅ **Demo video (1+ minutes)**: See video link above
+- ✅ **Basenames/Base Account integration**: Using OnchainKit with Name/Avatar components for Base Account display
+- ✅ **Proof of Deployment**: Base Sepolia testnet transaction verified
+- ✅ **1+ transactions on Base testnet**: Transaction hash provided below
+
+### 📊 Proof of Deployment (Base Testnet)
+
+**Transaction Details:**
+- **Network:** Base Sepolia (testnet)
+- **Tx Hash:** [`0x8cdf57d3...b62aa8`](https://sepolia.basescan.org/tx/0x8cdf57d3296911edbc9631871f961cc5b2d23213d1db2033af502fcd98b62aa8)
+- **Block:** 32801960 · **Status:** ✅ Success
+- **Timestamp:** 2025-10-25 06:03:28 UTC
+- **Contract Address:** `0xF45222d623B0081C658b284e2fCb85d5E7B1d3b3`
+- **Payment Amount:** 5.0 ETH (testnet)
+
+### 🎯 Project Highlights
+
+**Built on Base:**
+- Smart contract deployed on Base Sepolia testnet
+- Payment processing via Base blockchain
+- Multi-network support (Base Mainnet + Base Sepolia)
+- All transactions verified on BaseScan
+
+**Technical Implementation:**
+- Real-time RC car control via WebSocket
+- Live video streaming (15 FPS ESP32-CAM feed)
+- Blockchain payments with smart contract integration
+- Cross-platform support (Desktop, mobile, Farcaster Mini App)
+
+**Unique Value Proposition:**
+Base Revolt uniquely bridges Web3 and physical hardware by enabling users to control real RC cars through blockchain payments. This first-of-its-kind integration combines ESP32-CAM hardware, Base blockchain, and WebSocket relay to create a seamless onchain-to-physical experience.
+
+**Target Users:**
+- Web3 gaming enthusiasts seeking unique onchain experiences
+- IoT/DIY hobbyists interested in practical blockchain applications
+- Blockchain developers exploring Web3 + hardware integration
+
+**User Experience:**
+Designed for accessibility - anyone can connect their wallet and start controlling RC cars. OnchainKit integration displays ENS names/avatars automatically, making it easy for users to get onchain. Demo mode with social sharing lowers the barrier to entry, while the Farcaster Mini App provides native mobile experience.
+
+**Innovation Impact:**
+- Novel approach combining Web3 with physical hardware
+- Full-stack technical complexity (React + Node.js + ESP32 + Smart Contracts)
+- Seamless user onboarding with wallet connection
+- Social integration via Farcaster Mini App with viral sharing mechanics
 
 ---
 
@@ -620,8 +751,9 @@ Base Revolt는 온체인 소유권을 현실 세계의 움직임으로 변환합
 - **React 19** - UI 프레임워크
 - **Vite** - 빌드 도구 & 개발 서버
 - **Wagmi** - Ethereum용 React 훅
-- **OnchainKit** - Coinbase 지갑 UI 라이브러리
-- **@farcaster/auth-kit** - Farcaster 소셜 로그인
+- **Reown AppKit** - WalletConnect 기반 지갑 연결 인프라
+- **OnchainKit** - Coinbase 지갑 UI 라이브러리 (아바타/사용자명 표시)
+- **@farcaster/miniapp-sdk** - Farcaster Mini App SDK (공유 및 인증)
 - **Viem** - Ethereum 상호작용
 - **React Router** - 클라이언트 사이드 라우팅
 - **Vercel** - 프론트엔드 호스팅
@@ -830,7 +962,7 @@ Vercel 배포 URL 방문 (예: `https://base-revolt.vercel.app`)
 소셜 로그인 통합을 위해 **"Sign in with Farcaster"** 클릭
 
 ### 3. 지갑 연결
-**"Connect Wallet"** 클릭 → OnchainKit로 연결
+**"Connect Wallet"** 클릭 → Reown AppKit 모달에서 지갑 선택 → OnchainKit UI에 아바타/사용자명 자동 표시
 
 ### 4. 네트워크 선택
 - **Base Mainnet**: 실제 결제 ($4.99)
@@ -852,7 +984,7 @@ Vercel 배포 URL 방문 (예: `https://base-revolt.vercel.app`)
 
 ## 🗺️ 로드맵
 
-### ✅ MVP (현재 - 2024 Q4)
+### ✅ MVP (현재 - 2025 Q4)
 - [x] ESP32-CAM 비디오 스트리밍 (15 FPS)
 - [x] 원격 RC 카 제어 (키보드 + 터치)
 - [x] 세로/가로 모드 지원
@@ -863,7 +995,7 @@ Vercel 배포 URL 방문 (예: `https://base-revolt.vercel.app`)
 - [x] Farcaster Mini App 통합
 - [x] 로컬 데모 모드
 
-### ✅ Phase 2 (완료 - 2025 Q1)
+### ✅ Phase 2 (완료 - 2026 Q1)
 - [x] 세션 관리 시스템
 - [x] 사용 중인 차량을 위한 대기열 시스템
 - [x] 유료 사용자 우선순위 (선점)
@@ -874,17 +1006,51 @@ Vercel 배포 URL 방문 (예: `https://base-revolt.vercel.app`)
 - [ ] 상태 표시기가 있는 차량 선택 모달
 - [ ] 향상된 비디오 품질 (30 FPS, 720p)
 
-### 🔮 Phase 3 (2025 Q2)
+### 🔮 Phase 3 (2026 Q2)
 - [ ] 멀티플레이어 레이싱 모드
 - [ ] RC 카용 NFT 소유권
 - [ ] 리더보드 & 업적
 - [ ] 커스텀 트랙 & 장애물
 
-### 🌟 Phase 4 (2025 Q3+)
+### 🌟 Phase 4 (2026 Q3+)
 - [ ] 빌더 모드 (커스텀 트랙 생성)
 - [ ] C2E (Create-to-Earn) 보상
 - [ ] 글로벌 아레나 대회
 - [ ] 모바일 AR 통합 (ARKit/ARCore)
+- [ ] **온체인 관전자 시스템** - 실시간 시청 및 검증 가능한 온체인 참여
+
+#### 📺 온체인 관전자 시스템 (계획 중)
+
+Base Revolt는 플레이어 상호작용을 넘어 완전한 온체인 관전자 경제를 구축하기 위해 발전하고 있습니다. 다음 단계에서는 관전자들이 실시간으로 레이스를 시청할 뿐만 아니라 검증 가능한 온체인 액션을 통해 참여하고, 지원하며, 수익을 얻을 수 있습니다 — 도박 요소 없이.
+
+**주요 기능:**
+
+🎫 **관전자 NFT 티켓**
+- 각 라이브 매치마다 ERC-721 "관전자 티켓" NFT 생성
+- 독점 카메라 뷰, 리플레이, 레이스 내 채팅 접근 권한 부여
+- 각 민팅은 온체인 트랜잭션으로 측정 가능한 참여 보장
+
+💙 **지원 스테이킹**
+- 관전자들이 플레이어/팀을 지원하기 위해 ETH 또는 토큰 스테이킹 가능
+- 경기 후 "서포터 배지" NFT 및 스폰서 풀 분배 보상
+- 도박 위험 없이 추가 온체인 활동 생성 (스테이킹 → 보상 청구)
+
+🎁 **후원 추첨 보상**
+- 티켓 보유자는 커뮤니티 파트너의 후원 추첨에 자동 참여
+- 당첨자는 수집용 NFT, 물리적 상품 또는 게임 내 크레딧 수령
+- 모든 추첨 및 청구는 블록체인에 기록되어 투명성 보장
+
+**트랜잭션 흐름:**
+각 라이브 레이스는 여러 검증 가능한 온체인 이벤트를 생성합니다:
+- `mintTicket()` → 관전자 NFT 민팅
+- `stakeSupport()` → 플레이어 지원 액션
+- `claimReward()` → 경기 후 분배
+- `transferNFT()` → 수집품 거래
+
+이 설계는 **참가자당 2-5개의 검증 가능한 트랜잭션**을 허용하여 규제 위험 없이 네트워크 활동을 확장하고 완전한 투명성을 유지합니다.
+
+**비전:**
+실제 하드웨어, AR 강화 경쟁, 온체인 관전자 상호작용을 결합함으로써 Base Revolt는 단순한 레이싱 게임을 넘어 모든 응원, 스테이킹, 보상이 투명하게 온체인에 기록되는 살아있는 Base 구동 아레나가 됩니다.
 
 ---
 

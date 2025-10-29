@@ -9,6 +9,9 @@
   justify-content: center;
   padding: 20px;
   animation: fadeIn 0.2s ease;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 @keyframes fadeIn {
@@ -28,6 +31,9 @@
   padding: 24px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10001;
 }
 
 @keyframes slideUp {

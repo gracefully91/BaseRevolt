@@ -30,7 +30,12 @@ export default function VehicleSelectionModal({
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  if (!open) return null;
+  if (!open) {
+    console.log('VehicleSelectionModal closed');
+    return null;
+  }
+
+  console.log('VehicleSelectionModal rendering', { vehiclesCount: vehicles?.length });
 
   return (
     <div className="vehicle-selection-overlay">

@@ -10,6 +10,9 @@
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .vehicle-selection-modal {
@@ -24,6 +27,7 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.15);
   overflow: hidden;
+  pointer-events: auto !important;
 }
 
 .vehicle-selection-header {
@@ -67,6 +71,7 @@
   position: relative;
   min-height: auto;
   margin-bottom: 12px;
+  pointer-events: auto !important;
 }
 
 /* 강제로 텍스트 색상 적용 */
@@ -362,6 +367,9 @@
   cursor: pointer;
   transition: all 0.3s ease;
   min-width: 120px;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
 }
 
 .vehicle-btn-refresh {

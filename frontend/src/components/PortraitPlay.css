@@ -13,6 +13,9 @@
   justify-content: center;
   z-index: 2000;
   backdrop-filter: blur(6px);
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .portrait-exit-modal {
@@ -24,6 +27,11 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.15);
   animation: slideUp 0.3s ease;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 2001;
 }
 
 .portrait-exit-modal-header h3 {
@@ -58,6 +66,9 @@
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .portrait-exit-cancel-btn {
@@ -441,17 +452,27 @@
 .portrait-arrow-up,
 .portrait-arrow-down {
   color: #3b82f6;
-  font-size: 3.2rem;
+  font-size: 2.8rem;
   font-weight: bold;
   text-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+  transform: translateY(-5px);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .portrait-arrow-left,
 .portrait-arrow-right {
   color: #3b82f6;
-  font-size: 2.2rem;
+  font-size: 2.6rem;
   font-weight: bold;
   text-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+  transform: translateY(-3px);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .portrait-forward:active .portrait-arrow-up {
