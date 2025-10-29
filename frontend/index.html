@@ -331,34 +331,61 @@
           }
         });
         
-        // 모바일 환경에서 지갑 버튼 클릭 시 딥링크 시도
+        // 모바일 환경에서 지갑 버튼 클릭 시 딥링크 시도 (강화된 버전)
         const walletButtons = document.querySelectorAll('[data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"]');
         walletButtons.forEach(btn => {
           if (!btn.dataset.deepLinkAdded) {
+            // 클릭 이벤트를 가로채서 딥링크 시도
             btn.addEventListener('click', (e) => {
               const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase());
-              if (isMobile) {
-                const buttonText = btn.textContent.toLowerCase();
-                console.log('📱 모바일 지갑 버튼 클릭:', buttonText);
+              const isFarcaster = window.location.href.includes('farcaster.xyz') || 
+                                 window.location.href.includes('warpcast.com') ||
+                                 navigator.userAgent.includes('Farcaster');
+              
+              if (isMobile && isFarcaster) {
+                e.preventDefault(); // 기본 동작 방지
+                e.stopPropagation(); // 이벤트 전파 중지
                 
-                // 지갑별 딥링크 시도
+                const buttonText = btn.textContent.toLowerCase();
+                console.log('📱 모바일 Farcaster 지갑 버튼 클릭:', buttonText);
+                
+                // 즉시 딥링크 시도
+                if (buttonText.includes('metamask')) {
+                  console.log('🔗 MetaMask 딥링크 시도');
+                  window.location.href = 'metamask://dapp/' + window.location.href;
+                } else if (buttonText.includes('coinbase')) {
+                  console.log('🔗 Coinbase 딥링크 시도');
+                  window.location.href = 'cbwallet://dapp/' + window.location.href;
+                } else if (buttonText.includes('rainbow')) {
+                  console.log('🔗 Rainbow 딥링크 시도');
+                  window.location.href = 'rainbow://dapp/' + window.location.href;
+                } else if (buttonText.includes('phantom')) {
+                  console.log('🔗 Phantom 딥링크 시도');
+                  window.location.href = 'phantom://dapp/' + window.location.href;
+                } else if (buttonText.includes('rabby')) {
+                  console.log('🔗 Rabby 딥링크 시도');
+                  window.location.href = 'rabby://dapp/' + window.location.href;
+                } else if (buttonText.includes('trust')) {
+                  console.log('🔗 Trust 딥링크 시도');
+                  window.location.href = 'trust://dapp/' + window.location.href;
+                }
+                
+                // 3초 후 앱이 열리지 않으면 앱스토어로 이동
                 setTimeout(() => {
+                  console.log('⏰ 딥링크 타임아웃 - 앱스토어로 이동');
                   if (buttonText.includes('metamask')) {
-                    window.location.href = 'metamask://dapp/' + window.location.href;
+                    window.open('https://metamask.app.link/dapp/' + window.location.href, '_blank');
                   } else if (buttonText.includes('coinbase')) {
-                    window.location.href = 'cbwallet://dapp/' + window.location.href;
+                    window.open('https://go.cb-w.com/dapp/' + window.location.href, '_blank');
                   } else if (buttonText.includes('rainbow')) {
-                    window.location.href = 'rainbow://dapp/' + window.location.href;
-                  } else if (buttonText.includes('phantom')) {
-                    window.location.href = 'phantom://dapp/' + window.location.href;
-                  } else if (buttonText.includes('rabby')) {
-                    window.location.href = 'rabby://dapp/' + window.location.href;
-                  } else if (buttonText.includes('trust')) {
-                    window.location.href = 'trust://dapp/' + window.location.href;
+                    window.open('https://rainbow.me/app', '_blank');
                   }
-                }, 100);
+                }, 3000);
+                
+                return false;
               }
-            });
+            }, true); // capture phase에서 실행
+            
             btn.dataset.deepLinkAdded = 'true';
           }
         });
