@@ -1,267 +1,25 @@
-/* 커스텀 Connect Wallet 버튼 스타일 */
+/* Custom Connect Button - 세련된 하늘색 파란색 */
 .custom-connect-button {
-  background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%);
+  background: linear-gradient(135deg, #00D4FF 0%, #0080FF 100%);
   color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 10px;
-  font-size: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
+  padding: 12px 24px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
-  min-width: 160px;
-  justify-content: center;
-  height: 44px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 
+    0 8px 32px rgba(0, 212, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  min-width: 150px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  overflow: hidden;
 }
 
-.custom-connect-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 82, 255, 0.4);
-  background: linear-gradient(135deg, #0047e6 0%, #00b8e6 100%);
-}
-
-.custom-connect-button:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
-}
-
-.custom-connect-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.wallet-icon {
-  font-size: 18px;
-}
-
-.loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 연결된 상태 스타일 */
-.wallet-connected-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* OnchainKit Wallet 컴포넌트 스타일링 */
-.wallet-connected-container [data-ock-wallet] {
-  background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%);
-  border-radius: 12px;
-  padding: 8px 16px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 160px;
-  justify-content: center;
-}
-
-.wallet-connected-container [data-ock-wallet]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 82, 255, 0.4);
-  background: linear-gradient(135deg, #0047e6 0%, #00b8e6 100%);
-}
-
-.wallet-connected-container [data-ock-wallet]:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
-}
-
-.wallet-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.wallet-address {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 6px 12px;
-  border-radius: 8px;
-}
-
-.address-icon {
-  font-size: 16px;
-}
-
-.wallet-chain {
-  margin-top: 4px;
-}
-
-.chain-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.chain-badge.base {
-  background: rgba(0, 82, 255, 0.1);
-  color: #0052ff;
-  border: 1px solid rgba(0, 82, 255, 0.2);
-}
-
-.chain-badge.wrong {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.chain-icon {
-  font-size: 14px;
-}
-
-/* 강제 연결 해제 버튼 */
-.force-disconnect-button {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.force-disconnect-button:hover {
-  background: #dc2626;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-/* 컨테이너 스타일 */
-.wallet-connect-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* OnchainKit ConnectWallet 버튼 커스터마이징 - Base Revolt 스타일 */
-/* 모든 가능한 선택자로 스타일 강제 적용 */
-.wallet-connect-container button,
-.wallet-connect-container [data-testid="ockConnectWallet"],
-.custom-wallet-button button,
-.custom-wallet-button [data-testid="ockConnectWallet"],
-button[data-testid="ockConnectWallet"],
-div[data-ock-wallet] button {
-  background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%) !important;
-  color: white !important;
-  border: none !important;
-  padding: 10px 24px !important;
-  border-radius: 12px !important;
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  box-shadow: 0 4px 16px rgba(0, 82, 255, 0.35) !important;
-  min-width: 160px !important;
-  justify-content: center !important;
-  height: 44px !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-  letter-spacing: 0.3px !important;
-  text-transform: none !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-/* 호버 애니메이션 */
-.wallet-connect-container button:hover,
-.wallet-connect-container [data-testid="ockConnectWallet"]:hover,
-.custom-wallet-button button:hover,
-button[data-testid="ockConnectWallet"]:hover,
-div[data-ock-wallet] button:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 28px rgba(0, 82, 255, 0.5), 0 0 40px rgba(0, 212, 255, 0.3) !important;
-  background: linear-gradient(135deg, #0047e6 0%, #00b8e6 100%) !important;
-}
-
-/* 클릭 애니메이션 */
-.wallet-connect-container button:active,
-.wallet-connect-container [data-testid="ockConnectWallet"]:active,
-.custom-wallet-button button:active,
-button[data-testid="ockConnectWallet"]:active,
-div[data-ock-wallet] button:active {
-  transform: translateY(0) !important;
-  box-shadow: 0 4px 16px rgba(0, 82, 255, 0.35) !important;
-}
-
-/* 빛나는 펄스 애니메이션 - 계속 반짝임 */
-@keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 4px 16px rgba(0, 82, 255, 0.35),
-                0 0 20px rgba(0, 82, 255, 0.2),
-                0 0 30px rgba(0, 212, 255, 0.1) !important;
-  }
-  50% {
-    box-shadow: 0 6px 24px rgba(0, 82, 255, 0.5),
-                0 0 40px rgba(0, 82, 255, 0.4),
-                0 0 60px rgba(0, 212, 255, 0.3) !important;
-  }
-}
-
-/* 빛나는 애니메이션 적용 */
-.wallet-connect-container button,
-.wallet-connect-container [data-testid="ockConnectWallet"],
-.custom-wallet-button button,
-button[data-testid="ockConnectWallet"],
-div[data-ock-wallet] button {
-  animation: glow-pulse 2s ease-in-out infinite !important;
-}
-
-/* 버튼 내부 텍스트 스타일 */
-.wallet-connect-container [data-testid="ockConnectWallet"] span,
-[data-testid="ockConnectWallet"] span {
-  color: white !important;
-  font-weight: 700 !important;
-  font-size: 16px !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* 빛나는 효과 */
-.wallet-connect-container [data-testid="ockConnectWallet"]::before,
-[data-testid="ockConnectWallet"]::before {
+.custom-connect-button::before {
   content: '';
   position: absolute;
   top: 0;
@@ -272,560 +30,167 @@ div[data-ock-wallet] button {
   transition: left 0.5s;
 }
 
-.wallet-connect-container [data-testid="ockConnectWallet"]:hover::before,
-[data-testid="ockConnectWallet"]:hover::before {
+.custom-connect-button:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 12px 48px rgba(0, 212, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #00E6FF 0%, #0066FF 100%);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.custom-connect-button:hover::before {
   left: 100%;
 }
 
-/* 커스텀 지갑 모달 스타일 - OnchainKit과 색상 통일 */
-.custom-wallet-modal-overlay {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background: rgba(0, 0, 0, 0.6) !important;
-  backdrop-filter: blur(12px) !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  z-index: 9999 !important;
-  animation: fadeIn 0.3s ease-out !important;
-  margin: 0 !important;
-  padding: 0 !important;
+.custom-connect-button:active {
+  transform: translateY(-1px) scale(1.01);
+  transition: all 0.1s ease;
 }
 
-.custom-wallet-modal {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 25px 60px rgba(0, 82, 255, 0.2) !important;
-  border: 1px solid rgba(0, 82, 255, 0.1) !important;
-  max-width: 400px;
-  width: 90%;
-  max-height: 80vh;
-  overflow: hidden;
-  animation: slideUp 0.3s ease-out;
-  position: relative !important;
-  margin: auto !important;
-}
-
-.modal-header {
+/* Connected Wallet Container */
+.wallet-connected-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 24px 24px 16px 24px;
-  border-bottom: 1px solid rgba(0, 82, 255, 0.1);
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a1a;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background: rgba(0, 82, 255, 0.05);
-  color: #374151;
-}
-
-/* 지갑 그리드 */
-.wallet-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  padding: 24px;
 }
 
-.wallet-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px 12px;
-  border: 1px solid rgba(0, 82, 255, 0.1);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  color: inherit;
-}
-
-.wallet-option:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 82, 255, 0.15);
-  border-color: rgba(0, 82, 255, 0.3);
-  background: rgba(0, 82, 255, 0.05);
-}
-
-.wallet-option:active {
-  transform: translateY(0);
-}
-
-.wallet-option:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.wallet-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-}
-
-.metamask-icon {
-  background: linear-gradient(135deg, #f6851b 0%, #ff6b35 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.coinbase-icon {
-  background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.rabby-icon {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.trust-icon {
-  background: linear-gradient(135deg, #3375bb 0%, #4a90e2 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.frame-icon {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.default-icon {
-  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-/* 추가 지갑 아이콘 스타일 */
-.walletconnect-icon {
-  background: linear-gradient(135deg, #3b99fc 0%, #5b9bd5 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.safe-icon {
-  background: linear-gradient(135deg, #12ff80 0%, #00d4aa 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.phantom-icon {
-  background: linear-gradient(135deg, #ab9ff2 0%, #8b5cf6 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.brave-icon {
-  background: linear-gradient(135deg, #fb542b 0%, #ff6b35 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.opera-icon {
-  background: linear-gradient(135deg, #ff1b2d 0%, #cc0000 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.bitget-icon {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.bitkeep-icon {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.crypto-icon {
-  background: linear-gradient(135deg, #103f8c 0%, #1e40af 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.blockchain-icon {
-  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.kresus-icon {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  border-radius: 12px;
-  padding: 8px;
-  color: white;
-}
-
-.wallet-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  text-align: center;
-}
-
-/* 모달 푸터 */
-.modal-footer {
-  padding: 16px 24px 24px 24px;
-  border-top: 1px solid rgba(0, 82, 255, 0.1);
-}
-
-.modal-footer p {
-  margin: 0;
-  font-size: 12px;
-  color: #6b7280;
-  text-align: center;
-  line-height: 1.5;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-.modal-footer .link {
-  color: #0052ff;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.modal-footer .link:hover {
-  text-decoration: underline;
-  color: #0047e6;
-}
-
-/* 애니메이션 */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { 
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* 모바일 대응 */
-@media (max-width: 480px) {
-  .custom-wallet-modal {
-    width: 95%;
-    margin: 20px;
-  }
-  
-  .wallet-grid {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 16px;
-  }
-  
-  .wallet-option {
-    padding: 16px 8px;
-  }
-  
-  .wallet-icon {
-    font-size: 28px;
-    width: 40px;
-    height: 40px;
-  }
-  
-  .wallet-name {
-    font-size: 12px;
-  }
-}
-
-/* 체인 변경 섹션 스타일 - 개선된 드롭다운 UI */
-.chain-switch-section {
-  padding: 16px;
-  border-top: 1px solid rgba(0, 82, 255, 0.1);
-  border-bottom: 1px solid rgba(0, 82, 255, 0.1);
-}
-
-/* 현재 체인 표시 스타일 */
-.current-chain-display {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 82, 255, 0.1);
-  border-radius: 12px;
-  margin-bottom: 8px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.current-chain-display:hover {
-  border-color: rgba(0, 82, 255, 0.3);
-  background: rgba(0, 82, 255, 0.05);
-}
-
-.current-chain-info {
-  display: flex;
-  align-items: center;
+/* 상단바용 컴팩트 스타일 */
+.header-right .wallet-connected-container {
   gap: 8px;
+  flex-direction: row !important; /* 가로로 배치 */
 }
 
-.current-chain-info .chain-icon {
-  font-size: 18px;
-}
-
-.current-chain-info .chain-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.chain-dropdown-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  color: #6b7280;
-}
-
-.chain-dropdown-toggle:hover {
-  background: rgba(0, 82, 255, 0.1);
-  color: #0052ff;
-}
-
-.dropdown-arrow {
-  font-size: 12px;
-  transition: transform 0.3s ease;
-}
-
-.dropdown-arrow.open {
-  transform: rotate(180deg);
+/* 상단바에서 체인 선택과 지갑 버튼이 같은 높이로 정렬 */
+.header-right .chain-dropdown-button,
+.header-right [data-testid="ockConnectWallet_Connected"] {
+  height: 40px !important;
+  min-height: 40px !important;
 }
 
 /* 체인 선택 드롭다운 스타일 */
 .chain-dropdown {
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid rgba(0, 82, 255, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0, 82, 255, 0.15);
-  margin-bottom: 8px;
-  overflow: hidden;
-  animation: slideDown 0.3s ease-out;
+  position: relative;
+  display: inline-block;
+  margin: 0 !important; /* 모든 마진 제거 */
+  padding: 0 !important; /* 모든 패딩 제거 */
+}
+
+.chain-dropdown-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.chain-dropdown-button:hover {
+  background: rgba(138, 43, 226, 0.1);
+  border-color: rgba(138, 43, 226, 0.5);
+}
+
+.chain-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.chain-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 160px;
 }
 
 .chain-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  width: 100%;
   padding: 12px 16px;
   border: none;
-  background: transparent;
+  background: white;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
-  width: 100%;
-}
-
-.chain-option:hover:not(:disabled) {
-  background: rgba(0, 82, 255, 0.05);
-}
-
-.chain-option:active:not(:disabled) {
-  background: rgba(0, 82, 255, 0.1);
-}
-
-.chain-option.active {
-  background: rgba(0, 82, 255, 0.1);
-  color: #0052ff;
-}
-
-.chain-option:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.chain-option .chain-icon {
-  font-size: 16px;
-  margin-right: 8px;
-}
-
-.chain-option .chain-name {
-  flex: 1;
+  color: #333;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   text-align: left;
 }
 
-.current-badge {
-  background: #0052ff;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+.chain-option:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.chain-option:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
+.chain-option:hover {
+  background: rgba(138, 43, 226, 0.1);
+}
+
+.chain-option.active {
+  background: rgba(138, 43, 226, 0.2);
+  color: #8A2BE2;
   font-weight: 600;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.chain-option-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
-/* OnchainKit 모달 커스터마이징 - 우리 모달과 색상 통일 */
-@layer base {
-  [data-ock-theme='base-light'],
-  [data-ock-theme='base-dark'] {
-    /* 모달 배경 - 우리 모달과 동일 */
-    --ock-background: rgba(255, 255, 255, 0.98);
-    --ock-background-hover: rgba(0, 82, 255, 0.05);
-    --ock-background-active: rgba(0, 82, 255, 0.1);
-    --ock-background-alternate: rgba(255, 255, 255, 0.95);
-    --ock-background-alternate-hover: rgba(0, 82, 255, 0.05);
-    
-    /* 모달 테두리와 그림자 - 우리 모달과 동일 */
-    --ock-line: rgba(0, 82, 255, 0.1);
-    
-    /* 버튼 스타일 - 우리 모달과 동일 */
-    --ock-primary: #0052ff;
-    --ock-primary-hover: #0047e6;
-    --ock-primary-active: #003bb8;
-    
-    /* 텍스트 색상 */
-    --ock-foreground: #1a1a1a;
-    --ock-foreground-muted: #6b7280;
-    
-    /* 폰트 - 우리 모달과 동일 */
-    --ock-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --ock-radius-default: 16px;
-    --ock-radius-inner: 12px;
-  }
+/* OnchainKit overrides for consistent styling */
+[data-ock-wallet] {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-/* OnchainKit 모달이 헤더 위에 나오도록 z-index 설정 */
-/* 모든 가능한 선택자 시도 */
-[data-ock-wallet-modal],
-[data-ock-modal],
-.ock-modal,
-.ock-modal-overlay,
-[class*="ock"][class*="modal"],
-div[data-radix-portal],
-div[data-radix-portal] > div,
-[role="dialog"],
-[data-state="open"] {
-  z-index: 9999 !important;
-}
-
-/* OnchainKit은 Radix UI를 사용하므로 Radix Portal도 덮기 */
-body > div[data-radix-portal] {
-  z-index: 9999 !important;
-}
-
-/* Portal 내부의 모든 요소 */
-body > div:last-child {
-  z-index: 9999 !important;
-}
-
-/* 모든 OnchainKit 관련 오버레이 */
-div[style*="z-index"][data-ock],
-div[style*="z-index"].ock,
-div[style*="position: fixed"] {
-  z-index: 9999 !important;
-}
-
-/* 헤더용 OnchainKit 버튼 높이 조정 */
-.nav [data-testid="ockConnectWallet_Connected"] {
-  height: 34px !important;
-  padding: 4px 12px !important;
-  font-size: 14px !important;
-}
-
-.nav [data-testid="ockConnectWallet_Connected"] [data-testid="ockAvatar_ImageContainer"] {
-  height: 26px !important;
-  width: 26px !important;
-}
-
-.nav [data-testid="ockConnectWallet_Connected"] [data-testid="ockAvatar_Image"] {
-  height: 24px !important;
-  width: 24px !important;
-}
-
-/* 모달 오버레이 커스터마이징 - 우리 모달과 동일 */
-.ock-modal-overlay {
-  background: rgba(0, 0, 0, 0.6) !important;
-  backdrop-filter: blur(12px) !important;
-}
-
-/* 모달 컨텐츠 커스터마이징 - 우리 모달과 동일 */
-.ock-modal-content {
-  border-radius: 16px !important;
-  box-shadow: 0 25px 60px rgba(0, 82, 255, 0.2) !important;
-  border: 1px solid rgba(0, 82, 255, 0.1) !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-}
-
-/* 지갑 버튼들 커스터마이징 - 우리 모달과 동일 */
-.ock-wallet-button {
+[data-ock-wallet] button {
   border-radius: 12px !important;
-  transition: all 0.3s ease !important;
-  border: 1px solid rgba(0, 82, 255, 0.1) !important;
-  background: rgba(255, 255, 255, 0.95) !important;
 }
 
-.ock-wallet-button:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 25px rgba(0, 82, 255, 0.15) !important;
-  border-color: rgba(0, 82, 255, 0.3) !important;
-  background: rgba(0, 82, 255, 0.05) !important;
+/* OnchainKit 지갑 버튼 크기 조정 - 더 강력한 선택자 */
+button[data-testid="ockConnectWallet_Connected"] {
+  padding: 4px 8px !important; /* 위아래 4px, 좌우 8px */
+  min-height: 40px !important; /* 최소 높이 40px */
+  height: 40px !important; /* 고정 높이 40px */
+}
+
+/* OnchainKit 클래스 오버라이드 - 더 구체적인 선택자 */
+button[data-testid="ockConnectWallet_Connected"] .ock\\:px-4 {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+button[data-testid="ockConnectWallet_Connected"] .ock\\:py-3 {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* 아바타 크기 조정 */
+button[data-testid="ockConnectWallet_Connected"] [data-testid="ockAvatar_ImageContainer"] {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+/* 텍스트 크기 조정 */
+button[data-testid="ockConnectWallet_Connected"] [data-testid="ockIdentity_Text"] {
+  font-size: 14px !important;
+  line-height: 1.2 !important;
 }

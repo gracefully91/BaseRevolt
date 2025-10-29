@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { base } from 'wagmi/chains';
+import { base, baseSepolia } from 'wagmi/chains';
 import { useEffect } from 'react';
 
 import '@coinbase/onchainkit/styles.css';
@@ -9,7 +9,7 @@ import './styles/onchainkit-custom.css'; // 커스텀 OnchainKit 스타일
 import './styles/wallet-glow.css'; // 지갑 버튼 빛나는 효과
 import './styles/wallet-modal-responsive.css'; // ConnectWallet 모달 미니앱 최적화
 
-import { ConnectorProvider } from './providers/ConnectorProvider';
+import { ReownAppKitProvider } from './providers/ReownAppKitProvider';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Play from './pages/Play';
@@ -47,13 +47,14 @@ function AppContent() {
 
 function App() {
   return (
-    <ConnectorProvider>
+    <ReownAppKitProvider>
       <OnchainKitProvider
         chain={base}
+        chains={[base, baseSepolia]}
         config={{
           appearance: {
-            name: 'Base Revolt', // 모달 헤더에 표시될 앱 이름
-            logo: '/base-revolt logo.png', // 모달 헤더 로고
+            name: 'Base Revolt',
+            logo: '/base-revolt logo.png',
             mode: 'auto',
             theme: 'base',
           },
@@ -68,7 +69,7 @@ function App() {
           <AppContent />
         </BrowserRouter>
       </OnchainKitProvider>
-    </ConnectorProvider>
+    </ReownAppKitProvider>
   );
 }
 

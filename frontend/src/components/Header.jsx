@@ -6,14 +6,16 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-container">
-          <Link to="/" className="logo">
-            <span className="logo-icon">🚙</span>
-            <span className="logo-text">Base Revolt</span>
-          </Link>
+        {/* 로고 */}
+        <Link to="/" className="logo">
+          <span className="logo-icon">🚙</span>
+          <span className="logo-text">Base Revolt</span>
+        </Link>
 
-        <nav className="nav">
+        {/* 체인 선택 + 지갑 버튼 */}
+        <div className="header-right">
           <WalletConnectButton />
-        </nav>
+        </div>
       </div>
     </header>
   );

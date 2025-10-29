@@ -14,7 +14,7 @@
 .header-container {
   width: 100%;
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: 6px 24px; /* 위아래 패딩을 16px에서 6px로 줄임 */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -48,7 +48,7 @@
 }
 
 .logo-icon {
-  font-size: 48px;
+  font-size: 40px; /* 48px에서 40px로 줄임 */
   line-height: 1;
   animation: logo-glow 2.5s ease-in-out infinite;
 }
@@ -67,7 +67,7 @@
 }
 
 .logo-text {
-  font-size: 38px;
+  font-size: 32px; /* 38px에서 32px로 줄임 */
   font-weight: 900;
   background: linear-gradient(135deg, #0052ff 0%, #00d4ff 100%);
   -webkit-background-clip: text;
