@@ -28,32 +28,38 @@ export function ConnectorProvider({ children }) {
   const connectors = useMemo(() => {
     console.log('🔧 Creating connectors for environment:', { isInMiniApp, isLoading });
 
-    return connectorsForWallets(
-      [
-        {
-          groupName: 'Recommended',
-          wallets: isInMiniApp
-            ? [ // Farcaster + regular wallets in Mini-App
-                farcasterMiniAppWallet,
-                coinbaseWallet,
-                metaMaskWallet,
-                walletConnectWallet,
-                rainbowWallet,
-                phantomWallet,
-                rabbyWallet,
-                trustWallet,
-              ]
-            : [ // Regular wallets outside Mini-App
-                coinbaseWallet,
-                metaMaskWallet,
-                walletConnectWallet,
-                rainbowWallet,
-                phantomWallet,
-                rabbyWallet,
-                trustWallet,
+            return connectorsForWallets(
+              [
+                {
+                  groupName: 'Recommended',
+                  wallets: isInMiniApp
+                    ? [ // Farcaster 환경: Farcaster 지갑 우선, 나머지는 하단
+                        farcasterMiniAppWallet,
+                      ]
+                    : [ // Regular wallets outside Mini-App
+                        coinbaseWallet,
+                        metaMaskWallet,
+                        walletConnectWallet,
+                        rainbowWallet,
+                        phantomWallet,
+                        rabbyWallet,
+                        trustWallet,
+                      ],
+                },
+                // Farcaster 환경에서만 추가 지갑들을 별도 그룹으로
+                ...(isInMiniApp ? [{
+                  groupName: 'Other Wallets',
+                  wallets: [
+                    coinbaseWallet,
+                    metaMaskWallet,
+                    walletConnectWallet,
+                    rainbowWallet,
+                    phantomWallet,
+                    rabbyWallet,
+                    trustWallet,
+                  ]
+                }] : []),
               ],
-        },
-      ],
       {
         appName: 'Base Revolt',
         projectId: projectId,
