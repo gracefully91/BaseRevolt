@@ -76,44 +76,32 @@
         margin: 0 auto !important;
       }
       
-      /* OnchainKit 모달 색상 커스터마이징 */
-      [data-rk] [role="dialog"] {
-        background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.1) !important;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
-      }
 
-      /* 모달 헤더 스타일 */
-      [data-rk] [role="dialog"] h1 {
-        color: #333 !important;
-        text-shadow: none !important;
-      }
 
       /* 닫기 버튼 스타일 */
       [data-rk] [role="dialog"] button[aria-label="Close"] {
-        background: rgba(0, 0, 0, 0.1) !important;
-        color: #333 !important;
-        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
       }
 
       [data-rk] [role="dialog"] button[aria-label="Close"]:hover {
-        background: rgba(0, 0, 0, 0.2) !important;
+        background: rgba(255, 255, 255, 0.3) !important;
       }
 
       /* 지갑 버튼 스타일 */
       [data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"] {
-        background: white !important;
-        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
         color: #333 !important;
-        backdrop-filter: none !important;
+        backdrop-filter: blur(10px) !important;
         transition: all 0.3s ease !important;
       }
 
       [data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"]:hover {
-        background: #f8f9fa !important;
+        background: white !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
-        border-color: rgba(0, 0, 0, 0.2) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
       }
 
       /* 지갑 아이콘 스타일 */
@@ -128,17 +116,120 @@
         display: none !important;
       }
 
+      /* RainbowKit 모달 백드롭 제거 */
+      [data-rk] .ju367vb3 {
+        background: transparent !important;
+      }
+
+      /* OnchainKit 모달 색상 커스터마이징 */
+      [role="dialog"][data-testid="ockSheet"] {
+        background: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+        padding: 16px !important;
+        max-height: 70vh !important;
+      }
+
+      /* OnchainKit 모달 헤더 스타일 */
+      [role="dialog"][data-testid="ockSheet"] h1,
+      [role="dialog"][data-testid="ockSheet"] .ock\\:text-ock-foreground {
+        color: #333 !important;
+        text-shadow: none !important;
+      }
+
+      /* OnchainKit 모달 버튼 스타일 */
+      [role="dialog"][data-testid="ockSheet"] button,
+      [role="dialog"][data-testid="ockSheet"] a {
+        background: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        color: #333 !important;
+        transition: all 0.3s ease !important;
+        border-radius: 8px !important;
+      }
+
+      [role="dialog"][data-testid="ockSheet"] button:hover,
+      [role="dialog"][data-testid="ockSheet"] a:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+      }
+
+      /* OnchainKit 모달 아이콘 스타일 */
+      [role="dialog"][data-testid="ockSheet"] img {
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+      }
+
+      /* OnchainKit 모달 텍스트 색상 */
+      [role="dialog"][data-testid="ockSheet"] .ock\\:text-ock-foreground-muted {
+        color: #666 !important;
+      }
+
+      /* OnchainKit 모달 배경 컨테이너 */
+      [role="dialog"][data-testid="ockSheet"] .ock\\:bg-ock-background {
+        background: white !important;
+      }
+
+      /* 체인 선택 섹션 - 연보라 테두리만 */
+      .chain-switch-section {
+        background: white !important;
+        border: 2px solid rgba(138, 43, 226, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 8px !important;
+        margin: 4px 0 !important;
+      }
+
+      .current-chain-display {
+        background: white !important;
+        border: 1px solid rgba(138, 43, 226, 0.2) !important;
+        border-radius: 8px !important;
+        padding: 6px 10px !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .current-chain-display:hover {
+        background: rgba(138, 43, 226, 0.05) !important;
+        border-color: rgba(138, 43, 226, 0.4) !important;
+      }
+
+      .chain-dropdown {
+        background: white !important;
+        border: 1px solid rgba(138, 43, 226, 0.2) !important;
+        border-radius: 8px !important;
+        margin-top: 8px !important;
+        box-shadow: 0 4px 12px rgba(138, 43, 226, 0.1) !important;
+      }
+
+      .chain-option {
+        background: white !important;
+        border: none !important;
+        color: #333 !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .chain-option:hover {
+        background: rgba(138, 43, 226, 0.05) !important;
+        color: #8a2be2 !important;
+      }
+
+      .chain-option.active {
+        background: rgba(138, 43, 226, 0.1) !important;
+        color: #8a2be2 !important;
+        font-weight: 600 !important;
+      }
+
       /* "Learn More" 버튼 스타일 */
       [data-rk] [role="dialog"] button:has-text("Learn More"),
       [data-rk] [role="dialog"] button:has-text("더 알아보기") {
-        background: rgba(0, 0, 0, 0.1) !important;
-        color: #333 !important;
-        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
       }
 
       [data-rk] [role="dialog"] button:has-text("Learn More"):hover,
       [data-rk] [role="dialog"] button:has-text("더 알아보기"):hover {
-        background: rgba(0, 0, 0, 0.2) !important;
+        background: rgba(255, 255, 255, 0.3) !important;
       }
 
       /* 모바일 환경에서 지갑 연결 개선 */
@@ -167,13 +258,25 @@
           max-width: 95vw !important;
           margin: 10px auto !important;
           border-radius: 16px !important;
+          padding: 8px !important;
         }
         
         [data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"] {
-          padding: 20px !important;
+          padding: 8px 12px !important;
           font-size: 18px !important;
-          min-height: 70px !important;
-          border-radius: 12px !important;
+          min-height: 50px !important;
+          border-radius: 8px !important;
+          margin: 4px 0 !important;
+        }
+        
+        /* 지갑 버튼 컨테이너 간격 줄이기 */
+        [data-rk] [role="dialog"] > div {
+          gap: 4px !important;
+        }
+        
+        /* 지갑 그룹 간격 줄이기 */
+        [data-rk] [role="dialog"] section {
+          margin: 8px 0 !important;
         }
       }
       
