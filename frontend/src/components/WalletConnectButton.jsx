@@ -16,6 +16,7 @@ import {
   Identity,
   EthBalance,
 } from '@coinbase/onchainkit/identity';
+import { useMobileWalletDetection } from '../hooks/useMobileWalletDetection';
 import './WalletConnectButton.css';
 
 export default function WalletConnectButton() {
@@ -23,6 +24,7 @@ export default function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const [showChainDropdown, setShowChainDropdown] = useState(false);
+  const { isMobile, checkWalletInstalled, openWalletApp } = useMobileWalletDetection();
 
   // 지갑 연결 시 자동으로 Base Mainnet으로 전환 (선택적)
   // 주석 처리: 사용자가 수동으로 네트워크 선택하도록 함

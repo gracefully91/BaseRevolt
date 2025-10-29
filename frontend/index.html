@@ -139,6 +139,42 @@
       [data-rk] [role="dialog"] button:has-text("더 알아보기"):hover {
         background: rgba(255, 255, 255, 0.3) !important;
       }
+
+      /* 모바일 환경에서 지갑 연결 개선 */
+      @media (max-width: 768px) {
+        [data-rk] [role="dialog"] {
+          max-width: 90vw !important;
+          margin: 20px auto !important;
+        }
+        
+        [data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"] {
+          padding: 16px !important;
+          font-size: 16px !important;
+          min-height: 60px !important;
+        }
+        
+        /* 모바일에서 지갑 버튼 클릭 영역 확대 */
+        [data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"]:active {
+          transform: scale(0.98) !important;
+          background: rgba(255, 255, 255, 0.95) !important;
+        }
+      }
+
+      /* Farcaster Mini-App 환경에서의 모바일 최적화 */
+      @media (max-width: 480px) {
+        [data-rk] [role="dialog"] {
+          max-width: 95vw !important;
+          margin: 10px auto !important;
+          border-radius: 16px !important;
+        }
+        
+        [data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"] {
+          padding: 20px !important;
+          font-size: 18px !important;
+          min-height: 70px !important;
+          border-radius: 12px !important;
+        }
+      }
       
       /* 지갑 버튼 빛나는 효과 - 강제 적용 */
       @keyframes wallet-glow {
@@ -188,6 +224,38 @@
         buttons.forEach(btn => {
           if (!btn.style.animation || btn.style.animation === 'none') {
             btn.style.animation = 'wallet-glow 2s ease-in-out infinite';
+          }
+        });
+        
+        // 모바일 환경에서 지갑 버튼 클릭 시 딥링크 시도
+        const walletButtons = document.querySelectorAll('[data-rk] [role="dialog"] button[data-testid*="rk-wallet-option"]');
+        walletButtons.forEach(btn => {
+          if (!btn.dataset.deepLinkAdded) {
+            btn.addEventListener('click', (e) => {
+              const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent.toLowerCase());
+              if (isMobile) {
+                const buttonText = btn.textContent.toLowerCase();
+                console.log('📱 모바일 지갑 버튼 클릭:', buttonText);
+                
+                // 지갑별 딥링크 시도
+                setTimeout(() => {
+                  if (buttonText.includes('metamask')) {
+                    window.location.href = 'metamask://dapp/' + window.location.href;
+                  } else if (buttonText.includes('coinbase')) {
+                    window.location.href = 'cbwallet://dapp/' + window.location.href;
+                  } else if (buttonText.includes('rainbow')) {
+                    window.location.href = 'rainbow://dapp/' + window.location.href;
+                  } else if (buttonText.includes('phantom')) {
+                    window.location.href = 'phantom://dapp/' + window.location.href;
+                  } else if (buttonText.includes('rabby')) {
+                    window.location.href = 'rabby://dapp/' + window.location.href;
+                  } else if (buttonText.includes('trust')) {
+                    window.location.href = 'trust://dapp/' + window.location.href;
+                  }
+                }, 100);
+              }
+            });
+            btn.dataset.deepLinkAdded = 'true';
           }
         });
       });
