@@ -94,7 +94,7 @@ export function ConnectorProvider({ children }) {
   return (
     <WagmiProvider config={config} reconnectOnMount>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitProvider locale="en">
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>
