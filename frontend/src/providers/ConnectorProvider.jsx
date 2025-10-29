@@ -8,6 +8,9 @@ import {
   coinbaseWallet,
   walletConnectWallet,
   rainbowWallet,
+  phantomWallet,
+  rabbyWallet,
+  trustWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { useIsInMiniApp } from '../hooks/useIsInMiniApp';
 import { farcasterMiniAppWallet } from '../utils/farcaster-wallet';
@@ -36,12 +39,18 @@ export function ConnectorProvider({ children }) {
                 metaMaskWallet,
                 walletConnectWallet,
                 rainbowWallet,
+                phantomWallet,
+                rabbyWallet,
+                trustWallet,
               ]
             : [ // Regular wallets outside Mini-App
                 coinbaseWallet,
                 metaMaskWallet,
                 walletConnectWallet,
                 rainbowWallet,
+                phantomWallet,
+                rabbyWallet,
+                trustWallet,
               ],
         },
       ],
