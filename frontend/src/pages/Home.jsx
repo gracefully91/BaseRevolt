@@ -164,51 +164,20 @@ function Home() {
     try {
       console.log('🔄 Farcaster 공유 시작 (PhrasePool 방식)...');
       
-      // 미리 작성된 텍스트 (Universal Link 포함)
-      const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\nHere's the link :\nhttps://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt\n\n- Base Revolt 🚗";
+      // 미리 작성된 텍스트 (실제 도메인 URL 사용)
+      const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\n- Base Revolt 🚗";
       
-      // Farcaster compose URL (fc:miniapp 메타 태그로 자동 임베드 생성)
-      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+      // 실제 앱 도메인 URL (임베드용)
+      const appUrl = window.location.origin;
+      
+      // Farcaster compose URL (embeds 파라미터 포함)
+      const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(appUrl)}`;
       
       console.log('🔗 Farcaster URL:', farcasterUrl);
       
-      // SDK가 있으면 composeCast 사용 (올바른 방법)
-      if (sdk && sdk.actions && sdk.actions.composeCast) {
-        try {
-          // composeCast는 compose 창을 열어주고 embeds도 지원됨
-          const embeds = ["https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt"];
-          const result = await sdk.actions.composeCast({ 
-            text,
-            embeds
-          });
-          console.log('✅ SDK composeCast 결과:', result);
-          
-          // 실제 포스팅 여부 확인
-          if (result?.cast) {
-            console.log('🎉 실제로 포스팅됨!');
-            console.log('📝 Cast Hash:', result.cast.hash);
-            console.log('📺 Channel:', result.cast.channelKey);
-            
-            // 공유 완료 상태 저장
-            localStorage.setItem('base-revolt-shared', Date.now().toString());
-            setHasShared(true);
-            
-            // 포스팅 성공 알림
-            alert('🎉 Farcaster에 성공적으로 공유되었습니다!');
-          } else {
-            console.log('❌ 사용자가 포스팅을 취소함');
-            alert('포스팅이 취소되었습니다.');
-          }
-        } catch (error) {
-          console.log('⚠️ SDK composeCast 실패, 웹 방식으로 폴백:', error);
-          // 폴백: 웹 방식
-          window.location.href = farcasterUrl;
-        }
-      } else {
-        // SDK가 없으면 웹 방식으로 폴백
-        console.log('⚠️ SDK composeCast 없음, 웹 방식으로 폴백');
-        window.location.href = farcasterUrl;
-      }
+      // 웹 폴백 방식: 항상 window.location.href로 리다이렉트
+      console.log('🌐 웹 폴백 방식: warpcast.com으로 리다이렉트');
+      window.location.href = farcasterUrl;
       
     } catch (error) {
       console.error('Farcaster 공유 실패:', error);
@@ -265,26 +234,28 @@ function Home() {
         sdkComposeCast: !!sdk?.actions?.composeCast
       });
       
-      if (sdk && sdk.actions && sdk.actions.composeCast) {
-        // SDK가 있으면 composeCast 사용 (앱/웹 모두)
-        const embeds = ["https://farcaster.xyz/miniapps/nSqoh1xZsxF3/base-revolt"];
-        const result = await sdk.actions.composeCast({ 
-          text: "🚗 Check out Base Revolt - Drive RC Car remotely!",
-          embeds
-        });
-        
-        if (result?.cast) {
-          localStorage.setItem('base-revolt-shared', Date.now().toString());
-          setHasShared(true);
+      // Reown allowlist 수정 후 SDK 사용 시도
+      if (isFarcasterEnv && sdk?.actions?.composeCast) {
+        console.log('🎯 Farcaster 환경 감지 - SDK composeCast 사용');
+        try {
+          const appUrl = window.location.origin;
+          const text = "🚙 Check out Base Revolt\n\nControl a real RC car from your mini app!\n\n- Base Revolt 🚗";
+          
+          await sdk.actions.composeCast({
+            text: text,
+            embeds: [appUrl]
+          });
           console.log('✅ SDK composeCast 성공');
-        } else {
-          console.log('❌ 사용자가 포스팅을 취소함');
+          return;
+        } catch (sdkError) {
+          console.log('❌ SDK composeCast 실패, 웹 방식으로 폴백:', sdkError);
+          // SDK 실패 시 웹 방식으로 폴백
         }
-      } else {
-        // SDK composeCast 함수가 없으면 웹 방식으로 폴백
-        console.log('⚠️ SDK composeCast 함수 없음 - 웹 방식 사용');
-        await shareToFarcasterWeb();
       }
+      
+      // 웹 방식 사용 (SDK 없거나 실패한 경우)
+      console.log('🌐 웹 방식으로 공유');
+      await shareToFarcasterWeb();
     } catch (error) {
       console.error('Share failed:', error);
       console.log('💡 공유에 실패했습니다.');
