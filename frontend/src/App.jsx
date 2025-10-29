@@ -1,9 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { WagmiProvider } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { config } from './config/wagmi';
 import { base } from 'wagmi/chains';
 import { useEffect } from 'react';
 
@@ -12,11 +9,10 @@ import './styles/onchainkit-custom.css'; // 커스텀 OnchainKit 스타일
 import './styles/wallet-glow.css'; // 지갑 버튼 빛나는 효과
 import './styles/wallet-modal-responsive.css'; // ConnectWallet 모달 미니앱 최적화
 
+import { ConnectorProvider } from './providers/ConnectorProvider';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Play from './pages/Play';
-
-const queryClient = new QueryClient();
 
 function AppContent() {
   const location = useLocation();
@@ -51,41 +47,28 @@ function AppContent() {
 
 function App() {
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-                <OnchainKitProvider
-                  chain={base}
-                  config={{
-                    appearance: {
-                      name: 'Base Revolt', // 모달 헤더에 표시될 앱 이름
-                      logo: '/base-revolt logo.png', // 모달 헤더 로고
-                      mode: 'auto',
-                      theme: 'base',
-                    },
-                    wallet: {
-                      display: 'modal', // OnchainKit 기본 모달 사용
-                      preference: 'all',
-                      termsUrl: 'https://example.com/terms',
-                      privacyUrl: 'https://example.com/privacy',
-                      supportedWallets: {
-                        rabby: true,
-                        trust: true,
-                        frame: true,
-                      },
-                    },
-                  }}
-                >
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <AppContent />
-          </BrowserRouter>
-        </OnchainKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ConnectorProvider>
+      <OnchainKitProvider
+        chain={base}
+        config={{
+          appearance: {
+            name: 'Base Revolt', // 모달 헤더에 표시될 앱 이름
+            logo: '/base-revolt logo.png', // 모달 헤더 로고
+            mode: 'auto',
+            theme: 'base',
+          },
+        }}
+      >
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <AppContent />
+        </BrowserRouter>
+      </OnchainKitProvider>
+    </ConnectorProvider>
   );
 }
 
