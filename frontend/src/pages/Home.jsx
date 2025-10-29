@@ -353,6 +353,8 @@ function Home() {
   useEffect(() => {
     const checkSharedStatus = () => {
       const sharedToday = localStorage.getItem('farcasterSharedToday');
+      console.log('🔍 공유 상태 확인:', { sharedToday, timestamp: new Date().toISOString() });
+      
       if (sharedToday === 'true') {
         setHasShared(true);
         console.log('✅ 오늘 이미 공유함 - Demo Play 버튼 표시');
@@ -363,6 +365,9 @@ function Home() {
     };
 
     checkSharedStatus();
+    
+    // 버전 정보 출력
+    console.log('🚀 Base Revolt 앱 로드됨 - 버전:', new Date().toISOString());
   }, []);
 
   // 디버깅: 인증 상태 확인 (필요시만)
