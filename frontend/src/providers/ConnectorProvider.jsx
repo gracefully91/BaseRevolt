@@ -30,7 +30,13 @@ export function ConnectorProvider({ children }) {
         {
           groupName: 'Recommended',
           wallets: isInMiniApp
-            ? [farcasterMiniAppWallet] // Only Farcaster wallet in Mini-App
+            ? [ // Farcaster + regular wallets in Mini-App
+                farcasterMiniAppWallet,
+                coinbaseWallet,
+                metaMaskWallet,
+                walletConnectWallet,
+                rainbowWallet,
+              ]
             : [ // Regular wallets outside Mini-App
                 coinbaseWallet,
                 metaMaskWallet,
