@@ -8,6 +8,8 @@ import PaymentModal from '../components/PaymentModal';
 import VehicleSelectionModal from '../components/VehicleSelectionModal';
 import WaitingQueueModal from '../components/WaitingQueueModal';
 import QueueNotificationModal from '../components/QueueNotificationModal';
+import { MiniAppConnectButtons } from '../components/MiniAppConnectButtons';
+import { useIsInMiniApp } from '../hooks/useIsInMiniApp';
 import { vehicleManager } from '../utils/vehicleData';
 import './Home.css';
 
@@ -15,6 +17,7 @@ function Home() {
   const navigate = useNavigate();
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
+  const { isInMiniApp } = useIsInMiniApp();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -643,6 +646,13 @@ function Home() {
                 <li>Blockchain ownership proof</li>
               </ul>
             </div>
+          </div>
+        )}
+
+        {/* Farcaster Mini-App에서 연결되지 않은 경우 전용 버튼 표시 */}
+        {!isConnected && isInMiniApp && (
+          <div className="miniapp-connect-section">
+            <MiniAppConnectButtons />
           </div>
         )}
 
