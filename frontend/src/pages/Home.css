@@ -1,15 +1,20 @@
 .home-container {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .home-content {
   max-width: 800px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .hero-section {
@@ -273,6 +278,10 @@
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
+  .home-container {
+    padding: 10px;
+  }
+
   .title {
     font-size: 2.5rem;
   }
