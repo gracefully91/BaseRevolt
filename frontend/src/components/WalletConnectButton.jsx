@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useDisconnect, useConnect, useSwitchChain } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { 
   Wallet,
   ConnectWallet,
@@ -85,13 +86,15 @@ export default function WalletConnectButton() {
 
   const currentChain = getCurrentChainInfo();
 
-  // 연결되지 않은 경우 - OnchainKit 기본 모달 사용
+  // 연결되지 않은 경우 - RainbowKit ConnectButton 사용 (지갑 선택 UI 제공)
   if (!isConnected) {
     return (
       <div className="wallet-connect-container custom-wallet-button">
-        <Wallet>
-          <ConnectWallet className="custom-connect-wallet-btn" />
-        </Wallet>
+        <ConnectButton 
+          chainStatus="icon"
+          showBalance={false}
+          accountStatus="address"
+        />
       </div>
     );
   }
