@@ -1,6 +1,6 @@
 // wrapWalletForMiniApp.js - RainbowKit Wallet 래퍼 (모바일 딥링크 자동 오픈)
 
-import { buildDeeplink, openDeeplink } from './wcDeeplink';
+import { buildDeeplinkCandidates, tryDeeplinkCandidates } from './wcDeeplink';
 
 /**
  * RainbowKit Wallet을 래핑하여 모바일 환경에서 딥링크를 자동으로 엽니다
@@ -21,10 +21,10 @@ export function wrapWalletForMiniApp(walletFactory, target) {
         ...wallet.mobile,
         getUri: (wcUri) => {
           console.log(`📱 Mobile getUri called for ${target}:`, wcUri.substring(0, 30) + '...');
-          const deeplinkUrl = buildDeeplink(target, wcUri);
+          const candidates = buildDeeplinkCandidates(target, wcUri);
           
-          // 딥링크로 지갑 앱 열기
-          openDeeplink(deeplinkUrl);
+          // 딥링크 후보들로 지갑 앱 열기 시도
+          tryDeeplinkCandidates(candidates);
           
           // RainbowKit 내부가 문자열을 필요로 하므로 반환 유지
           return wcUri;
@@ -36,10 +36,10 @@ export function wrapWalletForMiniApp(walletFactory, target) {
         ...wallet.qrCode,
         getUri: (wcUri) => {
           console.log(`🔲 QR getUri called for ${target}:`, wcUri.substring(0, 30) + '...');
-          const deeplinkUrl = buildDeeplink(target, wcUri);
+          const candidates = buildDeeplinkCandidates(target, wcUri);
           
-          // 딥링크로 지갑 앱 열기
-          openDeeplink(deeplinkUrl);
+          // 딥링크 후보들로 지갑 앱 열기 시도
+          tryDeeplinkCandidates(candidates);
           
           return wcUri;
         },
