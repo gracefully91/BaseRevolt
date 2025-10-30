@@ -561,6 +561,16 @@ function Home() {
       queueLength: vehicle.waitingQueue?.length 
     });
     
+    // 유지보수 또는 오프라인 차량은 결제/대기열 이동 금지
+    if (vehicle.status === 'maintenance' || vehicle.status === 'offline') {
+      setSelectedVehicle(vehicle);
+      const statusMessage = vehicle.status === 'maintenance' 
+        ? '🚧 This vehicle is under maintenance. Please select another vehicle.'
+        : '⚠️ This vehicle is offline. Please select another vehicle.';
+      alert(statusMessage);
+      return;
+    }
+    
     setSelectedVehicle(vehicle);
     vehicleManager.selectVehicle(vehicle);
     

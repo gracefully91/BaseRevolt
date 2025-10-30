@@ -49,7 +49,7 @@ export default function VehicleSelectionModal({
           {vehicles.map((vehicle) => (
             <div 
               key={vehicle.id}
-              className={`vehicle-card ${selectedVehicle?.id === vehicle.id ? 'selected' : ''}`}
+              className={`vehicle-card ${selectedVehicle?.id === vehicle.id ? 'selected' : ''} ${vehicle.status === 'maintenance' ? 'maintenance' : ''} ${vehicle.status === 'offline' ? 'offline' : ''}`}
               onClick={() => handleVehicleSelect(vehicle)}
             >
               <img 
@@ -67,6 +67,7 @@ export default function VehicleSelectionModal({
                         <span className="blinking-dot">🟢</span> Available
                       </>
                     ) : vehicle.status === 'busy' ? '🔴 In Use' : 
+                      vehicle.status === 'offline' ? '🔴 Offline' :
                      '🟡 Maintenance'}
                   </span>
                 </div>
@@ -87,7 +88,9 @@ export default function VehicleSelectionModal({
                 )}
               </div>
               {selectedVehicle?.id === vehicle.id && (
-                <div className="selection-indicator">✅</div>
+                <div className="selection-indicator">
+                  {vehicle.status === 'maintenance' ? '🚧' : vehicle.status === 'offline' ? '⚠️' : '✅'}
+                </div>
               )}
             </div>
           ))}
