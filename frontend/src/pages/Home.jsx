@@ -411,6 +411,38 @@ function Home() {
           type: 'getQueueStatus',
           carId: 'car-001'
         }));
+
+        // WS가 열린 경우에만 헬스 체크로 available 전환 허용
+        (async () => {
+          try {
+            const httpBase = WS_SERVER_URL.replace('ws://', 'http://').replace('wss://', 'https://');
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 3000);
+            const res = await fetch(`${httpBase}/health`, { signal: controller.signal });
+            clearTimeout(timer);
+            const ok = res.ok;
+            const vehicle = vehicleManager.getVehicleById('car-001');
+            if (vehicle) {
+              if (ok) {
+                if (vehicle.status !== 'busy') {
+                  vehicle.status = 'available';
+                }
+                setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'ok' }));
+              } else {
+                vehicle.currentUser = null;
+                vehicle.status = 'offline';
+                setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'fail' }));
+              }
+            }
+          } catch (e) {
+            const vehicle = vehicleManager.getVehicleById('car-001');
+            if (vehicle) {
+              vehicle.currentUser = null;
+              vehicle.status = 'offline';
+              setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'error' }));
+            }
+          }
+        })();
       };
 
       ws.onmessage = (event) => {
@@ -466,37 +498,6 @@ function Home() {
       isConnectingRef.current = false;
     }
 
-    // 헬스 체크로 렌더/스트림 서버 상태 확인 후 차량 상태 반영
-    (async () => {
-      try {
-        const httpBase = WS_SERVER_URL.replace('ws://', 'http://').replace('wss://', 'https://');
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 3000);
-        const res = await fetch(`${httpBase}/health`, { signal: controller.signal });
-        clearTimeout(timer);
-        const ok = res.ok;
-        const vehicle = vehicleManager.getVehicleById('car-001');
-        if (vehicle) {
-          if (ok) {
-            if (vehicle.status !== 'busy') {
-              vehicle.status = 'available';
-            }
-            setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'ok' }));
-          } else {
-            vehicle.currentUser = null;
-            vehicle.status = 'offline';
-            setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'fail' }));
-          }
-        }
-      } catch (e) {
-        const vehicle = vehicleManager.getVehicleById('car-001');
-        if (vehicle) {
-          vehicle.currentUser = null;
-          vehicle.status = 'offline';
-          setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'error' }));
-        }
-      }
-    })();
   }, [showVehicleSelection]);
 
   // 서버 대기열 상태로 차량 정보 업데이트
