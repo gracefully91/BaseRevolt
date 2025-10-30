@@ -7,7 +7,7 @@ export const defaultVehicles = [
     name: 'Base Revolt Car',
     description: 'Real RC car controlled via ESP32 and web interface',
     image: '/static-gamgyul.png',
-    status: 'available',
+    status: 'offline',
     features: ['Real-time Video', 'Web Control', 'ESP32 Powered'],
     waitingQueue: [], // 대기열 배열 (실제로는 비어있음)
     currentUser: null, // 현재 사용자
@@ -30,7 +30,7 @@ export class VehicleManager {
       vehicle.waitingQueue = [];
       vehicle.estimatedWaitTime = 0;
       vehicle.currentUser = null;
-      vehicle.status = 'available';
+      vehicle.status = 'offline';
     });
   }
 

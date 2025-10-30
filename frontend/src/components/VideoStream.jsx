@@ -173,7 +173,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
           
           ws.send(JSON.stringify({
             type: 'requestSession',
-            carId: 'car01',
+            carId: 'car-001',
             wallet: wallet,
             tier: sessionTier
           }));

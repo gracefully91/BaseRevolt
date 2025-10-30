@@ -409,7 +409,7 @@ function Home() {
         // 대기열 상태 요청
         ws.send(JSON.stringify({
           type: 'getQueueStatus',
-          carId: 'car01'
+          carId: 'car-001'
         }));
       };
 
@@ -439,6 +439,13 @@ function Home() {
         console.log('❌ WebSocket disconnected');
         wsRef.current = null;
         isConnectingRef.current = false;
+        // 오프라인 처리
+        const vehicle = vehicleManager.getVehicleById('car-001');
+        if (vehicle) {
+          vehicle.currentUser = null;
+          vehicle.status = 'offline';
+          setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', offline: true }));
+        }
       };
 
       ws.onerror = (error) => {
@@ -446,16 +453,56 @@ function Home() {
         isConnectingRef.current = false;
         // 서버가 꺼져있으면 연결하지 않음
         ws.close();
+        // 오프라인 처리
+        const vehicle = vehicleManager.getVehicleById('car-001');
+        if (vehicle) {
+          vehicle.currentUser = null;
+          vehicle.status = 'offline';
+          setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', offline: true }));
+        }
       };
     } catch (error) {
       console.error('❌ WebSocket connection error:', error);
       isConnectingRef.current = false;
     }
+
+    // 헬스 체크로 렌더/스트림 서버 상태 확인 후 차량 상태 반영
+    (async () => {
+      try {
+        const httpBase = WS_SERVER_URL.replace('ws://', 'http://').replace('wss://', 'https://');
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(`${httpBase}/health`, { signal: controller.signal });
+        clearTimeout(timer);
+        const ok = res.ok;
+        const vehicle = vehicleManager.getVehicleById('car-001');
+        if (vehicle) {
+          if (ok) {
+            if (vehicle.status !== 'busy') {
+              vehicle.status = 'available';
+            }
+            setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'ok' }));
+          } else {
+            vehicle.currentUser = null;
+            vehicle.status = 'offline';
+            setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'fail' }));
+          }
+        }
+      } catch (e) {
+        const vehicle = vehicleManager.getVehicleById('car-001');
+        if (vehicle) {
+          vehicle.currentUser = null;
+          vehicle.status = 'offline';
+          setQueueStatus(prev => ({ ...(prev || {}), carId: 'car-001', health: 'error' }));
+        }
+      }
+    })();
   }, [showVehicleSelection]);
 
   // 서버 대기열 상태로 차량 정보 업데이트
   const updateVehicleFromQueueStatus = (status) => {
-    const vehicle = vehicleManager.getVehicleById('car-001');
+    const targetId = status.carId || 'car-001';
+    const vehicle = vehicleManager.getVehicleById(targetId);
     if (!vehicle) return;
 
     // 현재 사용자 정보 업데이트
@@ -491,7 +538,7 @@ function Home() {
       console.log('🔄 Requesting queue status refresh...');
       wsRef.current.send(JSON.stringify({
         type: 'getQueueStatus',
-        carId: 'car01'
+        carId: 'car-001'
       }));
     }
   };
