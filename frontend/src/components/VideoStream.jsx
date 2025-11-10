@@ -69,6 +69,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
         const message = JSON.stringify({ 
           type: 'control',
           command: command,
+          carId: 'CAR01',  // v2.0: 디바이스 ID 명시
           sessionId: sessionId
         });
         wsRef.current.send(message);
@@ -102,6 +103,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
         const message = JSON.stringify({ 
           type: 'control',
           command: 'stop',
+          carId: 'CAR01',  // v2.0: 디바이스 ID 명시
           sessionId: sessionId
         });
         wsRef.current.send(message);
@@ -173,7 +175,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
           
           ws.send(JSON.stringify({
             type: 'requestSession',
-            carId: 'car01',
+            carId: 'CAR01',  // v2.0: 디바이스 ID와 일치
             wallet: wallet,
             tier: sessionTier
           }));
@@ -436,7 +438,9 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
     console.log(`🎮 Sending command: ${command}`);
     const message = JSON.stringify({
       type: 'control',
-      command: command
+      command: command,
+      carId: 'CAR01',  // v2.0: 디바이스 ID 명시
+      sessionId: sessionId
     });
     
     wsRef.current.send(message);

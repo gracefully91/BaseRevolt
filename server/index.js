@@ -12,11 +12,10 @@ const server = createServer(app);
 // WebSocket 서버 생성
 const wss = new WebSocketServer({ server });
 
-// 연결된 클라이언트 관리
-const clients = {
-  rcCar: null,      // ESP32-CAM RC카
-  webUsers: new Set() // 웹 사용자들
-};
+// 연결된 클라이언트 관리 (v2.0: 디바이스 분리)
+// devices: Map<deviceId, { control: ws, camera: ws, metadata }>
+const devices = new Map();
+const webUsers = new Set();  // 웹 사용자들
 
 // 세션 관리
 const activeSessions = new Map(); // carId → session 정보
@@ -40,13 +39,19 @@ const DEMO_QUOTA_EXPIRY = 24 * 60 * 60 * 1000;
 
 // 헬스체크 엔드포인트 (Render 무료티어용)
 app.get('/', (req, res) => {
+  const deviceStats = {};
+  devices.forEach((device, deviceId) => {
+    deviceStats[deviceId] = {
+      control: device.control ? 'connected' : 'disconnected',
+      camera: device.camera ? 'connected' : 'disconnected'
+    };
+  });
+  
   res.json({
     status: 'running',
-    service: 'Base Revolt WebSocket Server',
-    clients: {
-      rcCar: clients.rcCar ? 'connected' : 'disconnected',
-      webUsers: clients.webUsers.size
-    }
+    service: 'Base Revolt WebSocket Server (v2.0 - Split Architecture)',
+    devices: deviceStats,
+    webUsers: webUsers.size
   });
 });
 
@@ -59,61 +64,84 @@ wss.on('connection', (ws, req) => {
   console.log('New connection from:', req.socket.remoteAddress);
   
   let clientType = null;
+  let deviceId = null;
+  let deviceRole = null;
   
-  // 헤더로 장치 타입 확인
+  // 헤더로 장치 타입 확인 (하위 호환)
   const deviceType = req.headers['x-device-type'];
   
   if (deviceType === 'rc-car') {
-    clientType = 'rc-car';
-    
-    // 기존 RC카 연결이 있다면 끊기
-    if (clients.rcCar) {
-      clients.rcCar.close();
-    }
-    
-    clients.rcCar = ws;
-    console.log('✅ RC Car connected');
-    
-    // 모든 웹 사용자에게 RC카 연결 알림
-    broadcastToWebUsers({
-      type: 'rc-car-status',
-      status: 'connected'
-    });
+    // 기존 ESP32 (하위 호환) - register 메시지 대기
+    clientType = 'device-pending';
+    console.log('⏳ Legacy device connected, waiting for registration...');
   } else {
+    // 웹 사용자
     clientType = 'web-user';
-    clients.webUsers.add(ws);
-    console.log(`✅ Web user connected (total: ${clients.webUsers.size})`);
+    webUsers.add(ws);
+    console.log(`✅ Web user connected (total: ${webUsers.size})`);
     
-    // 새 사용자에게 RC카 상태 알림
-    if (clients.rcCar) {
-      ws.send(JSON.stringify({
-        type: 'rc-car-status',
-        status: 'connected'
-      }));
-    } else {
-      ws.send(JSON.stringify({
-        type: 'rc-car-status',
-        status: 'disconnected'
-      }));
-    }
+    // 새 사용자에게 모든 디바이스 상태 알림
+    const anyCarConnected = Array.from(devices.values()).some(
+      device => device.control || device.camera
+    );
+    
+    ws.send(JSON.stringify({
+      type: 'rc-car-status',
+      status: anyCarConnected ? 'connected' : 'disconnected'
+    }));
   }
   
   // 메시지 수신 처리
   ws.on('message', (message) => {
-    if (clientType === 'rc-car') {
-      // RC카로부터 영상 데이터 → 모든 웹 사용자에게 브로드캐스트
-      if (message instanceof Buffer) {
-        // 바이너리 데이터 (JPEG 프레임)
-        broadcastToWebUsers(message, true);
-      } else {
-        // 텍스트 데이터 (상태 정보 등)
+    // 디바이스 등록 처리 (ESP32에서 첫 메시지)
+    if (clientType === 'device-pending' || clientType === 'device-control' || clientType === 'device-camera') {
+      if (!(message instanceof Buffer)) {
         try {
           const data = JSON.parse(message.toString());
-          console.log('RC Car message:', data);
+          
+          // 디바이스 등록
+          if (data.type === 'register') {
+            deviceId = data.deviceId;
+            deviceRole = data.role;
+            
+            // 디바이스 레지스트리에 추가
+            if (!devices.has(deviceId)) {
+              devices.set(deviceId, {});
+            }
+            
+            const device = devices.get(deviceId);
+            device[deviceRole] = ws;
+            
+            // 웹소켓에 메타데이터 저장
+            ws.deviceId = deviceId;
+            ws.role = deviceRole;
+            clientType = `device-${deviceRole}`;
+            
+            console.log(`✅ Device registered: ${deviceId} (${deviceRole})`);
+            
+            // 웹 사용자들에게 디바이스 상태 브로드캐스트
+            broadcastToWebUsers({
+              type: 'device-status',
+              deviceId,
+              role: deviceRole,
+              status: 'connected'
+            });
+            
+            return;
+          }
+          
+          console.log(`Device ${deviceRole} message:`, data);
         } catch (e) {
-          // JSON 아닌 경우 무시
+          // JSON 파싱 실패 - 바이너리일 수 있음
         }
       }
+      
+      // 카메라 디바이스에서 바이너리(영상 프레임) 수신
+      if (message instanceof Buffer && deviceRole === 'camera') {
+        // JPEG 프레임 → 모든 웹 사용자에게 브로드캐스트
+        broadcastToWebUsers(message, true);
+      }
+      
     } else if (clientType === 'web-user') {
       // 웹 사용자로부터 메시지 처리
       try {
@@ -155,18 +183,42 @@ wss.on('connection', (ws, req) => {
   
   // 연결 종료 처리
   ws.on('close', () => {
-    if (clientType === 'rc-car') {
-      console.log('❌ RC Car disconnected');
-      clients.rcCar = null;
+    if (clientType && clientType.startsWith('device-')) {
+      console.log(`❌ Device disconnected: ${deviceId} (${deviceRole})`);
       
-      // 모든 웹 사용자에게 RC카 연결 해제 알림
+      // 디바이스 레지스트리에서 제거
+      if (deviceId && devices.has(deviceId)) {
+        const device = devices.get(deviceId);
+        if (device[deviceRole]) {
+          delete device[deviceRole];
+        }
+        
+        // 디바이스의 모든 역할이 끊어졌으면 제거
+        if (!device.control && !device.camera) {
+          devices.delete(deviceId);
+        }
+      }
+      
+      // 웹 사용자들에게 디바이스 상태 브로드캐스트
       broadcastToWebUsers({
-        type: 'rc-car-status',
+        type: 'device-status',
+        deviceId,
+        role: deviceRole,
         status: 'disconnected'
       });
+      
+      // 하위 호환: rc-car-status도 전송
+      const anyCarConnected = Array.from(devices.values()).some(
+        device => device.control || device.camera
+      );
+      broadcastToWebUsers({
+        type: 'rc-car-status',
+        status: anyCarConnected ? 'connected' : 'disconnected'
+      });
+      
     } else if (clientType === 'web-user') {
-      clients.webUsers.delete(ws);
-      console.log(`❌ Web user disconnected (remaining: ${clients.webUsers.size})`);
+      webUsers.delete(ws);
+      console.log(`❌ Web user disconnected (remaining: ${webUsers.size})`);
     }
   });
   
@@ -180,8 +232,8 @@ wss.on('connection', (ws, req) => {
 function broadcastToWebUsers(data, isBinary = false) {
   const message = isBinary ? data : JSON.stringify(data);
   
-  clients.webUsers.forEach((client) => {
-    if (client.readyState === client.OPEN) {
+  webUsers.forEach((client) => {
+    if (client.readyState === 1) { // WebSocket.OPEN = 1
       client.send(message);
     }
   });
@@ -239,9 +291,10 @@ function endSession(carId, reason = 'manual') {
     }));
   }
   
-  // RC카에 정지 명령
-  if (clients.rcCar && clients.rcCar.readyState === clients.rcCar.OPEN) {
-    clients.rcCar.send(JSON.stringify({
+  // RC카 조종 디바이스에 정지 명령
+  const device = devices.get(carId);
+  if (device && device.control && device.control.readyState === 1) {
+    device.control.send(JSON.stringify({
       type: 'control',
       command: 'stop'
     }));
@@ -562,7 +615,7 @@ function handleEndSession(data) {
 }
 
 function handleControlCommand(ws, data) {
-  const { sessionId, command } = data;
+  const { sessionId, command, carId } = data;
   
   if (!sessionId) {
     ws.send(JSON.stringify({
@@ -574,9 +627,12 @@ function handleControlCommand(ws, data) {
   
   // 세션 검증
   let validSession = null;
-  for (const [carId, session] of activeSessions.entries()) {
+  let sessionCarId = carId;  // 명시적 carId 우선
+  
+  for (const [cid, session] of activeSessions.entries()) {
     if (session.sessionId === sessionId) {
       validSession = session;
+      sessionCarId = cid;
       break;
     }
   }
@@ -589,18 +645,20 @@ function handleControlCommand(ws, data) {
     return;
   }
   
-  // 세션이 유효하면 RC카로 명령 전달
-  console.log(`🎮 Control command: ${command} from session: ${sessionId}`);
+  // 세션이 유효하면 control 디바이스로 명령 전달
+  console.log(`🎮 Control command: ${command} from session: ${sessionId} to car: ${sessionCarId}`);
   
-  if (clients.rcCar && clients.rcCar.readyState === clients.rcCar.OPEN) {
-    clients.rcCar.send(JSON.stringify({
+  const device = devices.get(sessionCarId || 'CAR01');  // 기본값 CAR01
+  
+  if (device && device.control && device.control.readyState === 1) {
+    device.control.send(JSON.stringify({
       type: 'control',
       command: command
     }));
   } else {
     ws.send(JSON.stringify({
       type: 'error',
-      message: 'RC car not connected'
+      message: 'Control device not connected'
     }));
   }
 }
@@ -678,15 +736,19 @@ server.listen(PORT, () => {
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing server');
   
-  // 모든 클라이언트 연결 종료
-  if (clients.rcCar) {
-    clients.rcCar.close();
-  }
-  clients.webUsers.forEach(client => client.close());
+  // 모든 디바이스 연결 종료
+  devices.forEach((device) => {
+    if (device.control) device.control.close();
+    if (device.camera) device.camera.close();
+  });
+  
+  // 모든 웹 사용자 연결 종료
+  webUsers.forEach(client => client.close());
   
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
   });
 });
+
 
