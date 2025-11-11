@@ -29,11 +29,11 @@
 const char* ssid = "YOUR_WIFI_SSID";         // TODO: WiFi 이름으로 변경
 const char* password = "YOUR_WIFI_PASSWORD"; // TODO: WiFi 비밀번호로 변경
 
-// WebSocket 서버 설정 (Render)
-const char* ws_host = "base-revolt-server.onrender.com";  // TODO: Render URL로 변경
+const char* ws_host = "base-revolt-server.onrender.com";
 const int ws_port = 443;
-const char* ws_path = "/";
 const bool ws_ssl = true;
+
+const char* ws_path = "/";
 
 // 디바이스 ID 설정 (조종 보드와 동일한 ID 사용!)
 const char* DEVICE_ID = "CAR01";  // TODO: 조종 보드와 똑같은 ID 사용
@@ -42,25 +42,25 @@ const char* DEVICE_ROLE = "camera";
 // ==================== ESP32-S3 WROOM 카메라 핀 정의 ====================
 // TODO: 실제 사용하는 ESP32-S3 개발보드의 핀맵에 맞게 수정
 // 아래는 일반적인 ESP32-S3-CAM 모듈의 핀맵 예시입니다.
-
+  
 #define PWDN_GPIO_NUM     -1   // Power down 핀 (사용 안 함)
 #define RESET_GPIO_NUM    -1   // Reset 핀 (사용 안 함)
-#define XCLK_GPIO_NUM     10   // 외부 클럭
-#define SIOD_GPIO_NUM     40   // I2C Data
-#define SIOC_GPIO_NUM     39   // I2C Clock
+#define XCLK_GPIO_NUM     15   // 외부 클럭
+#define SIOD_GPIO_NUM     4    // I2C Data (SDA)
+#define SIOC_GPIO_NUM     5    // I2C Clock (SCL)
 
-// 카메라 데이터 핀
-#define Y9_GPIO_NUM       48   // D9
-#define Y8_GPIO_NUM       46   // D8
-#define Y7_GPIO_NUM       8    // D7
-#define Y6_GPIO_NUM       7    // D6
-#define Y5_GPIO_NUM       4    // D5
-#define Y4_GPIO_NUM       41   // D4
-#define Y3_GPIO_NUM       40   // D3
-#define Y2_GPIO_NUM       39   // D2
+// 카메라 데이터 핀 (ESP32-S3 N16R8 + OV3660 기준)
+#define Y9_GPIO_NUM       16   // D9
+#define Y8_GPIO_NUM       17   // D8
+#define Y7_GPIO_NUM       18   // D7
+#define Y6_GPIO_NUM       12   // D6
+#define Y5_GPIO_NUM       10   // D5
+#define Y4_GPIO_NUM        8   // D4
+#define Y3_GPIO_NUM        9   // D3
+#define Y2_GPIO_NUM       11   // D2
 
-#define VSYNC_GPIO_NUM    6    // 수직 동기
-#define HREF_GPIO_NUM     42   // 수평 참조
+#define VSYNC_GPIO_NUM     6   // 수직 동기
+#define HREF_GPIO_NUM      7   // 수평 참조
 #define PCLK_GPIO_NUM     13   // 픽셀 클럭
 
 /* 
@@ -147,6 +147,7 @@ void setupWiFi() {
 // ==================== WebSocket Setup ====================
 void setupWebSocket() {
   Serial.println("Setting up WebSocket...");
+  Serial.printf("Target: %s://%s:%d%s\n", ws_ssl ? "wss" : "ws", ws_host, ws_port, ws_path);
   
   if (ws_ssl) {
     webSocket.beginSSL(ws_host, ws_port, ws_path);
@@ -240,15 +241,12 @@ void setupCamera() {
   config.pixel_format = PIXFORMAT_JPEG;
   
   // 프레임 크기 설정 (SVGA = 800x600)
-  if(psramFound()){
-    config.frame_size = FRAMESIZE_SVGA;  // 800x600
-    config.jpeg_quality = 12;            // 0-63 (낮을수록 고화질)
-    config.fb_count = 2;                 // 프레임 버퍼 2개 (부드러운 스트리밍)
-  } else {
-    config.frame_size = FRAMESIZE_SVGA;
-    config.jpeg_quality = 12;
-    config.fb_count = 1;
-  }
+  const bool hasPsram = psramFound();
+  Serial.printf("PSRAM detected: %s\n", hasPsram ? "yes" : "no");
+
+  config.frame_size = FRAMESIZE_VGA;   // 초기 테스트는 640x480
+  config.jpeg_quality = 12;            // 0-63 (낮을수록 고화질)
+  config.fb_count = hasPsram ? 2 : 1;  // PSRAM 있으면 더블 버퍼
   
   // 카메라 초기화
   esp_err_t err = esp_camera_init(&config);
@@ -260,11 +258,11 @@ void setupCamera() {
   // 센서 설정 조정
   sensor_t * s = esp_camera_sensor_get();
   if (s != NULL) {
-    // 수직 반전 (필요 시)
-    // s->set_vflip(s, 1);  
+    Serial.printf("Camera sensor PID: 0x%x\n", s->id.PID);
     
-    // 수평 반전 (필요 시)
-    // s->set_hmirror(s, 1);
+    // OV3660은 기본적으로 상하/좌우가 반전되어 있을 수 있음
+    s->set_vflip(s, 1);
+    s->set_hmirror(s, 1);
     
     // 화이트밸런스 자동
     s->set_whitebal(s, 1);

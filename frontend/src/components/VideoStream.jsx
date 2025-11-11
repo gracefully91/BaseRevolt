@@ -282,10 +282,6 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
                     clearTimeout(stableConnectionTimeoutRef.current);
                     stableConnectionTimeoutRef.current = null;
                   }
-                  
-                  if (!isDemo) {
-                    clearCanvas();
-                  }
                 } else {
                   // RC카 연결됨 - 3초 대기 후 안정적인 연결로 간주 (더 관대하게)
                   console.log('⏳ RC Car connected, waiting 3 seconds for stable connection...');
@@ -330,6 +326,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
           }
           
           if (!isDemo) {
+            // 연결이 완전히 종료된 경우에만 캔버스를 초기화
             clearCanvas();
           }
           
