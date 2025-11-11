@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { WS_SERVER_URL } from '../config/contracts';
 import './VideoStream.css';
 
-function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls = true, sessionId, setSessionId, sessionTier, walletId }) {
+function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls = true, sessionId, setSessionId, sessionTier }) {
   const { address } = useAccount();
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
@@ -69,6 +69,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
         const message = JSON.stringify({ 
           type: 'control',
           command: command,
+          carId: 'CAR01',  // v2.0: 디바이스 ID 명시
           sessionId: sessionId
         });
         wsRef.current.send(message);
@@ -102,6 +103,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
         const message = JSON.stringify({ 
           type: 'control',
           command: 'stop',
+          carId: 'CAR01',  // v2.0: 디바이스 ID 명시
           sessionId: sessionId
         });
         wsRef.current.send(message);
@@ -164,16 +166,16 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
           // Identify as web user
           ws.send(JSON.stringify({ type: 'client', device: 'web-user' }));
           
-          // 세션 요청 - 상위 컴포넌트에서 전달받은 고정 wallet ID 사용
-          const wallet = walletId || (isDemo 
+          // 세션 요청
+          const wallet = isDemo 
             ? 'demo-user-' + Math.random().toString(36).substr(2, 9) 
-            : (address || 'anonymous-' + Math.random().toString(36).substr(2, 9)));
+            : (address || 'anonymous-' + Math.random().toString(36).substr(2, 9));
           
-          console.log(`📝 Requesting session: ${sessionTier}, wallet: ${wallet.substring(0, 20)}...`);
+          console.log(`📝 Requesting session: ${sessionTier}, wallet: ${wallet.substring(0, 10)}...`);
           
           ws.send(JSON.stringify({
             type: 'requestSession',
-            carId: 'car-001',
+            carId: 'CAR01',  // v2.0: 디바이스 ID와 일치
             wallet: wallet,
             tier: sessionTier
           }));
@@ -222,7 +224,7 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
                     
                     wsRef.current.send(JSON.stringify({
                       type: 'joinQueue',
-                      carId: 'car01',
+                      carId: 'CAR01',
                       wallet: wallet,
                       tier: sessionTier
                     }));
@@ -426,37 +428,22 @@ function VideoStream({ onConnectionChange, isDemo, onSendCommand, showControls =
     }
   };
 
-  // 제어 명령 전송 함수 (UDP 사용)
-  const sendCommand = async (command) => {
+  // 제어 명령 전송 함수
+  const sendCommand = (command) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       console.warn('❌ Cannot send command: WebSocket not connected');
       return false;
     }
     
-    console.log(`🎮 Sending UDP command: ${command}, sessionId: ${sessionId}`);
+    console.log(`🎮 Sending command: ${command}`);
+    const message = JSON.stringify({
+      type: 'control',
+      command: command,
+      carId: 'CAR01',  // v2.0: 디바이스 ID 명시
+      sessionId: sessionId
+    });
     
-    try {
-      // HTTP POST로 UDP 명령 전달
-      const response = await fetch(`${WS_SERVER_URL.replace('ws://', 'http://').replace('wss://', 'https://')}/udp-command`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          command: command,
-          sessionId: sessionId
-        })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log(`✅ UDP command sent successfully: ${result.command}`);
-      } else {
-        console.error('❌ UDP command failed:', response.statusText);
-      }
-    } catch (error) {
-      console.error('❌ UDP command error:', error);
-    }
+    wsRef.current.send(message);
     
     // 명령 전송 시 연결 상태 즉시 확인 (하드웨어가 움직이면 연결됨)
     lastCommandTimeRef.current = Date.now();

@@ -1,53 +1,21 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
-import { createSocket } from 'dgram';
 import { randomUUID } from 'crypto';
 
 const app = express();
-
-// CORS 설정
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
-
-// JSON 파싱 미들웨어
-app.use(express.json());
 const PORT = process.env.PORT || 8080;
-const UDP_PORT = 8081; // UDP 포트
 
 // HTTP 서버 생성
 const server = createServer(app);
 
-// UDP 서버 생성 (제어 명령용)
-const udpServer = createSocket('udp4');
-
-// ESP32 IP 주소 저장
-let esp32IP = null;
-
 // WebSocket 서버 생성
-const wss = new WebSocketServer({ 
-  server,
-  clientTracking: true,
-  perMessageDeflate: false,
-  // 타임아웃 설정 (무한으로 설정)
-  handshakeTimeout: 5000,
-  maxPayload: 100 * 1024 * 1024 // 100MB
-});
+const wss = new WebSocketServer({ server });
 
-// 연결된 클라이언트 관리
-const clients = {
-  rcCar: null,      // ESP32-CAM RC카
-  webUsers: new Set() // 웹 사용자들
-};
+// 연결된 클라이언트 관리 (v2.0: 디바이스 분리)
+// devices: Map<deviceId, { control: ws, camera: ws, metadata }>
+const devices = new Map();
+const webUsers = new Set();  // 웹 사용자들
 
 // 세션 관리
 const activeSessions = new Map(); // carId → session 정보
@@ -61,7 +29,7 @@ const SESSION_DURATION = {
 };
 
 // 하트비트 타임아웃 (10초)
-const HEARTBEAT_TIMEOUT = 30 * 1000; // 30초로 증가
+const HEARTBEAT_TIMEOUT = 10 * 1000;
 
 // 선점 경고 시간 (5초)
 const PREEMPT_WARNING_TIME = 5 * 1000;
@@ -69,18 +37,21 @@ const PREEMPT_WARNING_TIME = 5 * 1000;
 // 데모 쿼터 만료 시간 (24시간)
 const DEMO_QUOTA_EXPIRY = 24 * 60 * 60 * 1000;
 
-// 관리자 지갑 주소
-const ADMIN_WALLET = '0xd10d3381C1e824143D22350e9149413310F14F22';
-
 // 헬스체크 엔드포인트 (Render 무료티어용)
 app.get('/', (req, res) => {
+  const deviceStats = {};
+  devices.forEach((device, deviceId) => {
+    deviceStats[deviceId] = {
+      control: device.control ? 'connected' : 'disconnected',
+      camera: device.camera ? 'connected' : 'disconnected'
+    };
+  });
+  
   res.json({
     status: 'running',
-    service: 'Base Revolt WebSocket Server',
-    clients: {
-      rcCar: clients.rcCar ? 'connected' : 'disconnected',
-      webUsers: clients.webUsers.size
-    }
+    service: 'Base Revolt WebSocket Server (v2.0 - Split Architecture)',
+    devices: deviceStats,
+    webUsers: webUsers.size
   });
 });
 
@@ -88,147 +59,89 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// UDP 명령 전달 엔드포인트 (프론트엔드에서 호출)
-app.post('/udp-command', (req, res) => {
-  const { command, sessionId } = req.body;
-  
-  if (!command) {
-    return res.status(400).json({ error: 'Command required' });
-  }
-  
-  console.log(`📡 HTTP->UDP command: ${command}`);
-  
-  // ESP32 연결 확인 (디버깅 추가)
-  console.log('🔍 ESP32 연결 상태 체크:');
-  console.log('   clients.rcCar:', clients.rcCar ? 'exists' : 'null');
-  console.log('   readyState:', clients.rcCar ? clients.rcCar.readyState : 'N/A');
-  console.log('   OPEN constant:', clients.rcCar ? clients.rcCar.OPEN : 'N/A');
-  
-  if (!clients.rcCar || clients.rcCar.readyState !== clients.rcCar.OPEN) {
-    console.log('⚠️  ESP32 not connected via WebSocket');
-    return res.status(503).json({ error: 'ESP32 not connected' });
-  }
-  
-  // WebSocket으로 ESP32에 명령 전달 (우선순위)
-  console.log(`📤 Sending command via WebSocket: ${command}`);
-  clients.rcCar.send(JSON.stringify({
-    type: 'control',
-    command: command,
-    sessionId: sessionId
-  }));
-  
-  res.json({ success: true, command: command, method: 'websocket' });
-  
-  // UDP도 시도해보기 (백업용, 로컬 네트워크에서는 작동하지 않을 수 있음)
-  if (esp32IP) {
-    const esp32UDPPort = 8082;
-    const commandMsg = JSON.stringify({
-      type: 'control',
-      command: command,
-      sessionId: sessionId
-    });
-    
-    udpServer.send(commandMsg, esp32UDPPort, esp32IP, (err) => {
-      if (err) {
-        console.log(`⚠️  UDP backup failed: ${err.message}`);
-      } else {
-        console.log(`📡 UDP backup sent to ESP32 (${esp32IP}): ${command}`);
-      }
-    });
-  }
-});
-
 // WebSocket 연결 처리
 wss.on('connection', (ws, req) => {
-  const remoteIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  console.log('New connection from:', remoteIP);
-  console.log('   Headers:', {
-    'x-device-type': req.headers['x-device-type'],
-    'user-agent': req.headers['user-agent'],
-    'x-forwarded-for': req.headers['x-forwarded-for']
-  });
+  console.log('New connection from:', req.socket.remoteAddress);
   
   let clientType = null;
+  let deviceId = null;
+  let deviceRole = null;
   
-  // 헤더로 장치 타입 확인
+  // 헤더로 장치 타입 확인 (하위 호환)
   const deviceType = req.headers['x-device-type'];
   
-  // WebSocket keep-alive 설정 (모든 클라이언트에 대해)
-  ws.isAlive = true;
-  ws.on('pong', () => {
-    ws.isAlive = true;
-  });
-  
   if (deviceType === 'rc-car') {
-    clientType = 'rc-car';
-    
-    // 기존 RC카 연결이 있다면 끊기
-    if (clients.rcCar) {
-      console.log('⚠️  Closing existing RC Car connection');
-      clients.rcCar.close();
-    }
-    
-    clients.rcCar = ws;
-    console.log('✅ RC Car connected from:', remoteIP);
-    
-    // 모든 웹 사용자에게 RC카 연결 알림
-    broadcastToWebUsers({
-      type: 'rc-car-status',
-      status: 'connected'
-    });
+    // 기존 ESP32 (하위 호환) - register 메시지 대기
+    clientType = 'device-pending';
+    console.log('⏳ Legacy device connected, waiting for registration...');
   } else {
+    // 웹 사용자
     clientType = 'web-user';
-    clients.webUsers.add(ws);
-    console.log(`✅ Web user connected (total: ${clients.webUsers.size})`);
+    webUsers.add(ws);
+    console.log(`✅ Web user connected (total: ${webUsers.size})`);
     
-    // 새 사용자에게 RC카 상태 알림
-    if (clients.rcCar) {
-      ws.send(JSON.stringify({
-        type: 'rc-car-status',
-        status: 'connected'
-      }));
-    } else {
-      ws.send(JSON.stringify({
-        type: 'rc-car-status',
-        status: 'disconnected'
-      }));
-    }
+    // 새 사용자에게 모든 디바이스 상태 알림
+    const anyCarConnected = Array.from(devices.values()).some(
+      device => device.control || device.camera
+    );
+    
+    ws.send(JSON.stringify({
+      type: 'rc-car-status',
+      status: anyCarConnected ? 'connected' : 'disconnected'
+    }));
   }
   
   // 메시지 수신 처리
   ws.on('message', (message) => {
-    if (clientType === 'rc-car') {
-      // RC카로부터 영상 데이터 → 모든 웹 사용자에게 브로드캐스트
-      if (message instanceof Buffer) {
-        // 바이너리 데이터 (JPEG 프레임)
-        broadcastToWebUsers(message, true);
-      } else {
-        // 텍스트 데이터 (상태 정보, ping 등)
+    // 디바이스 등록 처리 (ESP32에서 첫 메시지)
+    if (clientType === 'device-pending' || clientType === 'device-control' || clientType === 'device-camera') {
+      if (!(message instanceof Buffer)) {
         try {
           const data = JSON.parse(message.toString());
           
-          // ping 메시지 처리 (ESP32 keep-alive)
-          if (data.type === 'ping') {
-            // 연결 유지 확인 - isAlive 갱신
-            ws.isAlive = true;
-            // pong 응답 전송 (선택적)
-            ws.send(JSON.stringify({ type: 'pong' }));
-            console.log('💓 RC Car ping received');
-          } 
-          // device 등록 메시지 처리 (IP 주소 저장)
-          else if (data.type === 'device' && data.ip) {
-            esp32IP = data.ip;
-            console.log(`📱 RC Car registered with IP: ${esp32IP}`);
-            console.log(`⚠️  WARNING: Using local IP ${esp32IP} - UDP may not work from server`);
-            console.log(`   Server is on internet, ESP32 is on local network`);
-            console.log(`   Consider using WebSocket for control instead of UDP`);
-          } else {
-            console.log('RC Car message:', data);
+          // 디바이스 등록
+          if (data.type === 'register') {
+            deviceId = data.deviceId;
+            deviceRole = data.role;
+            
+            // 디바이스 레지스트리에 추가
+            if (!devices.has(deviceId)) {
+              devices.set(deviceId, {});
+            }
+            
+            const device = devices.get(deviceId);
+            device[deviceRole] = ws;
+            
+            // 웹소켓에 메타데이터 저장
+            ws.deviceId = deviceId;
+            ws.role = deviceRole;
+            clientType = `device-${deviceRole}`;
+            
+            console.log(`✅ Device registered: ${deviceId} (${deviceRole})`);
+            
+            // 웹 사용자들에게 디바이스 상태 브로드캐스트
+            broadcastToWebUsers({
+              type: 'device-status',
+              deviceId,
+              role: deviceRole,
+              status: 'connected'
+            });
+            
+            return;
           }
+          
+          console.log(`Device ${deviceRole} message:`, data);
         } catch (e) {
-          // JSON 아닌 경우 무시
+          // JSON 파싱 실패 - 바이너리일 수 있음
         }
       }
+      
+      // 카메라 디바이스에서 바이너리(영상 프레임) 수신
+      if (message instanceof Buffer && deviceRole === 'camera') {
+        // JPEG 프레임 → 모든 웹 사용자에게 브로드캐스트
+        broadcastToWebUsers(message, true);
+      }
+      
     } else if (clientType === 'web-user') {
       // 웹 사용자로부터 메시지 처리
       try {
@@ -269,24 +182,43 @@ wss.on('connection', (ws, req) => {
   });
   
   // 연결 종료 처리
-  ws.on('close', (code, reason) => {
-    // console.log(`🔬 실험 D: WebSocket Close 이벤트 - Code: ${code}, Reason: ${reason.toString()}, Client: ${clientType}`);
-    
-    if (clientType === 'rc-car') {
-      console.log('❌ RC Car disconnected');
-      console.log('   Close code:', code);
-      console.log('   Close reason:', reason.toString());
-      console.log('   Remote IP:', remoteIP);
-      clients.rcCar = null;
+  ws.on('close', () => {
+    if (clientType && clientType.startsWith('device-')) {
+      console.log(`❌ Device disconnected: ${deviceId} (${deviceRole})`);
       
-      // 모든 웹 사용자에게 RC카 연결 해제 알림
+      // 디바이스 레지스트리에서 제거
+      if (deviceId && devices.has(deviceId)) {
+        const device = devices.get(deviceId);
+        if (device[deviceRole]) {
+          delete device[deviceRole];
+        }
+        
+        // 디바이스의 모든 역할이 끊어졌으면 제거
+        if (!device.control && !device.camera) {
+          devices.delete(deviceId);
+        }
+      }
+      
+      // 웹 사용자들에게 디바이스 상태 브로드캐스트
       broadcastToWebUsers({
-        type: 'rc-car-status',
+        type: 'device-status',
+        deviceId,
+        role: deviceRole,
         status: 'disconnected'
       });
+      
+      // 하위 호환: rc-car-status도 전송
+      const anyCarConnected = Array.from(devices.values()).some(
+        device => device.control || device.camera
+      );
+      broadcastToWebUsers({
+        type: 'rc-car-status',
+        status: anyCarConnected ? 'connected' : 'disconnected'
+      });
+      
     } else if (clientType === 'web-user') {
-      clients.webUsers.delete(ws);
-      console.log(`❌ Web user disconnected (remaining: ${clients.webUsers.size})`);
+      webUsers.delete(ws);
+      console.log(`❌ Web user disconnected (remaining: ${webUsers.size})`);
     }
   });
   
@@ -300,8 +232,8 @@ wss.on('connection', (ws, req) => {
 function broadcastToWebUsers(data, isBinary = false) {
   const message = isBinary ? data : JSON.stringify(data);
   
-  clients.webUsers.forEach((client) => {
-    if (client.readyState === client.OPEN) {
+  webUsers.forEach((client) => {
+    if (client.readyState === 1) { // WebSocket.OPEN = 1
       client.send(message);
     }
   });
@@ -359,9 +291,10 @@ function endSession(carId, reason = 'manual') {
     }));
   }
   
-  // RC카에 정지 명령
-  if (clients.rcCar && clients.rcCar.readyState === clients.rcCar.OPEN) {
-    clients.rcCar.send(JSON.stringify({
+  // RC카 조종 디바이스에 정지 명령
+  const device = devices.get(carId);
+  if (device && device.control && device.control.readyState === 1) {
+    device.control.send(JSON.stringify({
       type: 'control',
       command: 'stop'
     }));
@@ -399,22 +332,7 @@ function endSession(carId, reason = 'manual') {
   }
 }
 
-function isAdmin(wallet) {
-  return wallet && wallet.toLowerCase() === ADMIN_WALLET.toLowerCase();
-}
-
 function checkDemoQuota(wallet) {
-  console.log('🔍 checkDemoQuota 호출됨:');
-  console.log('   wallet:', wallet);
-  console.log('   ADMIN_WALLET:', ADMIN_WALLET);
-  console.log('   isAdmin 결과:', isAdmin(wallet));
-  
-  // 관리자는 데모 쿼터 무제한
-  if (isAdmin(wallet)) {
-    console.log(`👑 Admin wallet detected: ${wallet.substring(0, 10)}... - unlimited demo access`);
-    return true;
-  }
-  
   const quota = demoQuota.get(wallet);
   
   if (!quota) return true; // 사용 기록 없음
@@ -431,12 +349,6 @@ function checkDemoQuota(wallet) {
 }
 
 function useDemoQuota(wallet) {
-  // 관리자는 쿼터 사용하지 않음
-  if (isAdmin(wallet)) {
-    console.log(`👑 Admin wallet: ${wallet.substring(0, 10)}... - no quota consumed`);
-    return;
-  }
-  
   const now = Date.now();
   demoQuota.set(wallet, {
     usedAt: now,
@@ -450,11 +362,8 @@ function resetHeartbeatTimeout(session) {
     clearTimeout(session.heartbeatTimeout);
   }
   
-  // console.log(`🔬 실험 D: 하트비트 리셋 - Session: ${session.sessionId}, Wallet: ${session.wallet}`);
-  
   session.heartbeatTimeout = setTimeout(() => {
     console.log(`💔 Heartbeat timeout for session: ${session.sessionId}`);
-    // console.log(`🔬 실험 D: 타임아웃 상세 - Wallet: ${session.wallet}, Car: ${session.carId}, Tier: ${session.tier}`);
     endSession(session.carId, 'heartbeat_timeout');
   }, HEARTBEAT_TIMEOUT);
 }
@@ -706,12 +615,9 @@ function handleEndSession(data) {
 }
 
 function handleControlCommand(ws, data) {
-  const { sessionId, command } = data;
-  
-  console.log(`📥 Control command received: ${command}, sessionId: ${sessionId}`);
+  const { sessionId, command, carId } = data;
   
   if (!sessionId) {
-    console.log(`❌ No session ID provided`);
     ws.send(JSON.stringify({
       type: 'error',
       message: 'No session ID provided'
@@ -721,16 +627,17 @@ function handleControlCommand(ws, data) {
   
   // 세션 검증
   let validSession = null;
-  for (const [carId, session] of activeSessions.entries()) {
+  let sessionCarId = carId;  // 명시적 carId 우선
+  
+  for (const [cid, session] of activeSessions.entries()) {
     if (session.sessionId === sessionId) {
       validSession = session;
+      sessionCarId = cid;
       break;
     }
   }
   
   if (!validSession) {
-    console.log(`❌ Invalid or expired session: ${sessionId}`);
-    console.log(`   Active sessions: ${Array.from(activeSessions.entries()).map(([id, s]) => `${id}: ${s.sessionId}`).join(', ')}`);
     ws.send(JSON.stringify({
       type: 'error',
       message: 'Invalid or expired session'
@@ -738,20 +645,20 @@ function handleControlCommand(ws, data) {
     return;
   }
   
-  // 세션이 유효하면 RC카로 명령 전달
-  console.log(`🎮 Control command: ${command} from session: ${sessionId}`);
+  // 세션이 유효하면 control 디바이스로 명령 전달
+  console.log(`🎮 Control command: ${command} from session: ${sessionId} to car: ${sessionCarId}`);
   
-  if (clients.rcCar && clients.rcCar.readyState === clients.rcCar.OPEN) {
-    console.log(`📤 Sending to RC car: ${command}`);
-    clients.rcCar.send(JSON.stringify({
+  const device = devices.get(sessionCarId || 'CAR01');  // 기본값 CAR01
+  
+  if (device && device.control && device.control.readyState === 1) {
+    device.control.send(JSON.stringify({
       type: 'control',
       command: command
     }));
   } else {
-    console.log(`❌ RC car not connected (rcCar: ${clients.rcCar ? 'exists but closed' : 'null'})`);
     ws.send(JSON.stringify({
       type: 'error',
-      message: 'RC car not connected'
+      message: 'Control device not connected'
     }));
   }
 }
@@ -815,65 +722,6 @@ function handleGetQueueStatus(ws, data) {
   }));
 }
 
-// WebSocket keep-alive: 30초마다 모든 클라이언트에게 ping
-const keepAliveInterval = setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (ws.isAlive === false) {
-      console.log('⏱️  Client did not respond to ping, terminating');
-      return ws.terminate();
-    }
-    
-    ws.isAlive = false;
-    ws.ping();
-  });
-}, 30000); // 30초
-
-wss.on('close', () => {
-  clearInterval(keepAliveInterval);
-});
-
-// UDP 서버 설정
-udpServer.on('message', (msg, rinfo) => {
-  try {
-    const data = JSON.parse(msg.toString());
-    console.log(`📡 UDP command from ${rinfo.address}:${rinfo.port}:`, data);
-    
-    // 제어 명령을 UDP로 ESP32에 전달
-    if (data.type === 'control' && data.command) {
-      console.log(`🚀 Forwarding UDP command: ${data.command}`);
-      
-      // ESP32 IP 주소 확인
-      if (!esp32IP) {
-        console.log('⚠️  ESP32 IP not registered yet, cannot forward command');
-        return;
-      }
-      
-      // ESP32의 UDP 주소로 명령 전달
-      const esp32UDPPort = 8082;
-      
-      const commandMsg = JSON.stringify({
-        type: 'control',
-        command: data.command,
-        sessionId: data.sessionId
-      });
-      
-      udpServer.send(commandMsg, esp32UDPPort, esp32IP, (err) => {
-        if (err) {
-          console.error('UDP send error:', err);
-        } else {
-          console.log(`✅ UDP command sent to ESP32 (${esp32IP}): ${data.command}`);
-        }
-      });
-    }
-  } catch (e) {
-    console.error('UDP message parse error:', e);
-  }
-});
-
-udpServer.on('error', (err) => {
-  console.error('UDP server error:', err);
-});
-
 // 서버 시작
 server.listen(PORT, () => {
   console.log('='.repeat(50));
@@ -881,28 +729,26 @@ server.listen(PORT, () => {
   console.log('='.repeat(50));
   console.log(`Server running on port ${PORT}`);
   console.log(`WebSocket endpoint: ws://localhost:${PORT}`);
-  console.log(`📡 Keep-alive: 30s interval`);
   console.log('='.repeat(50));
-});
-
-// UDP 서버 시작
-udpServer.bind(UDP_PORT, () => {
-  console.log(`📡 UDP server listening on port ${UDP_PORT}`);
 });
 
 // 우아한 종료 처리
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing server');
   
-  // 모든 클라이언트 연결 종료
-  if (clients.rcCar) {
-    clients.rcCar.close();
-  }
-  clients.webUsers.forEach(client => client.close());
+  // 모든 디바이스 연결 종료
+  devices.forEach((device) => {
+    if (device.control) device.control.close();
+    if (device.camera) device.camera.close();
+  });
+  
+  // 모든 웹 사용자 연결 종료
+  webUsers.forEach(client => client.close());
   
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
   });
 });
+
 
