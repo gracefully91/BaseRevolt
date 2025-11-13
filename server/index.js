@@ -93,17 +93,12 @@ wss.on('connection', (ws, req) => {
   
   // 메시지 수신 처리
   ws.on('message', (message) => {
-    // 디버깅: 모든 메시지 로그
-    if (clientType === 'device-pending') {
-      console.log(`📨 Message from device-pending:`, message instanceof Buffer ? `Binary (${message.length} bytes)` : message.toString().substring(0, 100));
-    }
-    
     // 디바이스 등록 처리 (ESP32에서 첫 메시지)
     if (clientType === 'device-pending' || clientType === 'device-control' || clientType === 'device-camera') {
+      // 텍스트 메시지 처리 (등록 메시지)
       if (!(message instanceof Buffer)) {
         try {
           const data = JSON.parse(message.toString());
-          console.log(`📝 Parsed JSON from device:`, data);
           
           // 디바이스 등록
           if (data.type === 'register') {
@@ -133,21 +128,37 @@ wss.on('connection', (ws, req) => {
               status: 'connected'
             });
             
+            // 하위 호환: rc-car-status도 전송
+            const anyCarConnected = Array.from(devices.values()).some(
+              device => device.control || device.camera
+            );
+            broadcastToWebUsers({
+              type: 'rc-car-status',
+              status: anyCarConnected ? 'connected' : 'disconnected'
+            });
+            
             return;
           }
           
           console.log(`Device ${deviceRole} message:`, data);
         } catch (e) {
           // JSON 파싱 실패 - 바이너리일 수 있음
-          console.log(`⚠️ JSON parse error from device-pending:`, e.message);
-          console.log(`   Raw message:`, message.toString().substring(0, 200));
+          // device-pending 상태에서는 등록 전이므로 바이너리 메시지 무시
+          if (clientType === 'device-pending') {
+            // 등록 전 바이너리 메시지는 무시 (카메라 프레임이 등록 메시지보다 먼저 도착할 수 있음)
+            return;
+          }
         }
       }
       
       // 카메라 디바이스에서 바이너리(영상 프레임) 수신
-      if (message instanceof Buffer && deviceRole === 'camera') {
+      // 등록이 완료된 경우에만 처리 (deviceRole이 설정되어 있어야 함)
+      if (message instanceof Buffer && deviceRole === 'camera' && clientType === 'device-camera') {
         // JPEG 프레임 → 모든 웹 사용자에게 브로드캐스트
         broadcastToWebUsers(message, true);
+      } else if (message instanceof Buffer && clientType === 'device-pending') {
+        // 등록 전 바이너리 메시지는 무시
+        // console.log(`⚠️ Ignoring binary message from unregistered device`);
       }
       
     } else if (clientType === 'web-user') {

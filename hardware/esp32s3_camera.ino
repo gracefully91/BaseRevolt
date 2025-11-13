@@ -79,6 +79,8 @@ WebSocketsClient webSocket;
 unsigned long lastFrameTime = 0;
 const int frameInterval = 66; // ~15 FPS (1000ms / 15 = 66ms)
 bool wsConnected = false;
+bool deviceRegistered = false;  // 디바이스 등록 완료 여부
+unsigned long registrationTime = 0;  // 등록 메시지 전송 시간
 
 // ==================== 함수 선언 ====================
 void setupCamera();
@@ -113,9 +115,17 @@ void loop() {
   webSocket.loop();
   
   // 카메라 프레임 전송 (15 FPS)
-  if (wsConnected && (millis() - lastFrameTime > frameInterval)) {
+  // 등록이 완료된 후에만 프레임 전송
+  if (wsConnected && deviceRegistered && (millis() - lastFrameTime > frameInterval)) {
     sendCameraFrame();
     lastFrameTime = millis();
+  } else if (wsConnected && !deviceRegistered) {
+    // 등록 대기 중 - 500ms 후 자동으로 등록 완료로 간주
+    if (millis() - registrationTime > 500) {
+      deviceRegistered = true;
+      Serial.println("✅ Device registration auto-confirmed after 500ms");
+      Serial.println("▶️ Starting frame streaming...");
+    }
   }
   
   delay(1);
@@ -209,6 +219,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       Serial.printf("   Free heap: %d bytes\n", ESP.getFreeHeap());
       Serial.println("   🔄 Will retry in 10 seconds...");
       wsConnected = false;
+      deviceRegistered = false;  // 재연결 시 다시 등록 필요
       break;
       
     case WStype_CONNECTED:
@@ -224,7 +235,10 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         // 디바이스 등록 메시지 전송 (v2.0 프로토콜)
         Serial.println("📤 Sending registration message...");
         sendRegistration();
+        registrationTime = millis();
+        deviceRegistered = false;  // 등록 확인 대기
         Serial.println("✅ Registration message sent, waiting for server response...");
+        Serial.println("⏸️ Frame streaming paused until registration confirmed");
       }
       break;
       
@@ -232,10 +246,17 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       // 서버 메시지 수신 (카메라는 제어 명령 받지 않음)
       Serial.print("ℹ️ Server message: ");
       if (payload && length > 0) {
-        for (size_t i = 0; i < length && i < 200; i++) {
-          Serial.print((char)payload[i]);
+        String msg = String((char*)payload);
+        Serial.println(msg);
+        
+        // 등록 확인 (서버가 등록을 받았는지 확인)
+        // 참고: 서버는 등록 후 응답을 보내지 않지만, 연결이 유지되면 등록 성공으로 간주
+        if (!deviceRegistered && (millis() - registrationTime > 500)) {
+          // 등록 메시지 전송 후 500ms 경과 시 등록 완료로 간주
+          deviceRegistered = true;
+          Serial.println("✅ Device registration confirmed (connection stable)");
+          Serial.println("▶️ Starting frame streaming...");
         }
-        Serial.println();
       } else {
         Serial.println("(empty)");
       }
