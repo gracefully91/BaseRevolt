@@ -93,72 +93,83 @@ wss.on('connection', (ws, req) => {
   
   // 메시지 수신 처리
   ws.on('message', (message) => {
-    // 디바이스 등록 처리 (ESP32에서 첫 메시지)
-    if (clientType === 'device-pending' || clientType === 'device-control' || clientType === 'device-camera') {
-      // 텍스트 메시지 처리 (등록 메시지)
+    // device-pending 상태: 등록 메시지만 처리
+    if (clientType === 'device-pending') {
+      // 바이너리 메시지는 무시 (등록 전 프레임)
+      if (message instanceof Buffer) {
+        // console.log(`⚠️ Ignoring binary message from unregistered device (${message.length} bytes)`);
+        return;
+      }
+      
+      // 텍스트 메시지만 처리 (등록 메시지)
+      try {
+        const data = JSON.parse(message.toString());
+        console.log(`📝 Registration attempt:`, data);
+        
+        // 디바이스 등록
+        if (data.type === 'register') {
+          deviceId = data.deviceId;
+          deviceRole = data.role;
+          
+          // 디바이스 레지스트리에 추가
+          if (!devices.has(deviceId)) {
+            devices.set(deviceId, {});
+          }
+          
+          const device = devices.get(deviceId);
+          device[deviceRole] = ws;
+          
+          // 웹소켓에 메타데이터 저장
+          ws.deviceId = deviceId;
+          ws.role = deviceRole;
+          clientType = `device-${deviceRole}`;
+          
+          console.log(`✅ Device registered: ${deviceId} (${deviceRole})`);
+          
+          // 웹 사용자들에게 디바이스 상태 브로드캐스트
+          broadcastToWebUsers({
+            type: 'device-status',
+            deviceId,
+            role: deviceRole,
+            status: 'connected'
+          });
+          
+          // 하위 호환: rc-car-status도 전송
+          const anyCarConnected = Array.from(devices.values()).some(
+            device => device.control || device.camera
+          );
+          broadcastToWebUsers({
+            type: 'rc-car-status',
+            status: anyCarConnected ? 'connected' : 'disconnected'
+          });
+          
+          return;
+        }
+        
+        console.log(`⚠️ Non-register message from device-pending:`, data);
+      } catch (e) {
+        console.log(`⚠️ Failed to parse message from device-pending:`, e.message);
+      }
+      
+      return; // device-pending는 여기서 종료
+    }
+    
+    // 등록된 디바이스 (device-control 또는 device-camera)
+    if (clientType === 'device-control' || clientType === 'device-camera') {
+      // 텍스트 메시지 처리
       if (!(message instanceof Buffer)) {
         try {
           const data = JSON.parse(message.toString());
-          
-          // 디바이스 등록
-          if (data.type === 'register') {
-            deviceId = data.deviceId;
-            deviceRole = data.role;
-            
-            // 디바이스 레지스트리에 추가
-            if (!devices.has(deviceId)) {
-              devices.set(deviceId, {});
-            }
-            
-            const device = devices.get(deviceId);
-            device[deviceRole] = ws;
-            
-            // 웹소켓에 메타데이터 저장
-            ws.deviceId = deviceId;
-            ws.role = deviceRole;
-            clientType = `device-${deviceRole}`;
-            
-            console.log(`✅ Device registered: ${deviceId} (${deviceRole})`);
-            
-            // 웹 사용자들에게 디바이스 상태 브로드캐스트
-            broadcastToWebUsers({
-              type: 'device-status',
-              deviceId,
-              role: deviceRole,
-              status: 'connected'
-            });
-            
-            // 하위 호환: rc-car-status도 전송
-            const anyCarConnected = Array.from(devices.values()).some(
-              device => device.control || device.camera
-            );
-            broadcastToWebUsers({
-              type: 'rc-car-status',
-              status: anyCarConnected ? 'connected' : 'disconnected'
-            });
-            
-            return;
-          }
-          
           console.log(`Device ${deviceRole} message:`, data);
         } catch (e) {
-          // JSON 파싱 실패 - 바이너리일 수 있음
-          // device-pending 상태에서는 등록 전이므로 바이너리 메시지 무시
-          if (clientType === 'device-pending') {
-            // 등록 전 바이너리 메시지는 무시 (카메라 프레임이 등록 메시지보다 먼저 도착할 수 있음)
-            return;
-          }
+          console.log(`⚠️ Failed to parse message from ${deviceRole}:`, e.message);
         }
       }
       
       // 카메라 디바이스에서 바이너리(영상 프레임) 수신
-      // 등록이 완료된 경우에만 처리 (deviceRole이 설정되어 있어야 함)
       if (message instanceof Buffer && deviceRole === 'camera' && clientType === 'device-camera') {
         // JPEG 프레임 → 모든 웹 사용자에게 브로드캐스트
         broadcastToWebUsers(message, true);
-      } else if (message instanceof Buffer && clientType === 'device-pending') {
-        // 등록 전 바이너리 메시지는 무시
-        // console.log(`⚠️ Ignoring binary message from unregistered device`);
       }
       
     } else if (clientType === 'web-user') {
