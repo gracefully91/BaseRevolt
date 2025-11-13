@@ -1,7 +1,7 @@
 /*
- * Base Revolt v2.0 - ESP-32S Control Firmware (자동차 조종 방식)
+ * Base Revolt v2.0 - ESP32-C3 SuperMini Control Firmware
  * 
- * 역할: RC카 조종 전용 (모터 제어만)
+ * 역할: RC카 조종 전용 (모터 제어만) - 모든 카메라 모델과 호환
  * 
  * 기능:
  * - WiFi 연결
@@ -10,8 +10,8 @@
  * - L298N 모터 제어 (앞뒤 구동 + 좌우 스티어링)
  * 
  * 회로:
- * - GPIO 12, 13: 구동 모터 (앞뒤, IN1, IN2)
- * - GPIO 14, 15: 스티어링 모터 (좌우, IN3, IN4)
+ * - GPIO 3, 4: 구동 모터 (앞뒤, IN1, IN2)
+ * - GPIO 6, 7: 스티어링 모터 (좌우, IN3, IN4)
  * - ENA/ENB: 점퍼로 HIGH 설정 (또는 PWM 핀 연결)
  * 
  * 조종 방식:
@@ -23,6 +23,7 @@
  * - 카메라 관련 코드 전부 제거됨
  * - 영상 스트리밍 없음
  * - 제어 명령만 수신
+ * - ESP32-CAM 또는 ESP32-S3 카메라와 함께 사용 가능
  */
 
 #include <WiFi.h>
@@ -31,8 +32,8 @@
 
 // ==================== 설정 (TODO: 사용자가 수정 필요) ====================
 // WiFi 설정
-const char* ssid = "JIN";         // TODO: WiFi 이름으로 변경
-const char* password = "J13245678!"; // TODO: WiFi 비밀번호로 변경
+const char* ssid = "YOUR_WIFI_SSID";         // TODO: WiFi 이름으로 변경
+const char* password = "YOUR_WIFI_PASSWORD"; // TODO: WiFi 비밀번호로 변경
 
 // WebSocket 서버 설정 (Render)
 const char* ws_host = "base-revolt-server.onrender.com";  // TODO: Render URL로 변경
@@ -88,8 +89,9 @@ void updateStatusLed();
 // ==================== Setup ====================
 void setup() {
   Serial.begin(115200);
-  Serial.println("\n\n=== Base Revolt Control Device (ESP-32S) ===");
-  Serial.println("Version: 2.0 - Control Only");
+  delay(1000);
+  Serial.println("\n\n=== Base Revolt Control Device (ESP32-C3 SuperMini) ===");
+  Serial.println("Version: 2.0 - Control Only (Universal)");
   Serial.println("Device ID: " + String(DEVICE_ID));
   Serial.println("Role: " + String(DEVICE_ROLE));
   
@@ -349,10 +351,56 @@ void updateMotors() {
   }
 }
 
+// ==================== 자가진단 테스트 ====================
+void quickSelfTest() {
+  Serial.println("Starting motor self-test...");
+  delay(1000);
+  
+  // 1. 구동 전진
+  Serial.println("1. Testing DRIVE FORWARD...");
+  driveForward();
+  delay(500);
+  driveStop();
+  delay(300);
+  
+  // 2. 구동 후진
+  Serial.println("2. Testing DRIVE BACKWARD...");
+  driveBackward();
+  delay(500);
+  driveStop();
+  delay(300);
+  
+  // 3. 스티어링 좌
+  Serial.println("3. Testing STEER LEFT...");
+  steerLeft();
+  delay(300);
+  steerCenter();
+  delay(300);
+  
+  // 4. 스티어링 우
+  Serial.println("4. Testing STEER RIGHT...");
+  steerRight();
+  delay(300);
+  steerCenter();
+  delay(300);
+  
+  // 5. 복합 테스트 (전진 + 좌회전)
+  Serial.println("5. Testing COMBINED (Forward + Left)...");
+  driveForward();
+  steerLeft();
+  delay(500);
+  driveStop();
+  steerCenter();
+  delay(300);
+  
+  Serial.println("✅ Self-test complete!");
+}
+
+// ==================== 상태 LED 제어 ====================
 void triggerStatusLed() {
   digitalWrite(STATUS_LED_PIN, HIGH);
   ledOn = true;
-  ledOffTime = millis() + 150;
+  ledOffTime = millis() + 100;  // 100ms 후 꺼짐
 }
 
 void updateStatusLed() {
@@ -360,48 +408,5 @@ void updateStatusLed() {
     digitalWrite(STATUS_LED_PIN, LOW);
     ledOn = false;
   }
-}
-
-// ==================== 자가진단 테스트 ====================
-void quickSelfTest() {
-  Serial.println("Testing motors (Drive + Steering)...");
-  
-  // 구동 테스트: 전진
-  Serial.println("→ Drive: Forward");
-  driveForward();
-  delay(500);
-  driveStop();
-  delay(500);
-  
-  // 구동 테스트: 후진
-  Serial.println("→ Drive: Backward");
-  driveBackward();
-  delay(500);
-  driveStop();
-  delay(500);
-  
-  // 스티어링 테스트: 좌
-  Serial.println("→ Steer: Left");
-  steerLeft();
-  delay(300);
-  steerCenter();
-  delay(500);
-  
-  // 스티어링 테스트: 우
-  Serial.println("→ Steer: Right");
-  steerRight();
-  delay(300);
-  steerCenter();
-  delay(500);
-  
-  // 복합 테스트: 전진 + 좌회전
-  Serial.println("→ Forward + Left");
-  driveForward();
-  steerLeft();
-  delay(500);
-  driveStop();
-  steerCenter();
-  
-  Serial.println("✅ Self test complete!");
 }
 
