@@ -1,0 +1,137 @@
+warning: in the working copy of 'hardware/esp32s3_camera.ino', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/hardware/esp32s3_camera.ino b/hardware/esp32s3_camera.ino[m
+[1mindex 27fb019..ebf6d0f 100644[m
+[1m--- a/hardware/esp32s3_camera.ino[m
+[1m+++ b/hardware/esp32s3_camera.ino[m
+[36m@@ -79,6 +79,8 @@[m [mWebSocketsClient webSocket;[m
+ unsigned long lastFrameTime = 0;[m
+ const int frameInterval = 66; // ~15 FPS (1000ms / 15 = 66ms)[m
+ bool wsConnected = false;[m
+[32m+[m[32mbool deviceRegistered = false;  // 디바이스 등록 완료 여부[m
+[32m+[m[32munsigned long registrationTime = 0;  // 등록 메시지 전송 시간[m
+ [m
+ // ==================== 함수 선언 ====================[m
+ void setupCamera();[m
+[36m@@ -113,9 +115,17 @@[m [mvoid loop() {[m
+   webSocket.loop();[m
+   [m
+   // 카메라 프레임 전송 (15 FPS)[m
+[31m-  if (wsConnected && (millis() - lastFrameTime > frameInterval)) {[m
+[32m+[m[32m  // 등록이 완료된 후에만 프레임 전송[m
+[32m+[m[32m  if (wsConnected && deviceRegistered && (millis() - lastFrameTime > frameInterval)) {[m
+     sendCameraFrame();[m
+     lastFrameTime = millis();[m
+[32m+[m[32m  } else if (wsConnected && !deviceRegistered) {[m
+[32m+[m[32m    // 등록 대기 중 - 500ms 후 자동으로 등록 완료로 간주[m
+[32m+[m[32m    if (millis() - registrationTime > 500) {[m
+[32m+[m[32m      deviceRegistered = true;[m
+[32m+[m[32m      Serial.println("✅ Device registration auto-confirmed after 500ms");[m
+[32m+[m[32m      Serial.println("▶️ Starting frame streaming...");[m
+[32m+[m[32m    }[m
+   }[m
+   [m
+   delay(1);[m
+[36m@@ -209,6 +219,7 @@[m [mvoid webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {[m
+       Serial.printf("   Free heap: %d bytes\n", ESP.getFreeHeap());[m
+       Serial.println("   🔄 Will retry in 10 seconds...");[m
+       wsConnected = false;[m
+[32m+[m[32m      deviceRegistered = false;  // 재연결 시 다시 등록 필요[m
+       break;[m
+       [m
+     case WStype_CONNECTED:[m
+[36m@@ -224,7 +235,10 @@[m [mvoid webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {[m
+         // 디바이스 등록 메시지 전송 (v2.0 프로토콜)[m
+         Serial.println("📤 Sending registration message...");[m
+         sendRegistration();[m
+[32m+[m[32m        registrationTime = millis();[m
+[32m+[m[32m        deviceRegistered = false;  // 등록 확인 대기[m
+         Serial.println("✅ Registration message sent, waiting for server response...");[m
+[32m+[m[32m        Serial.println("⏸️ Frame streaming paused until registration confirmed");[m
+       }[m
+       break;[m
+       [m
+[36m@@ -232,10 +246,17 @@[m [mvoid webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {[m
+       // 서버 메시지 수신 (카메라는 제어 명령 받지 않음)[m
+       Serial.print("ℹ️ Server message: ");[m
+       if (payload && length > 0) {[m
+[31m-        for (size_t i = 0; i < length && i < 200; i++) {[m
+[31m-          Serial.print((char)payload[i]);[m
+[32m+[m[32m        String msg = String((char*)payload);[m
+[32m+[m[32m        Serial.println(msg);[m
+[32m+[m[41m        [m
+[32m+[m[32m        // 등록 확인 (서버가 등록을 받았는지 확인)[m
+[32m+[m[32m        // 참고: 서버는 등록 후 응답을 보내지 않지만, 연결이 유지되면 등록 성공으로 간주[m
+[32m+[m[32m        if (!deviceRegistered && (millis() - registrationTime > 500)) {[m
+[32m+[m[32m          // 등록 메시지 전송 후 500ms 경과 시 등록 완료로 간주[m
+[32m+[m[32m          deviceRegistered = true;[m
+[32m+[m[32m          Serial.println("✅ Device registration confirmed (connection stable)");[m
+[32m+[m[32m          Serial.println("▶️ Starting frame streaming...");[m
+         }[m
+[31m-        Serial.println();[m
+       } else {[m
+         Serial.println("(empty)");[m
+       }[m
+[1mdiff --git a/server/index.js b/server/index.js[m
+[1mindex 52411fb..5cc93fe 100644[m
+[1m--- a/server/index.js[m
+[1m+++ b/server/index.js[m
+[36m@@ -93,17 +93,12 @@[m [mwss.on('connection', (ws, req) => {[m
+   [m
+   // 메시지 수신 처리[m
+   ws.on('message', (message) => {[m
+[31m-    // 디버깅: 모든 메시지 로그[m
+[31m-    if (clientType === 'device-pending') {[m
+[31m-      console.log(`📨 Message from device-pending:`, message instanceof Buffer ? `Binary (${message.length} bytes)` : message.toString().substring(0, 100));[m
+[31m-    }[m
+[31m-    [m
+     // 디바이스 등록 처리 (ESP32에서 첫 메시지)[m
+     if (clientType === 'device-pending' || clientType === 'device-control' || clientType === 'device-camera') {[m
+[32m+[m[32m      // 텍스트 메시지 처리 (등록 메시지)[m
+       if (!(message instanceof Buffer)) {[m
+         try {[m
+           const data = JSON.parse(message.toString());[m
+[31m-          console.log(`📝 Parsed JSON from device:`, data);[m
+           [m
+           // 디바이스 등록[m
+           if (data.type === 'register') {[m
+[36m@@ -133,21 +128,37 @@[m [mwss.on('connection', (ws, req) => {[m
+               status: 'connected'[m
+             });[m
+             [m
+[32m+[m[32m            // 하위 호환: rc-car-status도 전송[m
+[32m+[m[32m            const anyCarConnected = Array.from(devices.values()).some([m
+[32m+[m[32m              device => device.control || device.camera[m
+[32m+[m[32m            );[m
+[32m+[m[32m            broadcastToWebUsers({[m
+[32m+[m[32m              type: 'rc-car-status',[m
+[32m+[m[32m              status: anyCarConnected ? 'connected' : 'disconnected'[m
+[32m+[m[32m            });[m
+[32m+[m[41m            [m
+             return;[m
+           }[m
+           [m
+           console.log(`Device ${deviceRole} message:`, data);[m
+         } catch (e) {[m
+           // JSON 파싱 실패 - 바이너리일 수 있음[m
+[31m-          console.log(`⚠️ JSON parse error from device-pending:`, e.message);[m
+[31m-          console.log(`   Raw message:`, message.toString().substring(0, 200));[m
+[32m+[m[32m          // device-pending 상태에서는 등록 전이므로 바이너리 메시지 무시[m
+[32m+[m[32m          if (clientType === 'device-pending') {[m
+[32m+[m[32m            // 등록 전 바이너리 메시지는 무시 (카메라 프레임이 등록 메시지보다 먼저 도착할 수 있음)[m
+[32m+[m[32m            return;[m
+[32m+[m[32m          }[m
+         }[m
+       }[m
+       [m
+       // 카메라 디바이스에서 바이너리(영상 프레임) 수신[m
+[31m-      if (message instanceof Buffer && deviceRole === 'camera') {[m
+[32m+[m[32m      // 등록이 완료된 경우에만 처리 (deviceRole이 설정되어 있어야 함)[m
+[32m+[m[32m      if (message instanceof Buffer && deviceRole === 'camera' && clientType === 'device-camera') {[m
+         // JPEG 프레임 → 모든 웹 사용자에게 브로드캐스트[m
+         broadcastToWebUsers(message, true);[m
+[32m+[m[32m      } else if (message instanceof Buffer && clientType === 'device-pending') {[m
+[32m+[m[32m        // 등록 전 바이너리 메시지는 무시[m
+[32m+[m[32m        // console.log(`⚠️ Ignoring binary message from unregistered device`);[m
+       }[m
+       [m
+     } else if (clientType === 'web-user') {[m

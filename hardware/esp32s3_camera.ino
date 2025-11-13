@@ -221,10 +221,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.printf("   Server: %s:%d\n", ws_host, ws_port);
         Serial.printf("   My IP: %s\n", WiFi.localIP().toString().c_str());
         
-        // 등록이 완료될 때까지 wsConnected를 설정하지 않음
-        // 이렇게 하면 loop()에서 프레임 전송을 시작하지 않음
-        
-        // 연결이 완전히 설정될 때까지 대기 (500ms로 증가)
+        // 연결이 완전히 설정될 때까지 대기
         Serial.println("⏳ Waiting 500ms for connection to stabilize...");
         delay(500);
         
@@ -232,15 +229,14 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.println("📤 Sending registration message...");
         sendRegistration();
         registrationTime = millis();
-        deviceRegistered = false;  // 등록 확인 대기
         
-        // 등록 메시지 전송 후 1초 대기
-        Serial.println("⏳ Waiting 1000ms for server to process registration...");
-        delay(1000);
+        // 등록 메시지가 서버에 도착하고 처리될 때까지 충분히 대기
+        // 이 시간 동안 loop()는 계속 돌지만 wsConnected가 false라서 프레임 전송 안 함
+        Serial.println("⏳ Waiting 2000ms for server to process registration...");
+        delay(2000);
         
-        // 이제 연결 완료로 표시
+        // 이제 연결 완료로 표시 - 이제부터 loop()에서 프레임 전송 시작
         wsConnected = true;
-        deviceRegistered = true;
         
         Serial.println("✅ Registration complete, starting frame streaming...");
       }

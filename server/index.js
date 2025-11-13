@@ -97,7 +97,7 @@ wss.on('connection', (ws, req) => {
     if (clientType === 'device-pending') {
       // 바이너리 메시지는 무시 (등록 전 프레임)
       if (message instanceof Buffer) {
-        // console.log(`⚠️ Ignoring binary message from unregistered device (${message.length} bytes)`);
+        console.log(`⚠️ Ignoring binary message from unregistered device (${message.length} bytes) - device must register first`);
         return;
       }
       

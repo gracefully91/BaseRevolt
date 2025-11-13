@@ -31,8 +31,8 @@
 
 // ==================== 설정 (TODO: 사용자가 수정 필요) ====================
 // WiFi 설정
-const char* ssid = "YOUR_WIFI_SSID";         // TODO: WiFi 이름으로 변경
-const char* password = "YOUR_WIFI_PASSWORD"; // TODO: WiFi 비밀번호로 변경
+const char* ssid = "JIN";         // TODO: WiFi 이름으로 변경
+const char* password = "J13245678!"; // TODO: WiFi 비밀번호로 변경
 
 // WebSocket 서버 설정 (Render)
 const char* ws_host = "base-revolt-server.onrender.com";  // TODO: Render URL로 변경
@@ -44,11 +44,12 @@ const bool ws_ssl = true;
 const char* DEVICE_ID = "CAR01";  // TODO: 여러 대면 CAR02, CAR03... 으로 변경
 const char* DEVICE_ROLE = "control";
 
-// 모터 제어 핀 (안정적인 핀만 사용)
-#define MOTOR_DRIVE_IN1  12   // 구동 모터 IN1 (전진/후진)
-#define MOTOR_DRIVE_IN2  13   // 구동 모터 IN2 (전진/후진)
-#define MOTOR_STEER_IN3  14   // 스티어링 모터 IN3 (좌우)
-#define MOTOR_STEER_IN4  15   // 스티어링 모터 IN4 (좌우)
+// 모터 제어 핀 (ESP32-C3 SuperMini 기준)
+#define MOTOR_DRIVE_IN1  3    // 구동 모터 IN1 (전진/후진) - GPIO3
+#define MOTOR_DRIVE_IN2  4    // 구동 모터 IN2 (전진/후진) - GPIO4
+#define MOTOR_STEER_IN3  6    // 스티어링 모터 IN3 (좌회전) - GPIO6
+#define MOTOR_STEER_IN4  7    // 스티어링 모터 IN4 (우회전) - GPIO7
+#define STATUS_LED_PIN   8    // 상태 표시 LED - GPIO8
 // ENA/ENB는 점퍼로 HIGH 설정 - 코드에서 제어하지 않음
 
 // ==================== 전역 변수 ====================
@@ -62,8 +63,12 @@ enum SteerState { STEER_CENTER, STEER_LEFT, STEER_RIGHT };
 DriveState currentDrive = DRIVE_STOP;
 SteerState currentSteer = STEER_CENTER;
 
+bool ledOn = false;
+unsigned long ledOffTime = 0;
+
 // ==================== 함수 선언 ====================
 void setupMotors();
+void setupStatusLed();
 void setupWiFi();
 void setupWebSocket();
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
@@ -77,6 +82,8 @@ void steerCenter();
 void updateMotors();
 void quickSelfTest();
 void sendRegistration();
+void triggerStatusLed();
+void updateStatusLed();
 
 // ==================== Setup ====================
 void setup() {
@@ -88,6 +95,7 @@ void setup() {
   
   // 모터 핀 초기화
   setupMotors();
+  setupStatusLed();
   
   // WiFi 연결
   setupWiFi();
@@ -105,6 +113,7 @@ void setup() {
 // ==================== Main Loop ====================
 void loop() {
   webSocket.loop();
+  updateStatusLed();
   delay(1);
 }
 
@@ -240,6 +249,14 @@ void setupMotors() {
   Serial.println("✅ Motors initialized (Drive: STOP, Steer: CENTER)");
 }
 
+void setupStatusLed() {
+  pinMode(STATUS_LED_PIN, OUTPUT);
+  digitalWrite(STATUS_LED_PIN, LOW);
+  ledOn = false;
+  ledOffTime = 0;
+  Serial.println("✅ Status LED initialized (GPIO8)");
+}
+
 // ==================== 모터 제어 명령 처리 ====================
 void handleMotorCommand(const char* command) {
   if (strcmp(command, "forward") == 0) {
@@ -264,18 +281,21 @@ void handleMotorCommand(const char* command) {
 void driveForward() {
   currentDrive = DRIVE_FORWARD;
   updateMotors();
+  triggerStatusLed();
   Serial.println("⬆️ DRIVE: FORWARD");
 }
 
 void driveBackward() {
   currentDrive = DRIVE_BACKWARD;
   updateMotors();
+  triggerStatusLed();
   Serial.println("⬇️ DRIVE: BACKWARD");
 }
 
 void driveStop() {
   currentDrive = DRIVE_STOP;
   updateMotors();
+  triggerStatusLed();
   Serial.println("⏹ DRIVE: STOP");
 }
 
@@ -283,18 +303,21 @@ void driveStop() {
 void steerLeft() {
   currentSteer = STEER_LEFT;
   updateMotors();
+  triggerStatusLed();
   Serial.println("⬅️ STEER: LEFT");
 }
 
 void steerRight() {
   currentSteer = STEER_RIGHT;
   updateMotors();
+  triggerStatusLed();
   Serial.println("➡️ STEER: RIGHT");
 }
 
 void steerCenter() {
   currentSteer = STEER_CENTER;
   updateMotors();
+  triggerStatusLed();
   Serial.println("↕️ STEER: CENTER");
 }
 
@@ -323,6 +346,19 @@ void updateMotors() {
     // 중앙 위치 (모터 정지)
     digitalWrite(MOTOR_STEER_IN3, LOW);
     digitalWrite(MOTOR_STEER_IN4, LOW);
+  }
+}
+
+void triggerStatusLed() {
+  digitalWrite(STATUS_LED_PIN, HIGH);
+  ledOn = true;
+  ledOffTime = millis() + 150;
+}
+
+void updateStatusLed() {
+  if (ledOn && millis() >= ledOffTime) {
+    digitalWrite(STATUS_LED_PIN, LOW);
+    ledOn = false;
   }
 }
 
