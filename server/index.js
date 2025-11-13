@@ -93,11 +93,17 @@ wss.on('connection', (ws, req) => {
   
   // 메시지 수신 처리
   ws.on('message', (message) => {
+    // 디버깅: 모든 메시지 로그
+    if (clientType === 'device-pending') {
+      console.log(`📨 Message from device-pending:`, message instanceof Buffer ? `Binary (${message.length} bytes)` : message.toString().substring(0, 100));
+    }
+    
     // 디바이스 등록 처리 (ESP32에서 첫 메시지)
     if (clientType === 'device-pending' || clientType === 'device-control' || clientType === 'device-camera') {
       if (!(message instanceof Buffer)) {
         try {
           const data = JSON.parse(message.toString());
+          console.log(`📝 Parsed JSON from device:`, data);
           
           // 디바이스 등록
           if (data.type === 'register') {
@@ -133,6 +139,8 @@ wss.on('connection', (ws, req) => {
           console.log(`Device ${deviceRole} message:`, data);
         } catch (e) {
           // JSON 파싱 실패 - 바이너리일 수 있음
+          console.log(`⚠️ JSON parse error from device-pending:`, e.message);
+          console.log(`   Raw message:`, message.toString().substring(0, 200));
         }
       }
       

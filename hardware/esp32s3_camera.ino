@@ -26,8 +26,8 @@
 
 // ==================== 설정 (TODO: 사용자가 수정 필요) ====================
 // WiFi 설정
-const char* ssid = "YOUR_WIFI_SSID";         // TODO: WiFi 이름으로 변경
-const char* password = "YOUR_WIFI_PASSWORD"; // TODO: WiFi 비밀번호로 변경
+const char* ssid = "KT_GiGA_89E9";  // TODO: WiFi 이름으로 변경
+const char* password = "ehk2dkg622";  // TODO: WiFi 비밀번호로 변경
 
 const char* ws_host = "base-revolt-server.onrender.com";
 const int ws_port = 443;
@@ -149,22 +149,42 @@ void setupWebSocket() {
   Serial.println("Setting up WebSocket...");
   Serial.printf("Target: %s://%s:%d%s\n", ws_ssl ? "wss" : "ws", ws_host, ws_port, ws_path);
   
+  // WebSocket 이벤트 핸들러 등록 (begin 전에 등록)
+  webSocket.onEvent(webSocketEvent);
+  
+  // 헤더 설정 (begin 전에 설정)
+  webSocket.setExtraHeaders("x-device-type: rc-car");
+  
+  // 재연결 설정 (begin 전에 설정)
+  webSocket.setReconnectInterval(10000);  // 10초로 증가 (안정성)
+  
   if (ws_ssl) {
+    Serial.println("Attempting SSL connection...");
+    Serial.println("⚠️ Note: SSL certificate validation may fail");
+    Serial.println("   If connection fails, check WebSocketsClient library version");
+    
+    // SSL 연결 시도
+    // 참고: ESP32 WebSocketsClient는 기본적으로 SSL 인증서를 검증합니다
+    // Render 서버의 인증서가 검증되지 않으면 연결이 실패할 수 있습니다
     webSocket.beginSSL(ws_host, ws_port, ws_path);
+    
+    // 연결 타임아웃 모니터링 (15초)
+    Serial.println("   Waiting up to 15 seconds for SSL handshake...");
   } else {
+    Serial.println("Attempting non-SSL connection...");
     webSocket.begin(ws_host, ws_port, ws_path);
   }
   
-  // WebSocket 이벤트 핸들러 등록
-  webSocket.onEvent(webSocketEvent);
-  
-  // 재연결 설정
-  webSocket.setReconnectInterval(5000);
-  
-  // 헤더 설정 (하위 호환)
-  webSocket.setExtraHeaders("x-device-type: rc-car");
-  
   Serial.println("WebSocket configured");
+  Serial.println("Waiting for connection...");
+  Serial.printf("WiFi status: %d (3=connected)\n", WiFi.status());
+  
+  // 연결 상태 확인 (5초 후)
+  delay(5000);
+  if (!wsConnected) {
+    Serial.println("⚠️ Still not connected after 5 seconds...");
+    Serial.println("   Check for WStype_ERROR messages above");
+  }
 }
 
 // ==================== WebSocket Event Handler ====================
@@ -172,28 +192,106 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
   switch(type) {
     case WStype_DISCONNECTED:
       Serial.println("❌ WebSocket Disconnected");
+      if (payload && length > 0) {
+        Serial.printf("   Reason: ");
+        for (size_t i = 0; i < length && i < 100; i++) {
+          Serial.print((char)payload[i]);
+        }
+        Serial.println();
+      } else {
+        Serial.println("   Reason: None (connection closed or failed)");
+        Serial.println("   💡 This usually means:");
+        Serial.println("      - SSL handshake failed");
+        Serial.println("      - Server rejected connection");
+        Serial.println("      - Network timeout");
+      }
+      Serial.printf("   WiFi status: %d\n", WiFi.status());
+      Serial.printf("   Free heap: %d bytes\n", ESP.getFreeHeap());
+      Serial.println("   🔄 Will retry in 10 seconds...");
       wsConnected = false;
       break;
       
     case WStype_CONNECTED:
-      Serial.println("✅ WebSocket Connected");
-      wsConnected = true;
-      
-      // 디바이스 등록 메시지 전송 (v2.0 프로토콜)
-      sendRegistration();
+      {
+        Serial.println("✅ WebSocket Connected");
+        Serial.printf("   Server: %s:%d\n", ws_host, ws_port);
+        Serial.printf("   My IP: %s\n", WiFi.localIP().toString().c_str());
+        wsConnected = true;
+        
+        // 연결이 완전히 설정될 때까지 약간 대기
+        delay(100);
+        
+        // 디바이스 등록 메시지 전송 (v2.0 프로토콜)
+        Serial.println("📤 Sending registration message...");
+        sendRegistration();
+        Serial.println("✅ Registration message sent, waiting for server response...");
+      }
       break;
       
     case WStype_TEXT:
       // 서버 메시지 수신 (카메라는 제어 명령 받지 않음)
       Serial.print("ℹ️ Server message: ");
-      Serial.println((char*)payload);
+      if (payload && length > 0) {
+        for (size_t i = 0; i < length && i < 200; i++) {
+          Serial.print((char)payload[i]);
+        }
+        Serial.println();
+      } else {
+        Serial.println("(empty)");
+      }
+      break;
+      
+    case WStype_BIN:
+      Serial.printf("📦 Binary data received: %d bytes\n", length);
       break;
       
     case WStype_ERROR:
-      Serial.println("❌ WebSocket Error");
+      {
+        Serial.println("❌ WebSocket Error");
+        if (payload && length > 0) {
+          Serial.printf("   Error message: ");
+          for (size_t i = 0; i < length && i < 200; i++) {
+            Serial.print((char)payload[i]);
+          }
+          Serial.println();
+        } else {
+          Serial.println("   Error: Unknown (check SSL certificate or network)");
+        }
+        Serial.printf("   WiFi status: %d\n", WiFi.status());
+        Serial.println("   💡 Possible causes:");
+        Serial.println("      1. SSL certificate validation failed");
+        Serial.println("      2. Network connectivity issue");
+        Serial.println("      3. Server not responding");
+        wsConnected = false;
+      }
+      break;
+      
+    case WStype_FRAGMENT_TEXT_START:
+      Serial.println("📝 Text fragment start");
+      break;
+      
+    case WStype_FRAGMENT_BIN_START:
+      Serial.println("📦 Binary fragment start");
+      break;
+      
+    case WStype_FRAGMENT:
+      Serial.printf("📄 Fragment: %d bytes\n", length);
+      break;
+      
+    case WStype_FRAGMENT_FIN:
+      Serial.println("✅ Fragment complete");
+      break;
+      
+    case WStype_PING:
+      Serial.println("🏓 Ping received");
+      break;
+      
+    case WStype_PONG:
+      Serial.println("🏓 Pong received");
       break;
       
     default:
+      Serial.printf("ℹ️ Unknown event type: %d\n", type);
       break;
   }
 }
@@ -240,20 +338,36 @@ void setupCamera() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
   
-  // 프레임 크기 설정 (SVGA = 800x600)
+  // 프레임 크기 설정 (PSRAM 여부에 따라 조정)
   const bool hasPsram = psramFound();
   Serial.printf("PSRAM detected: %s\n", hasPsram ? "yes" : "no");
+  Serial.printf("Free heap before camera init: %d bytes\n", ESP.getFreeHeap());
 
-  config.frame_size = FRAMESIZE_VGA;   // 초기 테스트는 640x480
-  config.jpeg_quality = 12;            // 0-63 (낮을수록 고화질)
-  config.fb_count = hasPsram ? 2 : 1;  // PSRAM 있으면 더블 버퍼
+  if (hasPsram) {
+    // PSRAM 있으면 VGA (640x480) 사용
+    Serial.println("✅ PSRAM detected - using VGA (640x480)");
+    config.frame_size = FRAMESIZE_VGA;
+    config.jpeg_quality = 12;
+    config.fb_count = 2;  // 더블 버퍼
+  } else {
+    // PSRAM 없으면 더 작은 해상도 사용
+    Serial.println("⚠️ No PSRAM detected - using QQVGA (160x120)");
+    config.frame_size = FRAMESIZE_QQVGA;  // 160x120 (최소 메모리 사용)
+    config.jpeg_quality = 20;             // 품질 낮춤 (파일 크기 감소)
+    config.fb_count = 1;                   // 싱글 버퍼만
+    config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;  // 버퍼가 비어있을 때만 캡처
+  }
   
   // 카메라 초기화
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("❌ Camera init failed with error 0x%x\n", err);
+    Serial.printf("Free heap after failed init: %d bytes\n", ESP.getFreeHeap());
+    Serial.println("💡 Try: 1) Enable PSRAM in board settings, 2) Reduce frame size, 3) Check wiring");
     return;
   }
+  
+  Serial.printf("✅ Camera initialized - Free heap: %d bytes\n", ESP.getFreeHeap());
   
   // 센서 설정 조정
   sensor_t * s = esp_camera_sensor_get();
