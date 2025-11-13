@@ -95,16 +95,28 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (message) => {
     // device-pending 상태: 등록 메시지만 처리
     if (clientType === 'device-pending') {
-      // 바이너리 메시지는 무시 (등록 전 프레임)
-      if (message instanceof Buffer) {
-        console.log(`⚠️ Ignoring binary message from unregistered device (${message.length} bytes) - device must register first`);
+      const messageLength = message.length || Buffer.byteLength(message);
+      
+      // 등록 메시지는 작은 크기여야 함 (< 1000 bytes)
+      // 큰 메시지는 카메라 프레임이므로 무시
+      if (messageLength > 1000) {
+        // console.log(`⚠️ Ignoring large message from unregistered device (${messageLength} bytes)`);
         return;
       }
       
-      // 텍스트 메시지만 처리 (등록 메시지)
+      // 메시지를 문자열로 변환 시도 (Buffer든 String이든)
+      let messageStr;
       try {
-        const data = JSON.parse(message.toString());
-        console.log(`📝 Registration attempt:`, data);
+        messageStr = message.toString('utf8');
+      } catch (e) {
+        console.log(`⚠️ Failed to convert message to string:`, e.message);
+        return;
+      }
+      
+      // JSON 파싱 시도
+      try {
+        const data = JSON.parse(messageStr);
+        console.log(`📝 Registration attempt (${messageLength} bytes):`, data);
         
         // 디바이스 등록
         if (data.type === 'register') {
@@ -148,7 +160,8 @@ wss.on('connection', (ws, req) => {
         
         console.log(`⚠️ Non-register message from device-pending:`, data);
       } catch (e) {
-        console.log(`⚠️ Failed to parse message from device-pending:`, e.message);
+        // JSON 파싱 실패 - 프레임 데이터일 가능성 높음, 조용히 무시
+        // console.log(`⚠️ Failed to parse message from device-pending (${messageLength} bytes):`, e.message);
       }
       
       return; // device-pending는 여기서 종료
