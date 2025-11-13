@@ -331,7 +331,8 @@ void sendRegistration() {
   Serial.println(payload);
   Serial.printf("   Payload length: %d bytes\n", payload.length());
   
-  bool sent = webSocket.sendTXT(payload);
+  // String 대신 const char*로 전송
+  bool sent = webSocket.sendTXT(payload.c_str(), payload.length());
   
   Serial.println("✅ Registration message sent:");
   Serial.println(payload);
