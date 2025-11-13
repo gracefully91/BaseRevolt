@@ -115,17 +115,10 @@ void loop() {
   webSocket.loop();
   
   // 카메라 프레임 전송 (15 FPS)
-  // 등록이 완료된 후에만 프레임 전송
-  if (wsConnected && deviceRegistered && (millis() - lastFrameTime > frameInterval)) {
+  // wsConnected가 true면 이미 등록 완료된 상태
+  if (wsConnected && (millis() - lastFrameTime > frameInterval)) {
     sendCameraFrame();
     lastFrameTime = millis();
-  } else if (wsConnected && !deviceRegistered) {
-    // 등록 대기 중 - 500ms 후 자동으로 등록 완료로 간주
-    if (millis() - registrationTime > 500) {
-      deviceRegistered = true;
-      Serial.println("✅ Device registration auto-confirmed after 500ms");
-      Serial.println("▶️ Starting frame streaming...");
-    }
   }
   
   delay(1);
@@ -227,18 +220,29 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.println("✅ WebSocket Connected");
         Serial.printf("   Server: %s:%d\n", ws_host, ws_port);
         Serial.printf("   My IP: %s\n", WiFi.localIP().toString().c_str());
-        wsConnected = true;
         
-        // 연결이 완전히 설정될 때까지 약간 대기
-        delay(100);
+        // 등록이 완료될 때까지 wsConnected를 설정하지 않음
+        // 이렇게 하면 loop()에서 프레임 전송을 시작하지 않음
+        
+        // 연결이 완전히 설정될 때까지 대기 (500ms로 증가)
+        Serial.println("⏳ Waiting 500ms for connection to stabilize...");
+        delay(500);
         
         // 디바이스 등록 메시지 전송 (v2.0 프로토콜)
         Serial.println("📤 Sending registration message...");
         sendRegistration();
         registrationTime = millis();
         deviceRegistered = false;  // 등록 확인 대기
-        Serial.println("✅ Registration message sent, waiting for server response...");
-        Serial.println("⏸️ Frame streaming paused until registration confirmed");
+        
+        // 등록 메시지 전송 후 1초 대기
+        Serial.println("⏳ Waiting 1000ms for server to process registration...");
+        delay(1000);
+        
+        // 이제 연결 완료로 표시
+        wsConnected = true;
+        deviceRegistered = true;
+        
+        Serial.println("✅ Registration complete, starting frame streaming...");
       }
       break;
       
@@ -327,10 +331,15 @@ void sendRegistration() {
   String payload;
   serializeJson(doc, payload);
   
-  webSocket.sendTXT(payload);
+  Serial.print("📤 Registration payload: ");
+  Serial.println(payload);
+  Serial.printf("   Payload length: %d bytes\n", payload.length());
+  
+  bool sent = webSocket.sendTXT(payload);
   
   Serial.println("✅ Registration message sent:");
   Serial.println(payload);
+  Serial.printf("   Send result: %s\n", sent ? "SUCCESS" : "FAILED");
 }
 
 // ==================== 카메라 초기화 ====================
