@@ -7,12 +7,20 @@ export default function VehicleSelectionModal({
   onVehicleSelect,
   onShowQueue,
   vehicles = [],
+  loading = false,
   onRefresh
 }) {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const isSelectable = (vehicle) => {
+    return vehicle.status === 'online';
+  };
+
   const handleVehicleSelect = (vehicle) => {
+    if (!isSelectable(vehicle)) {
+      return; // maintenance, in_use, offline 차량은 선택 불가
+    }
     setSelectedVehicle(vehicle);
     onVehicleSelect(vehicle);
   };
@@ -46,32 +54,45 @@ export default function VehicleSelectionModal({
         </div>
         
         <div className="vehicle-list">
-          {vehicles.map((vehicle) => (
+          {loading ? (
+            <div className="loading-vehicles">
+              <div className="loading-spinner">⏳</div>
+              <p>Loading vehicles...</p>
+            </div>
+          ) : vehicles.length === 0 ? (
+            <div className="no-vehicles">
+              <p>⚠️ No vehicles online</p>
+              <p className="subtext">Please wait for vehicles to connect</p>
+            </div>
+          ) : (
+            vehicles.map((vehicle) => (
             <div 
               key={vehicle.id}
-              className={`vehicle-card ${selectedVehicle?.id === vehicle.id ? 'selected' : ''} ${vehicle.status === 'maintenance' ? 'maintenance' : ''} ${vehicle.status === 'offline' ? 'offline' : ''}`}
+              className={`vehicle-card ${selectedVehicle?.id === vehicle.id ? 'selected' : ''} ${!isSelectable(vehicle) ? 'disabled' : ''}`}
               onClick={() => handleVehicleSelect(vehicle)}
+              style={{ cursor: isSelectable(vehicle) ? 'pointer' : 'not-allowed' }}
             >
               <img 
-                src={vehicle.image || '/static-gamgyul.png'} 
-                alt={vehicle.name}
+                src={`/vehicles/${vehicle.id}.png`}
+                alt={vehicle.name || vehicle.id}
                 className="vehicle-image"
-                onError={(e) => { e.target.src = '/static-gamgyul.png'; }}
+                onError={(e) => { e.target.src = '/vehicles/default.png'; }}
               />
               <div className="vehicle-content">
                 <div className="vehicle-header">
-                  <h4 className="vehicle-name">{vehicle.name}</h4>
+                  <h4 className="vehicle-name">{vehicle.name || vehicle.id}</h4>
                   <span className={`status-indicator ${vehicle.status}`}>
-                    {vehicle.status === 'available' ? (
+                    {vehicle.status === 'online' ? (
                       <>
                         <span className="blinking-dot">🟢</span> Available
                       </>
-                    ) : vehicle.status === 'busy' ? '🔴 In Use' : 
-                      vehicle.status === 'offline' ? '🔴 Offline' :
+                    ) : vehicle.status === 'in_use' ? '🔴 In Use' : 
+                      vehicle.status === 'offline' ? '⚪ Offline' :
                      '🟡 Maintenance'}
                   </span>
                 </div>
-                <p className="vehicle-description">{vehicle.description}</p>
+                <p className="vehicle-description">{vehicle.description || vehicle.hardwareSpec || 'RC Vehicle'}</p>
+                <p className="vehicle-id">ID: {vehicle.id}</p>
                 {vehicle.waitingQueue && vehicle.waitingQueue.length > 0 && (
                   <div className="vehicle-status-info">
                     <div className="status-line">
@@ -87,13 +108,14 @@ export default function VehicleSelectionModal({
                   </div>
                 )}
               </div>
-              {selectedVehicle?.id === vehicle.id && (
+              {selectedVehicle?.id === vehicle.id && isSelectable(vehicle) && (
                 <div className="selection-indicator">
-                  {vehicle.status === 'maintenance' ? '🚧' : vehicle.status === 'offline' ? '⚠️' : '✅'}
+                  ✅
                 </div>
               )}
             </div>
-          ))}
+          ))
+          )}
           {Array.from({ length: 3 }, (_, index) => (
             <div key={`empty-${index}`} className="vehicle-card empty-slot">
               <div className="vehicle-image empty-image">

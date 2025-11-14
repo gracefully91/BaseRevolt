@@ -75,3 +75,8 @@ export const TICKET_CONTRACT_ABI = [
 // 프로덕션용: wss://base-revolt-server.onrender.com
 export const WS_SERVER_URL = import.meta.env.VITE_WS_SERVER_URL || "wss://base-revolt-server.onrender.com";
 
+// HTTP API 서버 설정 (v2.1 - 차량 프로필 API)
+// 로컬 테스트용: http://localhost:8080
+// 프로덕션용: https://base-revolt-server.onrender.com
+export const API_SERVER_URL = import.meta.env.VITE_API_SERVER_URL || "http://localhost:8080";
+

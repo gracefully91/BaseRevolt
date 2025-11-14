@@ -13,6 +13,7 @@ import { ReownAppKitProvider } from './providers/ReownAppKitProvider';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Play from './pages/Play';
+import AdminVehicles from './pages/AdminVehicles';
 
 function AppContent() {
   const location = useLocation();
@@ -40,6 +41,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/play" element={<Play />} />
+        <Route path="/admin/vehicles" element={<AdminVehicles />} />
       </Routes>
     </>
   );

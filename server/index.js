@@ -6,6 +6,20 @@ import { randomUUID } from 'crypto';
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// JSON 파싱 미들웨어
+app.use(express.json());
+
+// CORS 설정
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // HTTP 서버 생성
 const server = createServer(app);
 
@@ -16,6 +30,10 @@ const wss = new WebSocketServer({ server });
 // devices: Map<deviceId, { control: ws, camera: ws, metadata }>
 const devices = new Map();
 const webUsers = new Set();  // 웹 사용자들
+
+// 차량 프로필 캐시 (v2.1: 차량 = DB 구조)
+// vehiclesOnline: Map<vehicleId, { id, hardwareSpec, name, description, ownerWallet, status, lastSeen, ws }>
+const vehiclesOnline = new Map();
 
 // 세션 관리
 const activeSessions = new Map(); // carId → session 정보
@@ -57,6 +75,90 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// 온라인 차량 목록 API (프론트 차량 선택 페이지용)
+app.get('/vehicles/online', (req, res) => {
+  const vehicles = [];
+  
+  vehiclesOnline.forEach((vehicle) => {
+    vehicles.push({
+      id: vehicle.id,
+      name: vehicle.name,
+      description: vehicle.description,
+      ownerWallet: vehicle.ownerWallet,
+      hardwareSpec: vehicle.hardwareSpec,
+      status: vehicle.status
+    });
+  });
+  
+  res.json(vehicles);
+});
+
+// 차량 설정 업데이트 API (관리자 페이지용)
+app.post('/vehicles/:id/config', (req, res) => {
+  const vehicleId = req.params.id;
+  const { name, description, ownerWallet } = req.body;
+  
+  console.log(`📝 Config update request for vehicle: ${vehicleId}`);
+  
+  const vehicle = vehiclesOnline.get(vehicleId);
+  
+  if (!vehicle) {
+    return res.status(404).json({
+      error: 'Vehicle not found or offline',
+      message: `Vehicle ${vehicleId} is not currently connected`
+    });
+  }
+  
+  // 메모리 캐시 업데이트
+  if (name !== undefined) vehicle.name = name;
+  if (description !== undefined) vehicle.description = description;
+  if (ownerWallet !== undefined) vehicle.ownerWallet = ownerWallet;
+  vehicle.lastSeen = Date.now();
+  
+  // WebSocket으로 차량에 설정 전송
+  const updateData = {};
+  if (name !== undefined) updateData.name = name;
+  if (description !== undefined) updateData.description = description;
+  if (ownerWallet !== undefined) updateData.ownerWallet = ownerWallet;
+  
+  try {
+    // control 또는 camera WebSocket 중 연결된 것 사용
+    const device = devices.get(vehicleId);
+    let targetWs = null;
+    
+    if (device) {
+      targetWs = device.control || device.camera;
+    }
+    
+    if (targetWs && targetWs.readyState === 1) {
+      targetWs.send(JSON.stringify({
+        type: 'updateConfig',
+        data: updateData
+      }));
+      
+      console.log(`✅ Config sent to vehicle ${vehicleId}:`, updateData);
+      
+      res.json({
+        success: true,
+        message: 'Config sent to vehicle',
+        updatedFields: Object.keys(updateData)
+      });
+    } else {
+      // WebSocket이 없거나 끊긴 경우
+      res.status(503).json({
+        error: 'Vehicle connection unavailable',
+        message: 'Vehicle is registered but WebSocket is not available'
+      });
+    }
+  } catch (error) {
+    console.error(`❌ Error sending config to vehicle ${vehicleId}:`, error);
+    res.status(500).json({
+      error: 'Failed to send config',
+      message: error.message
+    });
+  }
 });
 
 // WebSocket 연결 처리
@@ -158,6 +260,50 @@ wss.on('connection', (ws, req) => {
           return;
         }
         
+        // 차량 프로필 정보 (v2.1: 차량 = DB)
+        if (data.type === 'vehicleInfo') {
+          const vehicleId = data.id;
+          
+          console.log(`📋 Vehicle profile received: ${vehicleId}`, {
+            name: data.name,
+            hardwareSpec: data.hardwareSpec
+          });
+          
+          // vehiclesOnline 캐시에 저장 (upsert)
+          vehiclesOnline.set(vehicleId, {
+            id: vehicleId,
+            hardwareSpec: data.hardwareSpec || '',
+            name: data.name || vehicleId,
+            description: data.description || '',
+            ownerWallet: data.ownerWallet || '',
+            status: data.status || 'online',
+            lastSeen: Date.now()
+          });
+          
+          // 디바이스 등록도 함께 처리 (하위 호환)
+          // vehicleInfo에 role이 포함되어 있지 않으면 추론
+          if (!deviceId) {
+            deviceId = vehicleId;
+            // 카메라 모듈이 vehicleInfo를 보낸다고 가정
+            deviceRole = 'camera';
+            
+            if (!devices.has(deviceId)) {
+              devices.set(deviceId, {});
+            }
+            
+            const device = devices.get(deviceId);
+            device[deviceRole] = ws;
+            
+            ws.deviceId = deviceId;
+            ws.role = deviceRole;
+            clientType = `device-${deviceRole}`;
+            
+            console.log(`✅ Device auto-registered via vehicleInfo: ${deviceId} (${deviceRole})`);
+          }
+          
+          return;
+        }
+        
         console.log(`⚠️ Non-register message from device-pending:`, data);
       } catch (e) {
         // JSON 파싱 실패 - 프레임 데이터일 가능성 높음, 조용히 무시
@@ -239,6 +385,12 @@ wss.on('connection', (ws, req) => {
         // 디바이스의 모든 역할이 끊어졌으면 제거
         if (!device.control && !device.camera) {
           devices.delete(deviceId);
+          
+          // vehiclesOnline에서도 제거
+          if (vehiclesOnline.has(deviceId)) {
+            vehiclesOnline.delete(deviceId);
+            console.log(`📋 Vehicle profile removed: ${deviceId}`);
+          }
         }
       }
       
@@ -299,6 +451,14 @@ function createSession(carId, wallet, tier, ws) {
   };
   
   activeSessions.set(carId, session);
+  
+  // 차량 상태를 "in_use"로 변경
+  if (vehiclesOnline.has(carId)) {
+    const vehicle = vehiclesOnline.get(carId);
+    vehicle.status = 'in_use';
+    vehicle.lastSeen = Date.now();
+    console.log(`🚗 Vehicle ${carId} status: online → in_use`);
+  }
   
   // 자동 만료 타이머 설정
   session.autoEndTimeout = setTimeout(() => {
@@ -370,6 +530,14 @@ function endSession(carId, reason = 'manual') {
       broadcastQueueStatus(carId);
     }, 1000); // 1초 후 할당 (정리 시간)
   } else {
+    // 차량 상태를 "online"으로 복귀
+    if (vehiclesOnline.has(carId)) {
+      const vehicle = vehiclesOnline.get(carId);
+      vehicle.status = 'online';
+      vehicle.lastSeen = Date.now();
+      console.log(`🚗 Vehicle ${carId} status: in_use → online`);
+    }
+    
     // 대기열이 비었으면 상태만 브로드캐스트
     broadcastQueueStatus(carId);
   }

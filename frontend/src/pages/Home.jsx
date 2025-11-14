@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAccount, useReadContract, useChainId } from 'wagmi';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { base, baseSepolia } from 'wagmi/chains';
-import { TICKET_CONTRACT_ADDRESS, TICKET_CONTRACT_ABI, WS_SERVER_URL } from '../config/contracts';
+import { TICKET_CONTRACT_ADDRESS, TICKET_CONTRACT_ABI, WS_SERVER_URL, API_SERVER_URL } from '../config/contracts';
 import PaymentModal from '../components/PaymentModal';
 import VehicleSelectionModal from '../components/VehicleSelectionModal';
 import WaitingQueueModal from '../components/WaitingQueueModal';
 import QueueNotificationModal from '../components/QueueNotificationModal';
-import { vehicleManager } from '../utils/vehicleData';
 import './Home.css';
 
 function Home() {
@@ -27,6 +26,8 @@ function Home() {
   const [queueNotification, setQueueNotification] = useState(null);
   const [queueStatus, setQueueStatus] = useState(null);
   const [hasShared, setHasShared] = useState(false);
+  const [vehicles, setVehicles] = useState([]);
+  const [vehiclesLoading, setVehiclesLoading] = useState(true);
   const wsRef = useRef(null);
   const isConnectingRef = useRef(false);
   
@@ -290,6 +291,34 @@ function Home() {
       console.log('💡 공유에 실패했습니다.');
     }
   };
+
+  // 차량 목록 API 호출 (v2.1 - 실시간 온라인 차량)
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const response = await fetch(`${API_SERVER_URL}/vehicles/online`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch vehicles');
+        }
+        const data = await response.json();
+        console.log('✅ Online vehicles:', data);
+        setVehicles(data);
+      } catch (error) {
+        console.error('❌ Failed to fetch vehicles:', error);
+        // 에러 시 빈 배열 유지
+      } finally {
+        setVehiclesLoading(false);
+      }
+    };
+
+    // 초기 로드
+    fetchVehicles();
+
+    // 5초마다 폴링
+    const interval = setInterval(fetchVehicles, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Quick Auth를 사용한 Farcaster 인증
   useEffect(() => {
@@ -795,7 +824,8 @@ function Home() {
           onClose={() => setShowVehicleSelection(false)}
           onVehicleSelect={handleVehicleSelect}
           onShowQueue={handleShowQueue}
-          vehicles={vehicleManager.getVehicles()}
+          vehicles={vehicles}
+          loading={vehiclesLoading}
           onRefresh={async () => {
             // 서버에서 실시간 대기열 상태 가져오기
             await refreshQueueStatus();
@@ -861,6 +891,17 @@ function Home() {
             </button>
           )}
         </div>
+
+        {/* 관리자 페이지 버튼 (관리자 지갑 연결 시에만 표시) */}
+        {isConnected && address?.toLowerCase() === "0xd10d3381c1e824143d22350e9149413310f14f22" && (
+          <button 
+            className="admin-access-button"
+            onClick={() => navigate('/admin/vehicles')}
+            title="관리자 페이지"
+          >
+            ⚙️
+          </button>
+        )}
       </div>
     </div>
   );

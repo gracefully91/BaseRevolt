@@ -23,6 +23,7 @@
 #include <WebSocketsClient.h>
 #include "esp_camera.h"
 #include <ArduinoJson.h>
+#include <Preferences.h>
 
 // ==================== 설정 (TODO: 사용자가 수정 필요) ====================
 // WiFi 설정
@@ -37,6 +38,7 @@ const char* ws_path = "/";
 // 디바이스 ID 설정 (조종 보드와 동일한 ID 사용!)
 const char* DEVICE_ID = "CAR01";  // TODO: 조종 보드와 똑같은 ID 사용
 const char* DEVICE_ROLE = "camera";
+const char* HARDWARE_SPEC = "ESP32-CAM + OV2640";  // 하드웨어 스펙 (수정 불가)
 
 // ==================== ESP32-CAM (AI-Thinker) 카메라 핀 정의 ====================
 // AI-Thinker ESP32-CAM 모듈의 표준 핀맵
@@ -74,12 +76,21 @@ const int frameInterval = 66; // ~15 FPS (1000ms / 15 = 66ms)
 bool wsConnected = false;
 unsigned long registrationTime = 0;  // 등록 메시지 전송 시간
 
+// 차량 프로필 (NVS에 저장)
+Preferences preferences;
+String vehicleName;
+String vehicleDescription;
+String ownerWallet;
+
 // ==================== 함수 선언 ====================
 void setupCamera();
 void setupWiFi();
 void setupWebSocket();
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 void sendCameraFrame();
+void loadVehicleConfig();
+void sendVehicleInfo();
+void applyConfigUpdate(JsonObject data);
 void sendRegistration();
 
 // ==================== Setup ====================
@@ -90,6 +101,10 @@ void setup() {
   Serial.println("Version: 2.0 - Camera Only (Budget Model)");
   Serial.println("Device ID: " + String(DEVICE_ID));
   Serial.println("Role: " + String(DEVICE_ROLE));
+  Serial.println("Hardware: " + String(HARDWARE_SPEC));
+  
+  // 차량 프로필 로드
+  loadVehicleConfig();
   
   // WiFi 연결
   setupWiFi();
@@ -225,6 +240,11 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.println("⏳ Waiting 2000ms for server to process registration...");
         delay(2000);
         
+        // 차량 프로필 정보 전송 (v2.1)
+        Serial.println("📤 Sending vehicle profile...");
+        sendVehicleInfo();
+        delay(500);
+        
         // 이제 연결 완료로 표시 - 이제부터 loop()에서 프레임 전송 시작
         wsConnected = true;
         
@@ -233,11 +253,25 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       break;
       
     case WStype_TEXT:
-      // 서버 메시지 수신 (카메라는 제어 명령 받지 않음)
+      // 서버 메시지 수신
       Serial.print("ℹ️ Server message: ");
       if (payload && length > 0) {
         String msg = String((char*)payload);
         Serial.println(msg);
+        
+        // JSON 파싱 시도
+        StaticJsonDocument<512> doc;
+        DeserializationError error = deserializeJson(doc, msg);
+        
+        if (!error) {
+          const char* msgType = doc["type"];
+          
+          // 차량 설정 업데이트 (v2.1)
+          if (msgType && strcmp(msgType, "updateConfig") == 0) {
+            Serial.println("📝 Config update received from admin");
+            applyConfigUpdate(doc["data"]);
+          }
+        }
       } else {
         Serial.println("(empty)");
       }
@@ -379,5 +413,92 @@ void sendCameraFrame() {
   
   // 프레임 버퍼 해제
   esp_camera_fb_return(fb);
+}
+
+// ==================== 차량 프로필 관리 (v2.1) ====================
+
+// NVS에서 차량 설정 로드
+void loadVehicleConfig() {
+  Serial.println("📂 Loading vehicle config from NVS...");
+  
+  preferences.begin("vehicle", false);  // Read-write mode
+  
+  vehicleName = preferences.getString("name", "");
+  vehicleDescription = preferences.getString("desc", "");
+  ownerWallet = preferences.getString("owner", "");
+  
+  // 기본값 설정 (비어있으면)
+  if (vehicleName == "") {
+    vehicleName = String(DEVICE_ID);
+    Serial.println("  ⚠️ No name found, using device ID as default");
+  }
+  
+  preferences.end();
+  
+  Serial.println("✅ Vehicle config loaded:");
+  Serial.println("  Name: " + vehicleName);
+  Serial.println("  Description: " + vehicleDescription);
+  Serial.println("  Owner: " + ownerWallet);
+}
+
+// 서버에 차량 프로필 정보 전송
+void sendVehicleInfo() {
+  DynamicJsonDocument doc(512);
+  doc["type"] = "vehicleInfo";
+  doc["id"] = DEVICE_ID;
+  doc["hardwareSpec"] = HARDWARE_SPEC;
+  doc["name"] = vehicleName;
+  doc["description"] = vehicleDescription;
+  doc["ownerWallet"] = ownerWallet;
+  doc["status"] = "online";
+  
+  String payload;
+  serializeJson(doc, payload);
+  
+  Serial.print("📤 Vehicle info payload: ");
+  Serial.println(payload);
+  
+  bool sent = webSocket.sendTXT(payload.c_str(), payload.length());
+  Serial.printf("   Send result: %s\n", sent ? "SUCCESS" : "FAILED");
+}
+
+// 서버로부터 받은 설정 업데이트 적용
+void applyConfigUpdate(JsonObject data) {
+  preferences.begin("vehicle", false);
+  
+  bool updated = false;
+  
+  if (data.containsKey("name")) {
+    vehicleName = data["name"].as<String>();
+    preferences.putString("name", vehicleName);
+    Serial.println("  ✏️ Name updated: " + vehicleName);
+    updated = true;
+  }
+  
+  if (data.containsKey("description")) {
+    vehicleDescription = data["description"].as<String>();
+    preferences.putString("desc", vehicleDescription);
+    Serial.println("  ✏️ Description updated: " + vehicleDescription);
+    updated = true;
+  }
+  
+  if (data.containsKey("ownerWallet")) {
+    ownerWallet = data["ownerWallet"].as<String>();
+    preferences.putString("owner", ownerWallet);
+    Serial.println("  ✏️ Owner wallet updated: " + ownerWallet);
+    updated = true;
+  }
+  
+  preferences.end();
+  
+  if (updated) {
+    Serial.println("✅ Config saved to NVS");
+    
+    // 확인용으로 서버에 업데이트된 정보 재전송
+    delay(500);
+    sendVehicleInfo();
+  } else {
+    Serial.println("  ⚠️ No fields to update");
+  }
 }
 

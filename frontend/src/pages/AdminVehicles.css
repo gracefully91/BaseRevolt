@@ -1,0 +1,260 @@
+.admin-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.admin-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.admin-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.admin-header p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.admin-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 좌측: 차량 리스트 */
+.admin-vehicle-list {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.admin-vehicle-list h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.vehicle-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-vehicle-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-vehicle-card:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.admin-vehicle-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+}
+
+.admin-vehicle-card img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.vehicle-info {
+  flex: 1;
+}
+
+.vehicle-info h3 {
+  margin: 0 0 4px 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.vehicle-id {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0 0 8px 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.online {
+  background: #e7f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.in_use {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.status-badge.maintenance {
+  background: #fff9e6;
+  color: #f57c00;
+}
+
+/* 우측: 편집 폼 */
+.admin-edit-panel {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.admin-edit-panel h2 {
+  margin-bottom: 24px;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #555;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-group.readonly label {
+  color: #999;
+}
+
+.readonly-input {
+  background: #f5f5f5 !important;
+  cursor: not-allowed;
+  color: #666 !important;
+}
+
+.save-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.save-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+}
+
+/* 빈 상태 */
+.no-selection {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.no-selection p {
+  font-size: 1.2rem;
+}
+
+.admin-loading,
+.admin-no-vehicles,
+.admin-access-denied {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.admin-loading .spinner {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.admin-access-denied {
+  background: white;
+  border-radius: 16px;
+  padding: 60px;
+  margin: 100px auto;
+  max-width: 500px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.admin-access-denied h2 {
+  margin-bottom: 16px;
+  color: #c62828;
+}
+
+.admin-address-hint {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 12px;
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+  .admin-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-vehicle-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .admin-vehicle-card img {
+    width: 100%;
+    height: auto;
+    max-width: 200px;
+  }
+}
+
