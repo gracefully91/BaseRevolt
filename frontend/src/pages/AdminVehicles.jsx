@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { useNavigate } from 'react-router-dom';
 import { API_SERVER_URL } from '../config/contracts';
 import './AdminVehicles.css';
 
@@ -7,6 +8,7 @@ const ADMIN_ADDRESS = "0xd10d3381c1e824143d22350e9149413310f14f22";
 
 export default function AdminVehicles() {
   const { address, isConnected } = useAccount();
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -20,7 +22,7 @@ export default function AdminVehicles() {
   // 접근 제어
   const isAdmin = isConnected && address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase();
 
-  // 차량 목록 가져오기
+  // Fetch online vehicles
   useEffect(() => {
     if (!isAdmin) return;
 
@@ -42,7 +44,7 @@ export default function AdminVehicles() {
     return () => clearInterval(interval);
   }, [isAdmin]);
 
-  // 차량 선택 시 폼 데이터 설정
+  // Populate form when selecting a vehicle
   const handleSelectVehicle = (vehicle) => {
     setSelectedVehicle(vehicle);
     setFormData({
@@ -52,13 +54,13 @@ export default function AdminVehicles() {
     });
   };
 
-  // 폼 입력 핸들러
+  // Form input handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 설정 저장
+  // Save config to vehicle
   const handleSave = async () => {
     if (!selectedVehicle) return;
 
@@ -74,7 +76,7 @@ export default function AdminVehicles() {
       );
 
       if (response.ok) {
-        alert('✅ 설정이 차량에 전송되었습니다!');
+        alert('✅ Config sent to vehicle successfully!');
         // 목록 갱신
         const refreshResponse = await fetch(`${API_SERVER_URL}/vehicles/online`);
         if (refreshResponse.ok) {
@@ -89,35 +91,36 @@ export default function AdminVehicles() {
         }
       } else {
         const error = await response.json();
-        alert('❌ 전송 실패: ' + (error.message || '차량이 오프라인일 수 있습니다.'));
+        alert('❌ Failed to deliver config: ' + (error.message || 'Vehicle might be offline.'));
       }
     } catch (error) {
-      alert('❌ 오류 발생: ' + error.message);
+      alert('❌ Unexpected error: ' + error.message);
     } finally {
       setSaving(false);
     }
   };
 
-  // 접근 권한 체크
+  // Guard: wallet not connected
   if (!isConnected) {
     return (
       <div className="admin-container">
         <div className="admin-access-denied">
-          <h2>🔒 관리자 페이지</h2>
-          <p>지갑을 연결해주세요</p>
+          <h2>🔒 Admin Console</h2>
+          <p>Please connect your wallet to continue.</p>
         </div>
       </div>
     );
   }
 
+  // Guard: not authorized
   if (!isAdmin) {
     return (
       <div className="admin-container">
         <div className="admin-access-denied">
-          <h2>⛔ 접근 거부</h2>
-          <p>관리자 전용 페이지입니다</p>
+          <h2>⛔ Access Denied</h2>
+          <p>This page is restricted to admin wallets.</p>
           <p className="admin-address-hint">
-            현재 지갑: {address?.substring(0, 10)}...
+            Connected wallet: {address?.substring(0, 10)}...
           </p>
         </div>
       </div>
@@ -126,24 +129,31 @@ export default function AdminVehicles() {
 
   return (
     <div className="admin-container">
+      <button
+        className="admin-home-button"
+        onClick={() => navigate('/')}
+        title="Go Home"
+      >
+        ◀️
+      </button>
       <header className="admin-header">
-        <h1>🔧 차량 관리</h1>
-        <p>온라인 차량의 프로필을 수정할 수 있습니다</p>
+        <h1>🔧 Vehicle</h1>
+        <p>Update online vehicle profiles in real time.</p>
       </header>
 
       <div className="admin-content">
-        {/* 좌측: 차량 리스트 */}
+        {/* Left column: vehicle list */}
         <div className="admin-vehicle-list">
-          <h2>온라인 차량 ({vehicles.length})</h2>
+          <h2>Online Vehicles ({vehicles.length})</h2>
           
           {loading ? (
             <div className="admin-loading">
               <div className="spinner">⏳</div>
-              <p>로딩 중...</p>
+              <p>Loading...</p>
             </div>
           ) : vehicles.length === 0 ? (
             <div className="admin-no-vehicles">
-              <p>⚠️ 온라인 차량이 없습니다</p>
+              <p>⚠️ No vehicles currently online</p>
             </div>
           ) : (
             <div className="vehicle-cards">
@@ -162,9 +172,9 @@ export default function AdminVehicles() {
                     <h3>{vehicle.name || vehicle.id}</h3>
                     <p className="vehicle-id">ID: {vehicle.id}</p>
                     <span className={`status-badge ${vehicle.status}`}>
-                      {vehicle.status === 'online' ? '🟢 온라인' :
-                       vehicle.status === 'in_use' ? '🔴 사용 중' :
-                       '🟡 정비 중'}
+                      {vehicle.status === 'online' ? '🟢 Online' :
+                       vehicle.status === 'in_use' ? '🔴 In Use' :
+                       '🟡 Maintenance'}
                     </span>
                   </div>
                 </div>
@@ -173,14 +183,14 @@ export default function AdminVehicles() {
           )}
         </div>
 
-        {/* 우측: 편집 폼 */}
+        {/* Right column: edit form */}
         <div className="admin-edit-panel">
           {selectedVehicle ? (
             <>
-              <h2>차량 설정 편집</h2>
+              <h2>Edit Vehicle Profile</h2>
               
               <div className="form-group readonly">
-                <label>차량 ID (수정 불가)</label>
+                <label>Vehicle ID (read-only)</label>
                 <input
                   type="text"
                   value={selectedVehicle.id}
@@ -190,7 +200,7 @@ export default function AdminVehicles() {
               </div>
 
               <div className="form-group readonly">
-                <label>하드웨어 스펙 (수정 불가)</label>
+                <label>Hardware Spec (read-only)</label>
                 <input
                   type="text"
                   value={selectedVehicle.hardwareSpec || 'N/A'}
@@ -200,29 +210,29 @@ export default function AdminVehicles() {
               </div>
 
               <div className="form-group">
-                <label>차량 이름</label>
+                <label>Vehicle Name</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="예: Base Racer 01"
+                  placeholder="e.g. Base Racer 01"
                 />
               </div>
 
               <div className="form-group">
-                <label>설명</label>
+                <label>Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="차량에 대한 설명을 입력하세요"
+                  placeholder="Describe this vehicle (max 200 chars)"
                   rows="3"
                 />
               </div>
 
               <div className="form-group">
-                <label>소유자 지갑 주소</label>
+                <label>Owner Wallet Address</label>
                 <input
                   type="text"
                   name="ownerWallet"
@@ -237,16 +247,16 @@ export default function AdminVehicles() {
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? '전송 중...' : '💾 저장 및 전송'}
+                {saving ? 'Sending...' : '💾 Save & Push OTA'}
               </button>
 
               <p className="hint">
-                ℹ️ 저장 시 차량으로 설정이 즉시 전송됩니다
+                ℹ️ Changes are pushed to the vehicle immediately over OTA.
               </p>
             </>
           ) : (
             <div className="no-selection">
-              <p>👈 차량을 선택해주세요</p>
+              <p>👈 Select a vehicle to edit its profile</p>
             </div>
           )}
         </div>
