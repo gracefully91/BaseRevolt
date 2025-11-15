@@ -454,7 +454,7 @@ void loadVehicleConfig() {
 }
 
 // 서버에 차량 프로필 정보 전송
-void sendVehicleInfo() {
+void sendVehicleInfo(const char* status) {
   DynamicJsonDocument doc(512);
   doc["type"] = "vehicleInfo";
   doc["id"] = DEVICE_ID;
@@ -462,7 +462,7 @@ void sendVehicleInfo() {
   doc["name"] = vehicleName;
   doc["description"] = vehicleDescription;
   doc["ownerWallet"] = ownerWallet;
-  doc["status"] = "online";
+  doc["status"] = status ? status : "online";
   
   String payload;
   serializeJson(doc, payload);
@@ -471,6 +471,9 @@ void sendVehicleInfo() {
   Serial.println(payload);
   
   bool sent = webSocket.sendTXT(payload.c_str(), payload.length());
+  if (sent) {
+    lastVehicleInfoSent = millis();
+  }
   Serial.printf("   Send result: %s\n", sent ? "SUCCESS" : "FAILED");
 }
 
