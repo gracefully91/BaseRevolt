@@ -29,6 +29,14 @@ const int ws_port = 443;
 const char* ws_path = "/";
 const bool ws_ssl = true;
 
+// 디바이스 메타데이터 (서버 등록용)
+const char* DEVICE_ID = "CAR01";
+const char* DEVICE_ROLE = "camera";  // 레거시 통합 펌웨어는 카메라 역할로 등록
+const char* HARDWARE_SPEC = "ESP32-CAM (legacy)";
+const char* VEHICLE_NAME = "CAR01";
+const char* VEHICLE_DESCRIPTION = "Legacy ESP32-CAM combined board";
+const char* OWNER_WALLET = "";
+
 // UDP 서버 설정 (제어 명령용)
 const int udp_port = 8082;
 const char* server_ip = "base-revolt-server.onrender.com";
@@ -78,6 +86,8 @@ const bool FRAME_STREAMING_ENABLED = true; // 실험 A 완료 - 프레임이 원
 const int EXPERIMENT_FPS = 4; // 6 → 4로 더 낮춤 (안정성 우선)
 const int frameInterval = 1000 / EXPERIMENT_FPS; // 실험용 FPS
 bool wsConnected = false;
+const unsigned long VEHICLE_INFO_INTERVAL = 30000; // vehicleInfo 하트비트 간격
+unsigned long lastVehicleInfoSent = 0;
 
 // ==================== 함수 선언 ====================
 void setupCamera();
@@ -95,6 +105,8 @@ void motorLeft();
 void motorRight();
 void setDir(bool L1, bool L2, bool R3, bool R4);
 void quickSelfTest();
+void sendRegistration();
+void sendVehicleInfo(const char* status = "online");
 
 // ==================== Setup ====================
 void setup() {
@@ -151,6 +163,12 @@ void loop() {
     Serial.println("Sending keep-alive ping");
     webSocket.sendTXT("{\"type\":\"ping\"}");
     lastKeepAlive = millis();
+  }
+  
+  // vehicleInfo 하트비트
+  if (wsConnected && (millis() - lastVehicleInfoSent > VEHICLE_INFO_INTERVAL)) {
+    Serial.println("📡 Vehicle info heartbeat");
+    sendVehicleInfo();
   }
   
   delay(1);
@@ -275,6 +293,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       Serial.println("   Attempting to reconnect...");
       wsConnected = false;
       motorStop(); // 연결 끊기면 정지
+      lastVehicleInfoSent = 0;
       break;
       
     case WStype_CONNECTED:
@@ -284,10 +303,11 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.printf("   My IP: %s\n", WiFi.localIP().toString().c_str());
         wsConnected = true;
         
-        // 연결 확인 메시지 (IP 주소 포함)
-        String deviceMsg = "{\"type\":\"device\",\"device\":\"rc-car\",\"status\":\"connected\",\"ip\":\"" + WiFi.localIP().toString() + "\"}";
-        webSocket.sendTXT(deviceMsg);
-        Serial.println("Sent device registration message with IP");
+        // 서버에 디바이스 등록 + 차량 정보 표시
+        sendRegistration();
+        delay(500);
+        sendVehicleInfo();
+        lastVehicleInfoSent = millis();
       }
       break;
       
@@ -327,6 +347,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       
     case WStype_ERROR:
       Serial.println("[WS] Error occurred");
+      lastVehicleInfoSent = 0;
       break;
       
     case WStype_PING:
@@ -336,6 +357,41 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     case WStype_PONG:
       Serial.println("[WS] Pong received");
       break;
+  }
+}
+
+// ==================== Device Registration Helpers ====================
+void sendRegistration() {
+  DynamicJsonDocument doc(256);
+  doc["type"] = "register";
+  doc["deviceId"] = DEVICE_ID;
+  doc["role"] = DEVICE_ROLE;
+  
+  String payload;
+  serializeJson(doc, payload);
+  
+  Serial.println("📤 Registration payload:");
+  Serial.println(payload);
+  webSocket.sendTXT(payload);
+}
+
+void sendVehicleInfo(const char* status) {
+  DynamicJsonDocument doc(512);
+  doc["type"] = "vehicleInfo";
+  doc["id"] = DEVICE_ID;
+  doc["hardwareSpec"] = HARDWARE_SPEC;
+  doc["name"] = VEHICLE_NAME;
+  doc["description"] = VEHICLE_DESCRIPTION;
+  doc["ownerWallet"] = OWNER_WALLET;
+  doc["status"] = status ? status : "online";
+  
+  String payload;
+  serializeJson(doc, payload);
+  
+  Serial.println("📤 Vehicle info payload:");
+  Serial.println(payload);
+  if (webSocket.sendTXT(payload)) {
+    lastVehicleInfoSent = millis();
   }
 }
 

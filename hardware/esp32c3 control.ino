@@ -65,6 +65,9 @@ String vehicleName;
 String vehicleDescription;
 String ownerWallet;
 
+const unsigned long VEHICLE_INFO_INTERVAL = 30000; // 30초 간격
+unsigned long lastVehicleInfoSent = 0;
+
 // 현재 모터 상태 저장 (독립 제어를 위해)
 enum DriveState { DRIVE_STOP, DRIVE_FORWARD, DRIVE_BACKWARD };
 enum SteerState { STEER_CENTER, STEER_LEFT, STEER_RIGHT };
@@ -92,7 +95,7 @@ void updateMotors();
 void quickSelfTest();
 void sendRegistration();
 void loadVehicleConfig();
-void sendVehicleInfo();
+void sendVehicleInfo(const char* status = "online");
 void applyConfigUpdate(JsonObject data);
 void triggerStatusLed();
 void updateStatusLed();
@@ -130,6 +133,12 @@ void setup() {
 // ==================== Main Loop ====================
 void loop() {
   webSocket.loop();
+  
+  if (wsConnected && millis() - lastVehicleInfoSent > VEHICLE_INFO_INTERVAL) {
+    Serial.println("📡 Vehicle info heartbeat");
+    sendVehicleInfo();
+  }
+  
   updateStatusLed();
   delay(1);
 }
@@ -188,6 +197,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       // 연결 끊어지면 정지 (구동 멈춤 + 스티어링 중앙)
       driveStop();
       steerCenter();
+      lastVehicleInfoSent = 0;
       break;
       
     case WStype_CONNECTED:
@@ -201,6 +211,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       delay(500);
       Serial.println("📤 Sending vehicle profile...");
       sendVehicleInfo();
+      lastVehicleInfoSent = millis();
       break;
       
     case WStype_TEXT:
@@ -234,6 +245,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       
     case WStype_ERROR:
       Serial.println("❌ WebSocket Error");
+      lastVehicleInfoSent = 0;
       break;
       
     default:
@@ -284,7 +296,7 @@ void loadVehicleConfig() {
 }
 
 // 서버에 차량 프로필 정보 전송
-void sendVehicleInfo() {
+void sendVehicleInfo(const char* status) {
   DynamicJsonDocument doc(512);
   doc["type"] = "vehicleInfo";
   doc["id"] = DEVICE_ID;
@@ -292,7 +304,7 @@ void sendVehicleInfo() {
   doc["name"] = vehicleName;
   doc["description"] = vehicleDescription;
   doc["ownerWallet"] = ownerWallet;
-  doc["status"] = "online";
+  doc["status"] = status ? status : "online";
   
   String payload;
   serializeJson(doc, payload);
@@ -300,8 +312,12 @@ void sendVehicleInfo() {
   Serial.print("📤 Vehicle info payload: ");
   Serial.println(payload);
   
-  webSocket.sendTXT(payload);
-  Serial.println("   Vehicle info sent");
+  if (webSocket.sendTXT(payload)) {
+    lastVehicleInfoSent = millis();
+    Serial.println("   Vehicle info sent");
+  } else {
+    Serial.println("   Vehicle info send failed");
+  }
 }
 
 // 서버로부터 받은 설정 업데이트 적용

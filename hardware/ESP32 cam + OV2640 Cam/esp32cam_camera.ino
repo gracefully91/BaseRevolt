@@ -82,6 +82,10 @@ String vehicleName;
 String vehicleDescription;
 String ownerWallet;
 
+// 차량 프로필 하트비트 (vehicleInfo 재전송 간격)
+const unsigned long VEHICLE_INFO_INTERVAL = 30000; // 30초
+unsigned long lastVehicleInfoSent = 0;
+
 // ==================== 함수 선언 ====================
 void setupCamera();
 void setupWiFi();
@@ -89,7 +93,7 @@ void setupWebSocket();
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 void sendCameraFrame();
 void loadVehicleConfig();
-void sendVehicleInfo();
+void sendVehicleInfo(const char* status = "online");
 void applyConfigUpdate(JsonObject data);
 void sendRegistration();
 
@@ -122,11 +126,18 @@ void setup() {
 void loop() {
   webSocket.loop();
   
-  // 카메라 프레임 전송 (15 FPS)
-  // wsConnected가 true면 이미 등록 완료된 상태
-  if (wsConnected && (millis() - lastFrameTime > frameInterval)) {
-    sendCameraFrame();
-    lastFrameTime = millis();
+  if (wsConnected) {
+    // 카메라 프레임 전송 (15 FPS)
+    if (millis() - lastFrameTime > frameInterval) {
+      sendCameraFrame();
+      lastFrameTime = millis();
+    }
+    
+    // 차량 정보 하트비트 (30초마다 vehicleInfo 재전송)
+    if (millis() - lastVehicleInfoSent > VEHICLE_INFO_INTERVAL) {
+      Serial.println("📡 Vehicle info heartbeat");
+      sendVehicleInfo();
+    }
   }
   
   delay(1);
@@ -218,6 +229,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       Serial.printf("   Free heap: %d bytes\n", ESP.getFreeHeap());
       Serial.println("   🔄 Will retry in 10 seconds...");
       wsConnected = false;
+      lastVehicleInfoSent = 0;
       break;
       
     case WStype_CONNECTED:
@@ -244,6 +256,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.println("📤 Sending vehicle profile...");
         sendVehicleInfo();
         delay(500);
+        lastVehicleInfoSent = millis();
         
         // 이제 연결 완료로 표시 - 이제부터 loop()에서 프레임 전송 시작
         wsConnected = true;
@@ -299,6 +312,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.println("      2. Network connectivity issue");
         Serial.println("      3. Server not responding");
         wsConnected = false;
+        lastVehicleInfoSent = 0;
       }
       break;
       

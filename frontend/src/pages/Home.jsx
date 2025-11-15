@@ -4,6 +4,7 @@ import { useAccount, useReadContract, useChainId } from 'wagmi';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { base, baseSepolia } from 'wagmi/chains';
 import { TICKET_CONTRACT_ADDRESS, TICKET_CONTRACT_ABI, WS_SERVER_URL, API_SERVER_URL } from '../config/contracts';
+import { vehicleManager } from '../utils/vehicleData';
 import PaymentModal from '../components/PaymentModal';
 import VehicleSelectionModal from '../components/VehicleSelectionModal';
 import WaitingQueueModal from '../components/WaitingQueueModal';

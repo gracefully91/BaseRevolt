@@ -90,6 +90,9 @@ String vehicleName;
 String vehicleDescription;
 String ownerWallet;
 
+const unsigned long VEHICLE_INFO_INTERVAL = 30000; // 30초마다 vehicleInfo 재전송
+unsigned long lastVehicleInfoSent = 0;
+
 // ==================== 함수 선언 ====================
 void setupCamera();
 void setupWiFi();
@@ -97,7 +100,7 @@ void setupWebSocket();
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 void sendCameraFrame();
 void loadVehicleConfig();
-void sendVehicleInfo();
+void sendVehicleInfo(const char* status = "online");
 void applyConfigUpdate(JsonObject data);
 void sendRegistration();
 
@@ -129,11 +132,18 @@ void setup() {
 void loop() {
   webSocket.loop();
   
-  // 카메라 프레임 전송 (15 FPS)
-  // wsConnected가 true면 이미 등록 완료된 상태
-  if (wsConnected && (millis() - lastFrameTime > frameInterval)) {
-    sendCameraFrame();
-    lastFrameTime = millis();
+  if (wsConnected) {
+    // 카메라 프레임 전송 (15 FPS)
+    if (millis() - lastFrameTime > frameInterval) {
+      sendCameraFrame();
+      lastFrameTime = millis();
+    }
+    
+    // 차량 프로필 하트비트
+    if (millis() - lastVehicleInfoSent > VEHICLE_INFO_INTERVAL) {
+      Serial.println("📡 Vehicle info heartbeat");
+      sendVehicleInfo();
+    }
   }
   
   delay(1);
@@ -228,6 +238,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       Serial.println("   🔄 Will retry in 10 seconds...");
       wsConnected = false;
       deviceRegistered = false;  // 재연결 시 다시 등록 필요
+      lastVehicleInfoSent = 0;
       break;
       
     case WStype_CONNECTED:
@@ -254,6 +265,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.println("📤 Sending vehicle profile...");
         sendVehicleInfo();
         delay(500);
+        lastVehicleInfoSent = millis();
         
         // 이제 연결 완료로 표시 - 이제부터 loop()에서 프레임 전송 시작
         wsConnected = true;
@@ -318,6 +330,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.println("      2. Network connectivity issue");
         Serial.println("      3. Server not responding");
         wsConnected = false;
+        lastVehicleInfoSent = 0;
       }
       break;
       
@@ -501,7 +514,7 @@ void loadVehicleConfig() {
 }
 
 // 서버에 차량 프로필 정보 전송
-void sendVehicleInfo() {
+void sendVehicleInfo(const char* status) {
   DynamicJsonDocument doc(512);
   doc["type"] = "vehicleInfo";
   doc["id"] = DEVICE_ID;
@@ -509,7 +522,7 @@ void sendVehicleInfo() {
   doc["name"] = vehicleName;
   doc["description"] = vehicleDescription;
   doc["ownerWallet"] = ownerWallet;
-  doc["status"] = "online";
+  doc["status"] = status ? status : "online";
   
   String payload;
   serializeJson(doc, payload);
@@ -518,6 +531,9 @@ void sendVehicleInfo() {
   Serial.println(payload);
   
   bool sent = webSocket.sendTXT(payload.c_str(), payload.length());
+  if (sent) {
+    lastVehicleInfoSent = millis();
+  }
   Serial.printf("   Send result: %s\n", sent ? "SUCCESS" : "FAILED");
 }
 
