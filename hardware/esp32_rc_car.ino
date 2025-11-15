@@ -303,11 +303,14 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.printf("   My IP: %s\n", WiFi.localIP().toString().c_str());
         wsConnected = true;
         
-        // 서버에 디바이스 등록 + 차량 정보 표시
-        sendRegistration();
-        delay(500);
+        // 차량 정보 먼저 전송 (register 이전)
+        Serial.println("[WS] Sending vehicle profile (pre-register)...");
         sendVehicleInfo();
         lastVehicleInfoSent = millis();
+        delay(500);
+        
+        // 서버에 디바이스 등록
+        sendRegistration();
       }
       break;
       

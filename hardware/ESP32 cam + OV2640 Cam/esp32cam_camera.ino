@@ -242,21 +242,19 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
         Serial.println("⏳ Waiting 500ms for connection to stabilize...");
         delay(500);
         
+        // 차량 프로필 정보 전송 (v2.1 - register 이전에 전송해야 서버에서 인식)
+        Serial.println("📤 Sending vehicle profile (pre-register)...");
+        sendVehicleInfo();
+        delay(500);
+        
         // 디바이스 등록 메시지 전송 (v2.0 프로토콜)
         Serial.println("📤 Sending registration message...");
         sendRegistration();
         registrationTime = millis();
         
         // 등록 메시지가 서버에 도착하고 처리될 때까지 충분히 대기
-        // 이 시간 동안 loop()는 계속 돌지만 wsConnected가 false라서 프레임 전송 안 함
         Serial.println("⏳ Waiting 2000ms for server to process registration...");
         delay(2000);
-        
-        // 차량 프로필 정보 전송 (v2.1)
-        Serial.println("📤 Sending vehicle profile...");
-        sendVehicleInfo();
-        delay(500);
-        lastVehicleInfoSent = millis();
         
         // 이제 연결 완료로 표시 - 이제부터 loop()에서 프레임 전송 시작
         wsConnected = true;

@@ -204,14 +204,14 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       Serial.println("✅ WebSocket Connected");
       wsConnected = true;
       
-      // 디바이스 등록 메시지 전송 (v2.0 프로토콜)
-      sendRegistration();
-      
-      // 차량 프로필 정보 전송 (v2.1)
-      delay(500);
-      Serial.println("📤 Sending vehicle profile...");
+      // 차량 프로필 정보 전송 (register 이전)
+      Serial.println("📤 Sending vehicle profile (pre-register)...");
       sendVehicleInfo();
       lastVehicleInfoSent = millis();
+      delay(500);
+      
+      // 디바이스 등록 메시지 전송 (v2.0 프로토콜)
+      sendRegistration();
       break;
       
     case WStype_TEXT:
